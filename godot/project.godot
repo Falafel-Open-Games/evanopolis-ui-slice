@@ -1,0 +1,18 @@
+; Engine configuration file.
+; It's best edited in the editor, not by hand.
+
+config_version=5
+
+[application]
+config/name="Evanopolis UI Slice"
+run/main_scene="res://scenes/boot_menu.tscn"
+config/features=PackedStringArray("4.5")
+config/icon="res://icon.svg"
+
+[display]
+window/size/viewport_width=1280
+window/size/viewport_height=720
+window/size/mode=2
+
+[rendering]
+renderer/rendering_method="forward_plus"

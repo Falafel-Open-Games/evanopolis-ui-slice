@@ -1,0 +1,27 @@
+[gd_scene load_steps=3 format=3 uid="uid://bq8yu0tnywxwn"]
+
+[ext_resource type="PackedScene" uid="uid://q6cux836c2th" path="res://scenes/tile.tscn" id="1_5s5n0"]
+[ext_resource type="PackedScene" uid="uid://75mr7nsx53p0" path="res://scenes/corner_tile.tscn" id="2_f4p7u"]
+
+[node name="SideStrip" type="Node3D"]
+
+[node name="CornerTile" parent="." instance=ExtResource("2_f4p7u")]
+transform = Transform3D(0.8660254, 0, -0.5, 0, 1, 0, 0.5, 0, 0.8660254, 0, 0, -0.0034799427)
+
+[node name="Tile" parent="." instance=ExtResource("1_5s5n0")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.0065248907, 0, 0)
+
+[node name="Tile2" parent="." instance=ExtResource("1_5s5n0")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.05173998, 0, 0)
+
+[node name="Tile3" parent="." instance=ExtResource("1_5s5n0")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.09673998, 0, 0)
+
+[node name="Tile4" parent="." instance=ExtResource("1_5s5n0")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.1413725, 0, 0)
+
+[node name="Tile5" parent="." instance=ExtResource("1_5s5n0")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.18658759, 0, 0)
+
+[node name="Tile6" parent="." instance=ExtResource("1_5s5n0")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.23158759, 0, 0)

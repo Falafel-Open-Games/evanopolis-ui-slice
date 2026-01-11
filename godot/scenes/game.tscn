@@ -1,0 +1,59 @@
+[gd_scene load_steps=7 format=3 uid="uid://cqmxik86m7jfl"]
+
+[ext_resource type="PackedScene" uid="uid://bq8yu0tnywxwn" path="res://scenes/side_strip.tscn" id="2_s0k7h"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_8cj0n"]
+albedo_color = Color(0.05857501, 0.15, 0.0465, 1)
+
+[sub_resource type="PlaneMesh" id="PlaneMesh_8cj0n"]
+material = SubResource("StandardMaterial3D_8cj0n")
+size = Vector2(1, 1)
+
+[sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_8cj0n"]
+sky_horizon_color = Color(0.66224277, 0.6717428, 0.6867428, 1)
+ground_horizon_color = Color(0.66224277, 0.6717428, 0.6867428, 1)
+
+[sub_resource type="Sky" id="Sky_uwrxv"]
+sky_material = SubResource("ProceduralSkyMaterial_8cj0n")
+
+[sub_resource type="Environment" id="Environment_yqjtg"]
+background_mode = 2
+sky = SubResource("Sky_uwrxv")
+tonemap_mode = 2
+
+[node name="Game" type="Node3D"]
+
+[node name="Table" type="MeshInstance3D" parent="."]
+mesh = SubResource("PlaneMesh_8cj0n")
+
+[node name="Environment" type="Node3D" parent="."]
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="Environment"]
+environment = SubResource("Environment_yqjtg")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="Environment"]
+transform = Transform3D(-0.8660254, -0.43301278, 0.25, 0, 0.49999997, 0.86602545, -0.50000006, 0.75, -0.43301266, 0, 0, 0)
+shadow_enabled = true
+
+[node name="Camera3D" type="Camera3D" parent="Environment"]
+transform = Transform3D(1, 0, 0, 0, 0.7482267, 0.66344315, 0, -0.66344315, 0.7482267, 0, 0.956944, 1.2723932)
+
+[node name="tiles" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.14096236, 0, 0.25193307)
+
+[node name="SideStrip" parent="tiles" instance=ExtResource("2_s0k7h")]
+
+[node name="SideStrip2" parent="tiles" instance=ExtResource("2_s0k7h")]
+transform = Transform3D(0.49999997, 0, 0.86602545, 0, 1, 0, -0.86602545, 0, 0.49999997, 0.28620952, 0, -0.0019304231)
+
+[node name="SideStrip3" parent="tiles" instance=ExtResource("2_s0k7h")]
+transform = Transform3D(-0.50000006, 0, 0.8660254, 0, 1, 0, -0.8660254, 0, -0.50000006, 0.42784536, 0, -0.25294417)
+
+[node name="SideStrip4" parent="tiles" instance=ExtResource("2_s0k7h")]
+transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 0.28227258, 0, -0.50005245)
+
+[node name="SideStrip5" parent="tiles" instance=ExtResource("2_s0k7h")]
+transform = Transform3D(-0.50000006, 0, -0.8660254, 0, 1, 0, 0.8660254, 0, -0.50000006, -0.004400134, 0, -0.49770635)
+
+[node name="SideStrip6" parent="tiles" instance=ExtResource("2_s0k7h")]
+transform = Transform3D(0.49999997, 0, -0.86602545, 0, 1, 0, 0.86602545, 0, 0.49999997, -0.1462281, 0, -0.24818012)
