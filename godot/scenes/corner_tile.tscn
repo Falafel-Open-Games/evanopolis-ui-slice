@@ -17,7 +17,7 @@ size = Vector3(0.1, 0.01, 0.1)
 [node name="CornerTile" type="Node3D"]
 
 [node name="CSGBakedMeshInstance3D" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.4, 0, 0, 0, 0.4, 0, 0, 0, 0.4, 0, 0, 0)
+transform = Transform3D(0.4, 0, 0, 0, 0.4, 0, 0, 0, 0.4, 0, 0.002, 0)
 mesh = SubResource("ArrayMesh_y8lo4")
 
 [node name="CSGCombiner3D" type="CSGCombiner3D" parent="."]
