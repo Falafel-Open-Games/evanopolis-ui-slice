@@ -22,7 +22,7 @@ Offline UI slice for the Evanopolis tabletop game. This repo focuses on a playab
 
 1. Repo scaffolding (this step)
 2. Godot project skeleton and basic scene
-3. Offline game loop v0 (turns, dice, move, event log)
+3. Offline game loop v0 (movement + buy/rent)
 4. Property interactions v0 (buy, rent, ownership)
 5. Cards + jail + salida rules
 6. Economy extras (jackpot, capital vote, endgame triggers)
@@ -30,4 +30,6 @@ Offline UI slice for the Evanopolis tabletop game. This repo focuses on a playab
 ## Notes
 
 - See `docs/spec.md` for the current ruleset.
+- See `docs/ai-context.md` for offline demo scope + rules clarifications.
+- See `docs/runbook.md` for playtest steps.
 - Track decisions in `docs/design-decisions.md`.
