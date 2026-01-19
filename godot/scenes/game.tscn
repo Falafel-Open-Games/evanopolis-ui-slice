@@ -1,8 +1,10 @@
-[gd_scene load_steps=9 format=3 uid="uid://cqmxik86m7jfl"]
+[gd_scene load_steps=11 format=3 uid="uid://cqmxik86m7jfl"]
 
 [ext_resource type="PackedScene" uid="uid://bq8yu0tnywxwn" path="res://scenes/side_strip.tscn" id="2_s0k7h"]
 [ext_resource type="PackedScene" uid="uid://cf3ptmh3a1lsi" path="res://scenes/player_summary.tscn" id="2_yqjtg"]
+[ext_resource type="PackedScene" uid="uid://hsaj4hgpu7a6" path="res://scenes/pawn.tscn" id="3_lbhrr"]
 [ext_resource type="Script" uid="uid://csigfifodnx75" path="res://scripts/board_layout.gd" id="3_tfrx2"]
+[ext_resource type="Script" uid="uid://b4b2jj7a5a3fy" path="res://scripts/pawns_start.gd" id="4_3k9qj"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_8cj0n"]
 albedo_color = Color(0.05857501, 0.15, 0.0465, 1)
@@ -61,6 +63,74 @@ transform = Transform3D(-0.50000006, 0, -0.8660254, 0, 1, 0, 0.8660254, 0, -0.50
 
 [node name="SideStrip6" parent="tiles" instance=ExtResource("2_s0k7h")]
 transform = Transform3D(0.49999997, 0, -0.86602545, 0, 1, 0, 0.86602545, 0, 0.49999997, -0.1462281, 0, -0.24818012)
+
+[node name="Pawns" type="Node3D" parent="."]
+script = ExtResource("4_3k9qj")
+markers_root_path = NodePath("../tiles/SideStrip1/Tile4/PawnMarkers")
+
+[node name="Pawn1" parent="Pawns" instance=ExtResource("3_lbhrr")]
+base_color = Color(0.33333334, 0.3254902, 0.32941177, 1)
+accent_color = Color(0.69803923, 0.69411767, 0.7019608, 1)
+
+[node name="Pawn2" parent="Pawns" instance=ExtResource("3_lbhrr")]
+base_color = Color(0.8235294, 0.16862746, 0.16862746, 1)
+accent_color = Color(1, 0.54509807, 0.4745098, 1)
+
+[node name="Pawn3" parent="Pawns" instance=ExtResource("3_lbhrr")]
+base_color = Color(0.88235295, 0.42745098, 0.14509805, 1)
+accent_color = Color(0.972549, 0.6862745, 0.27450982, 1)
+
+[node name="Pawn4" parent="Pawns" instance=ExtResource("3_lbhrr")]
+base_color = Color(0.34509805, 0.49019608, 0.21176471, 1)
+accent_color = Color(0.45882353, 0.81960785, 0.6627451, 1)
+
+[node name="Pawn5" parent="Pawns" instance=ExtResource("3_lbhrr")]
+base_color = Color(0.28235295, 0.5529412, 0.8627451, 1)
+accent_color = Color(0.4745098, 0.7411765, 0.92156863, 1)
+
+[node name="Pawn6" parent="Pawns" instance=ExtResource("3_lbhrr")]
+base_color = Color(0.627451, 0.23921569, 0.75686276, 1)
+accent_color = Color(0.95686275, 0.5529412, 1, 1)
+
+[node name="PawnsDebug" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.254)
+visible = false
+
+[node name="Pawn1" parent="PawnsDebug" instance=ExtResource("3_lbhrr")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.844833e-05, 0, 0.027908891)
+
+[node name="Pawn2" parent="PawnsDebug" instance=ExtResource("3_lbhrr")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.01531476, 0, 0.028090894)
+
+[node name="Pawn3" parent="PawnsDebug" instance=ExtResource("3_lbhrr")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.014149776, 0, 0.027849317)
+
+[node name="Pawn4" parent="PawnsDebug" instance=ExtResource("3_lbhrr")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.00021187682, 0, 0.043000013)
+
+[node name="Pawn5" parent="PawnsDebug" instance=ExtResource("3_lbhrr")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.01531476, 0, 0.04291305)
+
+[node name="Pawn6" parent="PawnsDebug" instance=ExtResource("3_lbhrr")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.014610371, 0, 0.043000013)
+
+[node name="Pawn1b" parent="PawnsDebug" instance=ExtResource("3_lbhrr")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.16132756, 0, 0.028090894)
+
+[node name="Pawn2b" parent="PawnsDebug" instance=ExtResource("3_lbhrr")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.16887575, 0, 0.014402956)
+
+[node name="Pawn3b" parent="PawnsDebug" instance=ExtResource("3_lbhrr")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.14606124, 0, 0.027908891)
+
+[node name="Pawn4b" parent="PawnsDebug" instance=ExtResource("3_lbhrr")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.1706033, 0, 0.0432719)
+
+[node name="Pawn5b" parent="PawnsDebug" instance=ExtResource("3_lbhrr")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.17739198, 0, 0.029266298)
+
+[node name="Pawn6b" parent="PawnsDebug" instance=ExtResource("3_lbhrr")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.15522215, 0, 0.04289356)
 
 [node name="Control" type="Control" parent="."]
 layout_mode = 3
