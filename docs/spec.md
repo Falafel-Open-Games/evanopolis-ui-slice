@@ -63,8 +63,8 @@ Formato octogonal conforme imagem enviada.
 | Assunção         | 2 EVA      |
 | Ciudad del Este  | 2 EVA      |
 | Minsk            | 3 EVA      |
-| Sibéria          | 3 EVA      |
-| Texas            | 4 EVA      |
+| Sibéria (Irkutsk) | 3 EVA      |
+| Texas (Rockdale)  | 4 EVA      |
 
 ## 5. Infraestrutura por Terreno
 
