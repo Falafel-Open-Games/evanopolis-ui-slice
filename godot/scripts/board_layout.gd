@@ -89,3 +89,74 @@ func get_board_tiles() -> Array[Node3D]:
 			tiles_list.append(tile)
 
 	return tiles_list
+
+func get_tile_markers(tile_index: int) -> Array[Marker3D]:
+	var tiles: Array[Node3D] = get_board_tiles()
+	if tile_index < 0 or tile_index >= tiles.size():
+		return []
+	var tile: Node3D = tiles[tile_index]
+	var markers_root: Node = tile.get_node_or_null("PawnMarkers")
+	if markers_root == null:
+		return []
+	var markers: Array[Marker3D] = []
+	for index in range(1, 7):
+		var marker_node: Node = markers_root.get_node_or_null("Marker%d" % index)
+		if marker_node is Marker3D:
+			markers.append(marker_node)
+	return markers
+
+func get_tile_info(tile_index: int) -> Dictionary:
+	var info: Dictionary = {
+		"type": "unknown",
+		"city": "",
+		"incident_kind": "",
+	}
+
+	if tile_index == 0:
+		info["type"] = "start"
+		return info
+	if tile_index == 18:
+		info["type"] = "inspection"
+		return info
+	if tile_index == 6 or tile_index == 24:
+		info["type"] = "incident"
+		info["incident_kind"] = "suerte"
+		return info
+	if tile_index == 12 or tile_index == 30:
+		info["type"] = "incident"
+		info["incident_kind"] = "destino"
+		return info
+
+	var city: String = _city_for_property(tile_index)
+	if city.is_empty():
+		return info
+
+	info["city"] = city
+	info["type"] = "special_property" if _is_corner_tile(tile_index) else "property"
+	return info
+
+func _is_corner_tile(tile_index: int) -> bool:
+	if tile_index == 33:
+		return true
+	if tile_index < 3 or tile_index > 32:
+		return false
+	var offset: int = tile_index - 3
+	return (offset % 6) == 0
+
+func _city_for_property(tile_index: int) -> String:
+	if tile_index == 33 or tile_index == 34 or tile_index == 35:
+		return Palette.CITY_ORDER[Palette.CITY_ORDER.size() - 1]
+	if tile_index == 1 or tile_index == 2:
+		return Palette.CITY_ORDER[0]
+	if tile_index < 3 or tile_index > 32:
+		return ""
+	var offset: int = tile_index - 3
+	var strip_index: int = int(offset / 6.0) + 1
+	var tile_pos: int = offset % 6
+	if tile_pos == 3:
+		return ""
+	var prev_city: String = Palette.CITY_ORDER[strip_index - 1]
+	var next_city: String = Palette.CITY_ORDER[strip_index]
+	if tile_pos <= 2:
+		return prev_city
+	return next_city
