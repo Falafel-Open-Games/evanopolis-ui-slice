@@ -48,9 +48,9 @@ O tabuleiro possui 36 casas em um array circular:
 
 - 24 propriedades
 - 6 propriedades especiais
-- 2 Suerte
-- 2 Destino
-- 1 Cárcel
+- 2 Incident (suerte)
+- 2 Incident (destino)
+- 1 Inspection (cárcel)
 - 1 Salida (GO)
 
 Formato octogonal conforme imagem enviada.
@@ -135,7 +135,7 @@ RendaFinal = RendaBase × bonusGlobal × bonusCidade
 
 - +1 EVA adicional
 
-## 9. Prisão (Cárcel)
+## 9. Inspection (Cárcel)
 
 ### Consequências
 
@@ -154,7 +154,7 @@ Jogador não se move, mas pode:
 
 Após 3 falhas → paga 3 EVA obrigatoriamente.
 
-## 10. Carta Especial de Prisão
+## 10. Carta Especial de Inspection
 
 Inspeção Legal Rigorosa (Destino)
 
@@ -222,7 +222,7 @@ Escalonável por sala.
 - 10% como semente
 - Jackpot reinicia
 
-## 14. Cartas Suerte e Destino
+## 14. Cartas Incident (Suerte e Destino)
 
 Cada baralho tem 20 cartas:
 

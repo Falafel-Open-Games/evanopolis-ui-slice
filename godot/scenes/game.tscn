@@ -1,7 +1,8 @@
-[gd_scene load_steps=8 format=3 uid="uid://cqmxik86m7jfl"]
+[gd_scene load_steps=9 format=3 uid="uid://cqmxik86m7jfl"]
 
 [ext_resource type="PackedScene" uid="uid://bq8yu0tnywxwn" path="res://scenes/side_strip.tscn" id="2_s0k7h"]
 [ext_resource type="PackedScene" uid="uid://cf3ptmh3a1lsi" path="res://scenes/player_summary.tscn" id="2_yqjtg"]
+[ext_resource type="Script" uid="uid://csigfifodnx75" path="res://scripts/board_layout.gd" id="3_tfrx2"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_8cj0n"]
 albedo_color = Color(0.05857501, 0.15, 0.0465, 1)
@@ -23,6 +24,7 @@ sky = SubResource("Sky_uwrxv")
 tonemap_mode = 2
 
 [node name="Game" type="Node3D"]
+script = ExtResource("3_tfrx2")
 
 [node name="Table" type="MeshInstance3D" parent="."]
 mesh = SubResource("PlaneMesh_8cj0n")
@@ -43,7 +45,7 @@ fov = 43.9
 [node name="tiles" type="Node3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.14096236, 0, 0.25193307)
 
-[node name="SideStrip" parent="tiles" instance=ExtResource("2_s0k7h")]
+[node name="SideStrip1" parent="tiles" instance=ExtResource("2_s0k7h")]
 
 [node name="SideStrip2" parent="tiles" instance=ExtResource("2_s0k7h")]
 transform = Transform3D(0.49999997, 0, 0.86602545, 0, 1, 0, -0.86602545, 0, 0.49999997, 0.28620952, 0, -0.0019304231)
