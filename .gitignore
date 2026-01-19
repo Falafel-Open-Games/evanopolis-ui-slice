@@ -6,3 +6,6 @@
 *.log
 *~
 .DS_Store
+build/**
+!build/.gitkeep
+!build/html-client/.gitkeep

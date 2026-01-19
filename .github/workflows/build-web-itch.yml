@@ -1,0 +1,63 @@
+name: Build Web Export & Publish to itch.io
+
+on:
+  push:
+    branches: [main, ci-itch-publish]
+  workflow_dispatch:
+
+env:
+  GODOT_VERSION: 4.5.1
+  GODOT_RELEASE_NAME: stable
+
+jobs:
+  build-web:
+    name: Export Web HTML
+    runs-on: ubuntu-24.04
+    container:
+      image: fczuardi/godot-ci:4.5.1
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup export templates
+        run: |
+          mkdir -p ~/.local/share/godot/export_templates/
+          mv /root/.local/share/godot/export_templates/${GODOT_VERSION}.${GODOT_RELEASE_NAME} \
+             ~/.local/share/godot/export_templates/${GODOT_VERSION}.${GODOT_RELEASE_NAME}
+
+      - name: Export Web (HTML)
+        run: |
+          mkdir -p godot/build/html-client
+          godot --headless --verbose \
+            --path godot \
+            --export-release "Web" \
+            build/html-client/index.html
+
+      - name: Upload web html artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: web-html-build
+          path: godot/build/html-client
+
+  itch-publish:
+    name: Publish Web build to itch.io
+    needs: build-web
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download web html artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: web-html-build
+          path: build/html-client
+
+      - name: Setup butler
+        uses: remarkablegames/setup-butler@v2
+
+      - name: Upload to itch.io
+        run: |
+          butler push "build/html-client" \
+            ${{ vars.ITCHIO_USERNAME }}/${{ vars.ITCHIO_GAME }}:html5
+        env:
+          BUTLER_API_KEY: ${{ secrets.BUTLER_API_KEY }}

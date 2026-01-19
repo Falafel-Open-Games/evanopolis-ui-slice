@@ -6,3 +6,8 @@ _default:
 # Run the offline prototype (expects a Godot project under godot/).
 dev:
   godot --path godot
+
+# Export the HTML build locally.
+build-html:
+  mkdir -p build/html-client
+  godot --headless --path godot --export-release "Web" build/html-client/index.html
