@@ -26,3 +26,15 @@ Log small decisions here so we can track why the UI slice behaves the way it doe
 - Decision: Add six pawn marker slots per tile (two rows of three) and use a peg-style pawn (base, stem, cap).
 - Rationale: Keeps pawn placement clear in crowded tiles and matches the physical board-game feel.
 - Consequences: Pawn placement will target marker slots rather than tile centers.
+
+## 2026-01-11: Local game state node for turn flow
+
+- Decision: Keep turn state in a local `GameState` node under the game scene instead of using an autoload.
+- Rationale: Makes responsibilities explicit and keeps early iteration contained to the scene.
+- Consequences: Other nodes should reference `GameState` via node paths.
+
+## 2026-01-11: Color palette autoload
+
+- Decision: Centralize player and city color constants in the `Palette` autoload.
+- Rationale: Avoids color duplication across UI components and board logic.
+- Consequences: UI scripts should reference `Palette` for player colors.

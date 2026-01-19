@@ -28,6 +28,6 @@ func _apply_colors() -> void:
 func _set_mesh_color(mesh: MeshInstance3D, color: Color) -> void:
 	if mesh == null:
 		return
-	var material := StandardMaterial3D.new()
+	var material: StandardMaterial3D = StandardMaterial3D.new()
 	material.albedo_color = color
 	mesh.material_override = material
