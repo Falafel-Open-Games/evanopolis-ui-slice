@@ -11,7 +11,7 @@ config_version=5
 [application]
 
 config/name="Evanopolis UI Slice"
-run/main_scene="res://scenes/boot_menu.tscn"
+run/main_scene="uid://cqmxik86m7jfl"
 config/features=PackedStringArray("4.5")
 config/icon="res://icon.svg"
 

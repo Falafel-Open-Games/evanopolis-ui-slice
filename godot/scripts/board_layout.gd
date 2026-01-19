@@ -29,16 +29,24 @@ const SIDE_STRIP_NAMES := [
 ]
 
 const CENTER_TILE_NAME := "Tile4"
+const STRIP_TILE_ORDER := [
+	"CornerTile",
+	"Tile2",
+	"Tile3",
+	"Tile4",
+	"Tile5",
+	"Tile6",
+]
 
 func _ready() -> void:
 	_apply_colors()
+	print(get_board_tiles())
 
 func _apply_colors() -> void:
 	for side_index in range(SIDE_STRIP_NAMES.size()):
 		var side_name: String = SIDE_STRIP_NAMES[side_index]
 		var side := get_node_or_null("tiles/" + side_name)
 		if side == null:
-			print("null side")
 			continue
 
 		var prev_city: String = CITY_ORDER[side_index]
@@ -57,3 +65,34 @@ func _set_tile_color(parent: Node, tile_name: String, color: Color) -> void:
 	var tile := parent.get_node_or_null(tile_name)
 	if tile is BoardTile:
 		tile.tile_color = color
+
+func get_board_tiles() -> Array[Node3D]:
+	var tiles_list: Array[Node3D] = []
+	var tiles_root := get_node_or_null("tiles")
+	if tiles_root == null:
+		return tiles_list
+
+	# Start at SideStrip1 Tile4 and move counter-clockwise.
+	var strip1 := tiles_root.get_node_or_null(SIDE_STRIP_NAMES[0])
+	if strip1 == null:
+		return tiles_list
+	for tile_name in ["Tile4", "Tile5", "Tile6"]:
+		var tile := strip1.get_node_or_null(tile_name)
+		if tile is Node3D:
+			tiles_list.append(tile)
+
+	for index in range(1, SIDE_STRIP_NAMES.size()):
+		var strip := tiles_root.get_node_or_null(SIDE_STRIP_NAMES[index])
+		if strip == null:
+			continue
+		for tile_name in STRIP_TILE_ORDER:
+			var tile := strip.get_node_or_null(tile_name)
+			if tile is Node3D:
+				tiles_list.append(tile)
+
+	for tile_name in ["CornerTile", "Tile2", "Tile3"]:
+		var tile := strip1.get_node_or_null(tile_name)
+		if tile is Node3D:
+			tiles_list.append(tile)
+
+	return tiles_list

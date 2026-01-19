@@ -1,0 +1,42 @@
+[gd_scene load_steps=5 format=3 uid="uid://hsaj4hgpu7a6"]
+
+[ext_resource type="Script" uid="uid://cupp01rayuvya" path="res://scripts/pawn.gd" id="1_2ny1j"]
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_1"]
+top_radius = 0.04
+bottom_radius = 0.04
+height = 0.012
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_2"]
+top_radius = 0.018
+bottom_radius = 0.018
+height = 0.03
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_3"]
+top_radius = 0.024
+bottom_radius = 0.024
+height = 0.01
+
+[node name="Pawn" type="Node3D"]
+script = ExtResource("1_2ny1j")
+
+[node name="Parts" type="Node3D" parent="."]
+transform = Transform3D(0.15, 0, 0, 0, 0.15, 0, 0, 0, 0.15, 0, 0, 0)
+
+[node name="Base" type="MeshInstance3D" parent="Parts"]
+unique_name_in_owner = true
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.006, 0)
+mesh = SubResource("CylinderMesh_1")
+skeleton = NodePath("../..")
+
+[node name="Stem" type="MeshInstance3D" parent="Parts"]
+unique_name_in_owner = true
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.027, 0)
+mesh = SubResource("CylinderMesh_2")
+skeleton = NodePath("../..")
+
+[node name="Cap" type="MeshInstance3D" parent="Parts"]
+unique_name_in_owner = true
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.047, 0)
+mesh = SubResource("CylinderMesh_3")
+skeleton = NodePath("../..")

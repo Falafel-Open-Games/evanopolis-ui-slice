@@ -20,3 +20,9 @@ Log small decisions here so we can track why the UI slice behaves the way it doe
 - Decision: Use a 3D Node3D scene with a fixed camera and generated BoxMesh tiles.
 - Rationale: Enables spatial board layout while keeping visuals minimal for iteration.
 - Consequences: Early UI is a 2D overlay on top of the 3D scene.
+
+## 2026-01-11: Pawn markers and peg pawn shape
+
+- Decision: Add six pawn marker slots per tile (two rows of three) and use a peg-style pawn (base, stem, cap).
+- Rationale: Keeps pawn placement clear in crowded tiles and matches the physical board-game feel.
+- Consequences: Pawn placement will target marker slots rather than tile centers.
