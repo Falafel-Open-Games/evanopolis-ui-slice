@@ -1,4 +1,8 @@
-[gd_scene load_steps=3 format=4 uid="uid://75mr7nsx53p0"]
+[gd_scene load_steps=5 format=4 uid="uid://75mr7nsx53p0"]
+
+[ext_resource type="Script" uid="uid://kkctmgrcsfau" path="res://scripts/board_tile.gd" id="1_4kwbn"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_wnpk2"]
 
 [sub_resource type="ArrayMesh" id="ArrayMesh_y8lo4"]
 _surfaces = [{
@@ -15,9 +19,11 @@ _surfaces = [{
 size = Vector3(0.1, 0.01, 0.1)
 
 [node name="CornerTile" type="Node3D"]
+script = ExtResource("1_4kwbn")
 
 [node name="CSGBakedMeshInstance3D" type="MeshInstance3D" parent="."]
 transform = Transform3D(0.4, 0, 0, 0, 0.4, 0, 0, 0, 0.4, 0, 0.002, 0)
+material_override = SubResource("StandardMaterial3D_wnpk2")
 mesh = SubResource("ArrayMesh_y8lo4")
 
 [node name="CSGCombiner3D" type="CSGCombiner3D" parent="."]

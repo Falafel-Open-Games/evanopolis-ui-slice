@@ -18,7 +18,7 @@ Done means:
 - Board shows visual pawns/tokens.
 - Roll dice button.
 - Pawn movement on the board.
-- UI shows the landed tile type (property, special property, suerte, destino, go, jail).
+- UI shows the landed tile type (property, special property, incident, go, inspection).
 - If the tile is a property and unowned, show options to buy or end turn.
 - If the player passes the buy opportunity, no auction.
 - Visuals: simple meshes + placeholder colors.
@@ -28,4 +28,3 @@ Done means:
 - Dice randomness: seed is derived from a `game_id` generated on boot.
 - `game_id` is editable on the boot screen to reproduce matches.
 - Focus UI validation on movement and landed tile type for this milestone.
-
