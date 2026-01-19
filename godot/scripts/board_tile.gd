@@ -16,7 +16,7 @@ func _ready() -> void:
 	_apply_color()
 
 func _apply_color() -> void:
-	var material := StandardMaterial3D.new()
+	var material: StandardMaterial3D = StandardMaterial3D.new()
 	material.albedo_color = _tile_color
 	for mesh in find_children("*", "MeshInstance3D", true, false):
 		if mesh is MeshInstance3D:

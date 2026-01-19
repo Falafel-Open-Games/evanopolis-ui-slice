@@ -28,3 +28,8 @@ Done means:
 - Dice randomness: seed is derived from a `game_id` generated on boot.
 - `game_id` is editable on the boot screen to reproduce matches.
 - Focus UI validation on movement and landed tile type for this milestone.
+
+## GDScript Preferences
+
+- Avoid type inference syntax like `:=`. Use explicit types instead to prevent
+  Variant inference warnings treated as errors in the editor.
