@@ -17,10 +17,12 @@ signal dice_rolled(die_1: int, die_2: int, total: int)
 
 @onready var end_turn_button: Button = %EndTurnButton
 @onready var property_container: VBoxContainer = %PropertyContainer
+@onready var property_image: TextureRect = %Image
 @onready var movement_button: Button = %MovementButton
 @onready var dice_1_label: Label = %Dice1Label
 @onready var dice_2_label: Label = %Dice2Label
 @onready var tile_type_label: Label = %TileTypeLabel
+@onready var image: TextureRect = %Image
 
 # Called when the node enters the scene tree for the first time.
 func _ready() -> void:
@@ -81,8 +83,11 @@ func update_tile_info(tile_type: String, city: String, incident_kind: String) ->
 		return
 	if tile_type == "property" or tile_type == "special_property":
 		property_container.visible = true
+		_update_property_image(city)
 	else:
 		property_container.visible = false
+		if property_image != null:
+			property_image.texture = null
 
 func _update_tile_type_label(tile_type: String, city: String, incident_kind: String) -> void:
 	if tile_type_label == null:
@@ -108,3 +113,29 @@ func _update_tile_type_label(tile_type: String, city: String, incident_kind: Str
 		_:
 			label_text += "Unknown"
 	tile_type_label.text = label_text
+
+func _update_property_image(city: String) -> void:
+	if property_image == null:
+		return
+	var image_path: String = _get_city_image_path(city)
+	if image_path.is_empty():
+		property_image.texture = null
+		return
+	property_image.texture = load(image_path)
+
+func _get_city_image_path(city: String) -> String:
+	match city:
+		"Caracas":
+			return "res://textures/1-caracas-without-mining.png"
+		"Assuncion":
+			return "res://textures/2-assuncion-without-mining.png"
+		"Ciudad del Este":
+			return "res://textures/3-ciudad-del-este-without-mining.png"
+		"Minsk":
+			return "res://textures/4-minsk-without-mining.png"
+		"Irkutsk":
+			return "res://textures/5-irkutsk-without-mining.png"
+		"Rockdale":
+			return "res://textures/6-rockdale-without-mining.png"
+		_:
+			return ""

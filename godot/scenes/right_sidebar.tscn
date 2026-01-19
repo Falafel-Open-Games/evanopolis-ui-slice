@@ -107,6 +107,7 @@ layout_mode = 2
 theme_override_constants/separation = 10
 
 [node name="Image" type="TextureRect" parent="MarginContainer/Content/PropertyContainer"]
+unique_name_in_owner = true
 clip_contents = true
 layout_mode = 2
 texture = ExtResource("1_jxb3w")
