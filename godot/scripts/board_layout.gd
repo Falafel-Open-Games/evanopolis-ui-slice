@@ -22,12 +22,15 @@ func _ready() -> void:
 	_apply_colors()
 
 func _apply_colors() -> void:
+	var tiles_root: Node = get_node_or_null("../tiles")
+	if tiles_root == null:
+		return
 	var city_order: Array[String] = Palette.CITY_ORDER
 	var last_city: String = city_order[city_order.size() - 1]
 
 	for side_index in range(SIDE_STRIP_NAMES.size()):
 		var side_name: String = SIDE_STRIP_NAMES[side_index]
-		var side: Node = get_node_or_null("../tiles/" + side_name)
+		var side: Node = _get_side_node(tiles_root, side_name)
 		if side == null:
 			continue
 
@@ -62,7 +65,7 @@ func get_board_tiles() -> Array[Node3D]:
 		return tiles_list
 
 	# Start at SideStrip1 Tile3 and move counter-clockwise.
-	var strip1: Node = tiles_root.get_node_or_null(SIDE_STRIP_NAMES[0])
+	var strip1: Node = _get_side_node(tiles_root, SIDE_STRIP_NAMES[0])
 	if strip1 == null:
 		return tiles_list
 	for tile_name in ["Tile3", "Tile4"]:
@@ -71,7 +74,7 @@ func get_board_tiles() -> Array[Node3D]:
 			tiles_list.append(tile)
 
 	for index in range(1, SIDE_STRIP_NAMES.size()):
-		var strip: Node = tiles_root.get_node_or_null(SIDE_STRIP_NAMES[index])
+		var strip: Node = _get_side_node(tiles_root, SIDE_STRIP_NAMES[index])
 		if strip == null:
 			continue
 		for tile_name in STRIP_TILE_ORDER:
@@ -85,6 +88,14 @@ func get_board_tiles() -> Array[Node3D]:
 			tiles_list.append(tile)
 
 	return tiles_list
+
+func _get_side_node(tiles_root: Node, side_name: String) -> Node:
+	if tiles_root == null:
+		return null
+	var side: Node = tiles_root.get_node_or_null(side_name)
+	if side != null:
+		return side
+	return tiles_root.find_child(side_name, true, false)
 
 func get_tile_markers(tile_index: int) -> Array[Marker3D]:
 	var tiles: Array[Node3D] = get_board_tiles()
