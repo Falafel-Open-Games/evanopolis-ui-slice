@@ -15,12 +15,12 @@ run/main_scene="uid://cqmxik86m7jfl"
 config/features=PackedStringArray("4.5")
 config/icon="res://icon.svg"
 
+[autoload]
+
+Palette="*res://scripts/autoload/color_palette.gd"
+
 [display]
 
 window/size/viewport_width=1280
 window/size/viewport_height=720
 window/size/mode=2
-
-[autoload]
-
-Palette="*res://scripts/autoload/color_palette.gd"
