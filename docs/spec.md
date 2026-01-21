@@ -131,6 +131,7 @@ RendaFinal = RendaBase × bonusGlobal × bonusCidade
 - Cada turno tem um tempo limite configurável.
 - Opções atuais: 10s, 30s (padrão), 60s.
 - Quando o tempo acaba, o turno termina automaticamente (penalidade pendente).
+- O RNG do dado usa um `game_id` editável para reproduzir partidas.
 
 ### Passar pela SALIDA
 
