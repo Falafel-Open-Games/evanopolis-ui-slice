@@ -1,13 +1,16 @@
-[gd_scene load_steps=14 format=3 uid="uid://cqmxik86m7jfl"]
+[gd_scene load_steps=44 format=4 uid="uid://cqmxik86m7jfl"]
 
-[ext_resource type="PackedScene" uid="uid://bq8yu0tnywxwn" path="res://scenes/side_strip.tscn" id="2_s0k7h"]
+[ext_resource type="PackedScene" uid="uid://belar34400qbw" path="res://scenes/side_strip.tscn" id="2_s0k7h"]
 [ext_resource type="PackedScene" uid="uid://cf3ptmh3a1lsi" path="res://scenes/player_summary.tscn" id="2_yqjtg"]
 [ext_resource type="PackedScene" uid="uid://hsaj4hgpu7a6" path="res://scenes/pawn.tscn" id="3_lbhrr"]
 [ext_resource type="Script" uid="uid://csigfifodnx75" path="res://scripts/board_layout.gd" id="3_tfrx2"]
 [ext_resource type="Script" uid="uid://b4b2jj7a5a3fy" path="res://scripts/pawns_start.gd" id="4_3k9qj"]
 [ext_resource type="Script" uid="uid://e1pe74jhpbxc" path="res://scripts/game_controller.gd" id="5_77h6y"]
+[ext_resource type="PackedScene" uid="uid://75mr7nsx53p0" path="res://scenes/corner_tile.tscn" id="5_kvpfn"]
+[ext_resource type="Script" uid="uid://kkctmgrcsfau" path="res://scripts/board_tile.gd" id="6_dinhu"]
 [ext_resource type="PackedScene" uid="uid://ckbnfxtwa4po5" path="res://scenes/right_sidebar.tscn" id="6_p57ef"]
 [ext_resource type="Script" uid="uid://c6s7q4d0p7qrx" path="res://scripts/game_state.gd" id="7_h6e2v"]
+[ext_resource type="PackedScene" uid="uid://q6cux836c2th" path="res://scenes/tile.tscn" id="7_kvuet"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_8cj0n"]
 albedo_color = Color(0.05857501, 0.15, 0.0465, 1)
@@ -27,6 +30,89 @@ sky_material = SubResource("ProceduralSkyMaterial_8cj0n")
 background_mode = 2
 sky = SubResource("Sky_uwrxv")
 tonemap_mode = 2
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_kvpfn"]
+albedo_color = Color(1, 0.49803922, 0.3137255, 1)
+
+[sub_resource type="ArrayMesh" id="ArrayMesh_y8lo4"]
+_surfaces = [{
+"aabb": AABB(-0.08656675, -0.005, -0.06830127, 0.17313357, 0.01, 0.13660254),
+"attribute_data": PackedByteArray("AAAAAAAAgD+rqqo+AAAAP6uqqj4AAIA/q6oqPwAAgD8AAIA/AAAAP5OyTj8AAIA/AACAPwAAAD8Y+Fs/AAAAPwAAgD8AAAAAq6oqPwAAgD+rqio/AAAAP/Lkfz8AAAA/q6oqPwAAgD/y5H8/AAAAP/v2fz8AAAA/AACAPwAAAD+rqio/AACAP/v2fz8AAAA/AAAAAAAAAD+OdKo+AAAAAI50qj4AAAA/AAAAAAAAgD8AAAAAAAAAP6uqqj4AAAA/AACAPwAAAAAY+Fs/AAAAPxj4Wz8AAAAAq6oqPwAAgD/DogY/AACAP6uqKj8AAAA/q6oqPwAAAD/DogY/AACAP6uqqj4AAIA/AAAAAAAAAD8AAAAAAAAAAI50qj4AAAAAq6oqPwAAAD+rqqo+AACAP8jgqj4AAAA/k7JOPwAAgD8AAIA/bhcAPwAAgD8AAIA/k7JOPwAAgD8AAIA/AAAAPwAAgD9uFwA/q6qqPgAAAD+hmKo+AAAAP6uqqj4AAAAAq6qqPgAAAD/pyao+AAAAAOnJqj4AAAA/q6qqPgAAAAChmKo+AAAAP6GYqj4AAAAAq6qqPgAAAD+rqqo+AAAAAOnJqj4AAAAAyOCqPgAAAD+rqqo+AACAP7W8qj4AAAA/tbyqPgAAAD+rqqo+AACAP6uqqj5uFwA/tbyqPgAAAD+rqqo+bhcAP6uqqj4AAAA/q6oqPwAAAD+wsyo/AAAAP6uqKj9uFwA/q6qqPgAAgD9ti6o+AACAP22Lqj4AAAA/AAAAAAAAAD8AAAAAAAAAAMxMEDkAAAA/q6qqPgAAgD9ti6o+AAAAP6uqqj4AAAA/AAAAAAAAAADMTBA5AAAAAMxMEDkAAAA/q6oqPwAAAD+rqio/bhcAP6ahKj8AAAA/AACAPwAAgD8Y+Fs/AACAP8+edD9J9D8/q6oqPwAAAD+rqio/AAAAAJOyTj8AAAA/AACAPwAAgD/PnnQ/SfQ/PwAAgD8AAAA/q6oqPwAAAD+rqqo+AAAAP6uqKj8AAAAAq6qqPgAAAD8yc9g5AAAAPzJz2DkAAAAAAACAPwAAAD/PnnQ/SfQ/P7nFKj8AAAA/q6oqPwAAAACTsk4/AAAAAJOyTj8AAAA/q6qqPgAAgD8NbcE+SfQ/P3u68j4AAIA/q6qqPgAAAD+rqqo+AAAAAKuqKj8AAAAAq6qqPgAAgD+rqqo+AAAAPw1twT5J9D8/q6qqPgAAAD8yc9g5AAAAAKuqqj4AAAAAq6qqPgAAAD+djyo/AAAAPw1twT5J9D8/"),
+"format": 34359738391,
+"primitive": 3,
+"uv_scale": Vector4(0, 0, 0, 0),
+"vertex_count": 120,
+"vertex_data": PackedByteArray("BscVvQrXo7uJ4Yu96UmxvQrXozuL7JU86UmxvQrXo7uL7JU8BscVvQrXo7uJ4Yu9ABYWOArXo7uJ4Ys9AAAAMwrXo7uzSUG9BscVvQrXo7uJ4Yu9AAAAMwrXo7uzSUG9BscVvQrXozuJ4Yu9BscVvQrXo7uJ4Yu96UmxvQrXo7uL7JU8AOaVuArXo7sRwYs9BscVvQrXo7uJ4Yu9AOaVuArXo7sRwYs9AAAAMwrXo7u21os9ABYWOArXo7uJ4Ys9BscVvQrXo7uJ4Yu9AAAAMwrXo7u21os96UmxvQrXo7uL7JU8AOaVuArXozsRwYs9AOaVuArXo7sRwYs9BscVvQrXo7uJ4Yu9BscVvQrXozuJ4Yu96UmxvQrXozuL7JU8BscVvQrXozuJ4Yu9AAAAMwrXo7uzSUG9AAAAMwrXozuzSUG9BscVvQrXozuJ4Yu9AAAAMwrXozuzSUG96UmxvQrXozuL7JU86UmxvQrXozuL7JU8AAAAMwrXozuzSUG9UvJMPQrXozuL7JW86UmxvQrXo7uL7JU86UmxvQrXozuL7JU8AOaVuArXozsRwYs96UmxvQrXozuL7JU8UvJMPQrXozuL7JW8AOaVuArXozsRwYs9AAAAMwrXo7uzSUG9AAaWOArXo7sRwYs9UvJMPQrXo7uL7JW8AAAAMwrXo7uzSUG9ABYWOArXo7uJ4Ys9AAaWOArXo7sRwYs9ABYWOArXo7uJ4Ys9AAAAMwrXo7u21os9ABYWOArXozuJ4Ys9ABYWOArXo7uJ4Ys9AAaWOArXozsRwYs9AAaWOArXo7sRwYs9ABYWOArXozuJ4Ys9AAAAMwrXo7u21os9AAAAMwrXozu21os9ABYWOArXo7uJ4Ys9ABYWOArXozuJ4Ys9AAaWOArXozsRwYs9AOaVuArXozsRwYs9UvJMPQrXozuL7JW8AAAAMwrXozu21os9AAAAMwrXozu21os9UvJMPQrXozuL7JW8AAaWOArXozsRwYs9AAAAMwrXozu21os9AAaWOArXozsRwYs9ABYWOArXozuJ4Ys9ANYVuArXo7uJ4Ys9AAAAMwrXo7u21os9AOaVuArXo7sRwYs9ANYVuArXo7uJ4Ys9AOaVuArXo7sRwYs9AOaVuArXozsRwYs9ANYVuArXo7uJ4Ys9ANYVuArXozuJ4Ys9AAAAMwrXo7u21os9ANYVuArXo7uJ4Ys9AOaVuArXozsRwYs9ANYVuArXozuJ4Ys9ANYVuArXozuJ4Ys9AAAAMwrXozu21os9AAAAMwrXo7u21os9ANYVuArXozuJ4Ys9AOaVuArXozsRwYs9AAAAMwrXozu21os9FscVPQrXo7uJ4Yu9AAAAMwrXo7uzSUG9UvJMPQrXo7uL7JW8FscVPQrXo7uJ4Yu9FscVPQrXozuJ4Yu9AAAAMwrXo7uzSUG9FscVPQrXo7uJ4Yu9UvJMPQrXo7uL7JW88UmxPQrXo7uL7JU8FscVPQrXo7uJ4Yu98UmxPQrXo7uL7JU8FscVPQrXozuJ4Yu98UmxPQrXo7uL7JU8AAaWOArXo7sRwYs9AAaWOArXozsRwYs98UmxPQrXo7uL7JU8UvJMPQrXo7uL7JW8AAaWOArXo7sRwYs9FscVPQrXozuJ4Yu9AAAAMwrXozuzSUG9AAAAMwrXo7uzSUG9FscVPQrXozuJ4Yu9UvJMPQrXozuL7JW8AAAAMwrXozuzSUG98UmxPQrXo7uL7JU88UmxPQrXozuL7JU8FscVPQrXozuJ4Yu9FscVPQrXozuJ4Yu98UmxPQrXozuL7JU8UvJMPQrXozuL7JW88UmxPQrXo7uL7JU8AAaWOArXozsRwYs98UmxPQrXozuL7JU88UmxPQrXozuL7JU8AAaWOArXozsRwYs9UvJMPQrXozuL7JW8AADZriVR/78AANmuJVH/vwAA2a4lUf+//38AACXR/7//fwAAJtH/v/9/AAAl0f+///8l0QAAbNf//yXRAABs1///JdEAAGzX/38AACXR/7//fwAAJdH/v/9/AAAk0f+//38AACXR/7//fwAAJNH/v/9/AAAk0f+//38AACbR/7//fwAAJdH/v/9/AAAk0f+/JVH/fyXR/78lUf9/JdH/vyVR/38l0f+/AADZriVR/78AANmuJVH/vwAA2a4lUf+///8l0QAAbNf//yXRAABs1///JdEAAGzX/3///wAAbNf/f///AABs1/9///8AAGzX/3///wAAbNf/f///AABs1/9///8AAGzXJVH/fyXR/78lUf9/JdH/vyVR/38l0f+//3///wAAbNf/f///AABs1/9///8AAGzX/38AACXR/7//fwAAKNH/v/9/AAAl0f+//38AACXR/7//fwAAJtH/v/9/AAAo0f+/JFH/fyTR/78kUf9/JNH/vyRR/38k0f+/JdH/f///kugl0f9///+S6CXR/3///5LoJFH/fyTR/78kUf9/JNH/vyRR/38k0f+/JdH/f///kugl0f9///+S6CXR/3///5Lo/3///wAAbNf/f///AABs1/9///8AAGzX/3///wAAbNf/f///AABs1/9///8AAGvX/3///wAAbNf/f///AABr1/9///8AAGzX/38AAP//bNf/fwAA//9s1/9/AAD//2zX2S7/f9iu/7/ZLv9/2K7/v9ku/3/Yrv+/2q7/f///bNfarv9///9s19qu/3///2zX2S7/f9iu/7/ZLv9/2K7/v9ku/3/Yrv+/2q7/f///bNfarv9///9s19qu/3///2zX/3///9ou/7//f///2i7/v/9////aLv+//38AAP//bNf/fwAA//9s1/9/AAD//2zXAAAl0dku/78AACXR2S7/vwAAJdHZLv+//38AAP//bNf/fwAA//9s1/9/AAD//2zX///ZrgAAkuj//9muAACS6P//2a4AAJLo2a7/f///bNfZrv9///9s19mu/3///2zX/38AAP//bNf/fwAA//9s1/9/AAD//2zXAAAl0dku/78AACXR2S7/vwAAJdHZLv+//3///9ku/7//f///2S7/v/9////ZLv+////ZrgAAkuj//9muAACS6P//2a4AAJLo/3///9ku/7//f///2S7/v/9////ZLv+/2a7/f///bNfZrv9///9s19mu/3///2zX/3///9ku/7//f///2S7/v/9////ZLv+/")
+}]
+
+[sub_resource type="BoxMesh" id="BoxMesh_wnpk2"]
+size = Vector3(0.1, 0.01, 0.1)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_dinhu"]
+
+[sub_resource type="BoxMesh" id="BoxMesh_uiyn6"]
+size = Vector3(0.1, 0.01, 0.1)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_kvuet"]
+albedo_color = Color(0.16862746, 0.16862746, 0.16862746, 1)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_trtic"]
+albedo_color = Color(0.16862746, 0.16862746, 0.16862746, 1)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_ir15t"]
+albedo_color = Color(1, 0.64705884, 0, 1)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_ca42v"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_rysoc"]
+albedo_color = Color(0.2509804, 0.2509804, 0.2509804, 1)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_ssvqc"]
+albedo_color = Color(0.2509804, 0.2509804, 0.2509804, 1)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_264po"]
+albedo_color = Color(1, 0.64705884, 0, 1)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_1kice"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_5newe"]
+albedo_color = Color(0.34901962, 0.34901962, 0.34901962, 1)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_37s47"]
+albedo_color = Color(0.34901962, 0.34901962, 0.34901962, 1)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_bt5mj"]
+albedo_color = Color(0.4117647, 0.4117647, 0.4117647, 1)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_e1j6l"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_pl11u"]
+albedo_color = Color(0.4509804, 0.4509804, 0.4509804, 1)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_bhx41"]
+albedo_color = Color(0.4509804, 0.4509804, 0.4509804, 1)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_qnb83"]
+albedo_color = Color(1, 0.64705884, 0, 1)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_sww3w"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_suyxu"]
+albedo_color = Color(0.56078434, 0.56078434, 0.56078434, 1)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_sgl2t"]
+albedo_color = Color(0.56078434, 0.56078434, 0.56078434, 1)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_qouja"]
+albedo_color = Color(1, 0.64705884, 0, 1)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_wljb1"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_v2yb1"]
+albedo_color = Color(0.6784314, 0.6784314, 0.6784314, 1)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_js0lu"]
+albedo_color = Color(0.6784314, 0.6784314, 0.6784314, 1)
 
 [node name="Game" type="Node3D"]
 
@@ -54,32 +140,859 @@ shadow_enabled = true
 
 [node name="Camera3D" type="Camera3D" parent="Environment"]
 transform = Transform3D(1, 0, 0, 0, 0.84463644, 0.5353404, 0, -0.5353404, 0.84463644, 0, 0.4244808, 0.7434412)
-fov = 43.9
+fov = 53.9
 
 [node name="tiles" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.14096236, 0, 0.25193307)
+transform = Transform3D(0.8660254, 0, 0.5, 0, 1, 0, -0.5, 0, 0.8660254, 0, 0, 0.33)
 
-[node name="SideStrip1" parent="tiles" instance=ExtResource("2_s0k7h")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.0020422935, 0, 0.003063351)
+[node name="SideStrip1" type="Node3D" parent="tiles" instance=ExtResource("2_s0k7h")]
 
-[node name="SideStrip2" parent="tiles" instance=ExtResource("2_s0k7h")]
-transform = Transform3D(0.49999997, 0, 0.86602545, 0, 1, 0, -0.86602545, 0, 0.49999997, 0.19371998, 0, 0.00096845627)
+[node name="CornerTile" type="Node3D" parent="tiles/SideStrip1" instance=ExtResource("5_kvpfn")]
+transform = Transform3D(0.8660254, 0, -0.5, 0, 1, 0, 0.5, 0, 0.8660254, 0, 0, 0)
+script = ExtResource("6_dinhu")
+tile_color = Color(1, 0.49803922, 0.3137255, 1)
 
-[node name="SideStrip3" parent="tiles" instance=ExtResource("2_s0k7h")]
-transform = Transform3D(-0.50000006, 0, 0.8660254, 0, 1, 0, -0.8660254, 0, -0.50000006, 0.28882664, 0, -0.1696936)
+[node name="CSGBakedMeshInstance3D" type="MeshInstance3D" parent="tiles/SideStrip1/CornerTile"]
+transform = Transform3D(0.4, 0, 0, 0, 0.4, 0, 0, 0, 0.4, 0, 0.002, -0.004)
+material_override = SubResource("StandardMaterial3D_kvpfn")
+mesh = SubResource("ArrayMesh_y8lo4")
 
-[node name="SideStrip4" parent="tiles" instance=ExtResource("2_s0k7h")]
-transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 0.18880007, 0, -0.3374564)
+[node name="PawnMarkers" type="Node3D" parent="tiles/SideStrip1/CornerTile"]
 
-[node name="SideStrip5" parent="tiles" instance=ExtResource("2_s0k7h")]
-transform = Transform3D(-0.50000006, 0, -0.8660254, 0, 1, 0, 0.8660254, 0, -0.50000006, -0.0050759763, 0, -0.33558646)
+[node name="Marker1" type="Marker3D" parent="tiles/SideStrip1/CornerTile/PawnMarkers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.039)
 
-[node name="SideStrip6" parent="tiles" instance=ExtResource("2_s0k7h")]
-transform = Transform3D(0.49999997, 0, -0.86602545, 0, 1, 0, 0.86602545, 0, 0.49999997, -0.10168193, 0, -0.16519612)
+[node name="Marker2" type="Marker3D" parent="tiles/SideStrip1/CornerTile/PawnMarkers"]
+transform = Transform3D(0.49999997, 0, -0.86602545, 0, 1, 0, 0.86602545, 0, 0.49999997, 0.013, 0, 0.031)
+
+[node name="Marker3" type="Marker3D" parent="tiles/SideStrip1/CornerTile/PawnMarkers"]
+transform = Transform3D(0.49999997, 0, 0.86602545, 0, 1, 0, -0.86602545, 0, 0.49999997, -0.013314066, 0, 0.03142811)
+
+[node name="Marker4" type="Marker3D" parent="tiles/SideStrip1/CornerTile/PawnMarkers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.056709815)
+
+[node name="Marker5b" type="Marker3D" parent="tiles/SideStrip1/CornerTile/PawnMarkers"]
+transform = Transform3D(0.49999997, 0, -0.86602545, 0, 1, 0, 0.86602545, 0, 0.49999997, 0.013, 0, 0.048)
+
+[node name="Marker6b" type="Marker3D" parent="tiles/SideStrip1/CornerTile/PawnMarkers"]
+transform = Transform3D(0.49999997, 0, 0.86602545, 0, 1, 0, -0.86602545, 0, 0.49999997, -0.013002703, 0, 0.048442956)
+
+[node name="Marker5" type="Marker3D" parent="tiles/SideStrip1/CornerTile/PawnMarkers"]
+transform = Transform3D(0.49999997, 0, -0.86602545, 0, 1, 0, 0.86602545, 0, 0.49999997, 0.021, 0, 0.044)
+visible = false
+
+[node name="Marker6" type="Marker3D" parent="tiles/SideStrip1/CornerTile/PawnMarkers"]
+transform = Transform3D(0.49999997, 0, 0.86602545, 0, 1, 0, -0.86602545, 0, 0.49999997, -0.021, 0, 0.044)
+visible = false
+
+[node name="CSGCombiner3D" type="CSGCombiner3D" parent="tiles/SideStrip1/CornerTile"]
+visible = false
+
+[node name="CSGMesh3D2" type="CSGMesh3D" parent="tiles/SideStrip1/CornerTile/CSGCombiner3D"]
+transform = Transform3D(0.8660254, 0, -0.5, 0, 1, 0, 0.5, 0, 0.8660254, -0.018265486, 0, 0)
+mesh = SubResource("BoxMesh_wnpk2")
+
+[node name="CSGMesh3D" type="CSGMesh3D" parent="tiles/SideStrip1/CornerTile/CSGCombiner3D"]
+transform = Transform3D(0.8660254, 0, 0.5, 0, 1, 0, -0.5, 0, 0.8660254, 0.018265545, 0, 0)
+mesh = SubResource("BoxMesh_wnpk2")
+
+[node name="Tile2" type="Node3D" parent="tiles/SideStrip1" instance=ExtResource("7_kvuet")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.053479988, 0, 0)
+script = ExtResource("6_dinhu")
+
+[node name="Mesh" type="MeshInstance3D" parent="tiles/SideStrip1/Tile2"]
+transform = Transform3D(0.4, 0, 0, 0, 0.4, 0, 0, 0, 0.4, 0, 0.002, 0)
+material_override = SubResource("StandardMaterial3D_dinhu")
+mesh = SubResource("BoxMesh_uiyn6")
+
+[node name="PawnMarkers" type="Node3D" parent="tiles/SideStrip1/Tile2"]
+
+[node name="Marker1" type="Marker3D" parent="tiles/SideStrip1/Tile2/PawnMarkers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.03)
+
+[node name="Marker2" type="Marker3D" parent="tiles/SideStrip1/Tile2/PawnMarkers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.015, 0, 0.03)
+
+[node name="Marker3" type="Marker3D" parent="tiles/SideStrip1/Tile2/PawnMarkers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.015, 0, 0.03)
+
+[node name="Marker4" type="Marker3D" parent="tiles/SideStrip1/Tile2/PawnMarkers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.045)
+
+[node name="Marker5" type="Marker3D" parent="tiles/SideStrip1/Tile2/PawnMarkers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.015, 0, 0.045)
+
+[node name="Marker6" type="Marker3D" parent="tiles/SideStrip1/Tile2/PawnMarkers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.015, 0, 0.045)
+
+[node name="Tile3" type="Node3D" parent="tiles/SideStrip1" instance=ExtResource("7_kvuet")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.098479986, 0, 0)
+script = ExtResource("6_dinhu")
+tile_color = Color(0.16862746, 0.16862746, 0.16862746, 1)
+
+[node name="Mesh" type="MeshInstance3D" parent="tiles/SideStrip1/Tile3"]
+transform = Transform3D(0.4, 0, 0, 0, 0.4, 0, 0, 0, 0.4, 0, 0.002, 0)
+material_override = SubResource("StandardMaterial3D_kvuet")
+mesh = SubResource("BoxMesh_uiyn6")
+
+[node name="PawnMarkers" type="Node3D" parent="tiles/SideStrip1/Tile3"]
+
+[node name="Marker1" type="Marker3D" parent="tiles/SideStrip1/Tile3/PawnMarkers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.03)
+
+[node name="Marker2" type="Marker3D" parent="tiles/SideStrip1/Tile3/PawnMarkers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.015, 0, 0.03)
+
+[node name="Marker3" type="Marker3D" parent="tiles/SideStrip1/Tile3/PawnMarkers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.015, 0, 0.03)
+
+[node name="Marker4" type="Marker3D" parent="tiles/SideStrip1/Tile3/PawnMarkers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.045)
+
+[node name="Marker5" type="Marker3D" parent="tiles/SideStrip1/Tile3/PawnMarkers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.015, 0, 0.045)
+
+[node name="Marker6" type="Marker3D" parent="tiles/SideStrip1/Tile3/PawnMarkers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.015, 0, 0.045)
+
+[node name="Tile4" type="Node3D" parent="tiles/SideStrip1" instance=ExtResource("7_kvuet")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.1435475, 0, 0)
+script = ExtResource("6_dinhu")
+tile_color = Color(0.16862746, 0.16862746, 0.16862746, 1)
+
+[node name="Mesh" type="MeshInstance3D" parent="tiles/SideStrip1/Tile4"]
+transform = Transform3D(0.4, 0, 0, 0, 0.4, 0, 0, 0, 0.4, 0, 0.002, 0)
+material_override = SubResource("StandardMaterial3D_trtic")
+mesh = SubResource("BoxMesh_uiyn6")
+
+[node name="PawnMarkers" type="Node3D" parent="tiles/SideStrip1/Tile4"]
+
+[node name="Marker1" type="Marker3D" parent="tiles/SideStrip1/Tile4/PawnMarkers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.03)
+
+[node name="Marker2" type="Marker3D" parent="tiles/SideStrip1/Tile4/PawnMarkers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.015, 0, 0.03)
+
+[node name="Marker3" type="Marker3D" parent="tiles/SideStrip1/Tile4/PawnMarkers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.015, 0, 0.03)
+
+[node name="Marker4" type="Marker3D" parent="tiles/SideStrip1/Tile4/PawnMarkers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.045)
+
+[node name="Marker5" type="Marker3D" parent="tiles/SideStrip1/Tile4/PawnMarkers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.015, 0, 0.045)
+
+[node name="Marker6" type="Marker3D" parent="tiles/SideStrip1/Tile4/PawnMarkers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.015, 0, 0.045)
+
+[node name="SideStrip2" type="Node3D" parent="tiles/SideStrip1" instance=ExtResource("2_s0k7h")]
+transform = Transform3D(0.49999997, 0, 0.86602545, 0, 1, 0, -0.86602545, 0, 0.49999997, 0.195, 0, 0)
+
+[node name="CornerTile" type="Node3D" parent="tiles/SideStrip1/SideStrip2" instance=ExtResource("5_kvpfn")]
+transform = Transform3D(0.8660254, 0, -0.5, 0, 1, 0, 0.5, 0, 0.8660254, 0, 0, 0)
+script = ExtResource("6_dinhu")
+tile_color = Color(1, 0.64705884, 0, 1)
+
+[node name="CSGBakedMeshInstance3D" type="MeshInstance3D" parent="tiles/SideStrip1/SideStrip2/CornerTile"]
+transform = Transform3D(0.4, 0, 0, 0, 0.4, 0, 0, 0, 0.4, 0, 0.002, -0.004)
+material_override = SubResource("StandardMaterial3D_ir15t")
+mesh = SubResource("ArrayMesh_y8lo4")
+
+[node name="PawnMarkers" type="Node3D" parent="tiles/SideStrip1/SideStrip2/CornerTile"]
+
+[node name="Marker1" type="Marker3D" parent="tiles/SideStrip1/SideStrip2/CornerTile/PawnMarkers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.039)
+
+[node name="Marker2" type="Marker3D" parent="tiles/SideStrip1/SideStrip2/CornerTile/PawnMarkers"]
+transform = Transform3D(0.49999997, 0, -0.86602545, 0, 1, 0, 0.86602545, 0, 0.49999997, 0.013, 0, 0.031)
+
+[node name="Marker3" type="Marker3D" parent="tiles/SideStrip1/SideStrip2/CornerTile/PawnMarkers"]
+transform = Transform3D(0.49999997, 0, 0.86602545, 0, 1, 0, -0.86602545, 0, 0.49999997, -0.013314066, 0, 0.03142811)
+
+[node name="Marker4" type="Marker3D" parent="tiles/SideStrip1/SideStrip2/CornerTile/PawnMarkers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.056709815)
+
+[node name="Marker5b" type="Marker3D" parent="tiles/SideStrip1/SideStrip2/CornerTile/PawnMarkers"]
+transform = Transform3D(0.49999997, 0, -0.86602545, 0, 1, 0, 0.86602545, 0, 0.49999997, 0.013, 0, 0.048)
+
+[node name="Marker6b" type="Marker3D" parent="tiles/SideStrip1/SideStrip2/CornerTile/PawnMarkers"]
+transform = Transform3D(0.49999997, 0, 0.86602545, 0, 1, 0, -0.86602545, 0, 0.49999997, -0.013002703, 0, 0.048442956)
+
+[node name="Marker5" type="Marker3D" parent="tiles/SideStrip1/SideStrip2/CornerTile/PawnMarkers"]
+transform = Transform3D(0.49999997, 0, -0.86602545, 0, 1, 0, 0.86602545, 0, 0.49999997, 0.021, 0, 0.044)
+visible = false
+
+[node name="Marker6" type="Marker3D" parent="tiles/SideStrip1/SideStrip2/CornerTile/PawnMarkers"]
+transform = Transform3D(0.49999997, 0, 0.86602545, 0, 1, 0, -0.86602545, 0, 0.49999997, -0.021, 0, 0.044)
+visible = false
+
+[node name="CSGCombiner3D" type="CSGCombiner3D" parent="tiles/SideStrip1/SideStrip2/CornerTile"]
+visible = false
+
+[node name="CSGMesh3D2" type="CSGMesh3D" parent="tiles/SideStrip1/SideStrip2/CornerTile/CSGCombiner3D"]
+transform = Transform3D(0.8660254, 0, -0.5, 0, 1, 0, 0.5, 0, 0.8660254, -0.018265486, 0, 0)
+mesh = SubResource("BoxMesh_wnpk2")
+
+[node name="CSGMesh3D" type="CSGMesh3D" parent="tiles/SideStrip1/SideStrip2/CornerTile/CSGCombiner3D"]
+transform = Transform3D(0.8660254, 0, 0.5, 0, 1, 0, -0.5, 0, 0.8660254, 0.018265545, 0, 0)
+mesh = SubResource("BoxMesh_wnpk2")
+
+[node name="Tile2" type="Node3D" parent="tiles/SideStrip1/SideStrip2" instance=ExtResource("7_kvuet")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.053479988, 0, 0)
+script = ExtResource("6_dinhu")
+
+[node name="Mesh" type="MeshInstance3D" parent="tiles/SideStrip1/SideStrip2/Tile2"]
+transform = Transform3D(0.4, 0, 0, 0, 0.4, 0, 0, 0, 0.4, 0, 0.002, 0)
+material_override = SubResource("StandardMaterial3D_ca42v")
+mesh = SubResource("BoxMesh_uiyn6")
+
+[node name="PawnMarkers" type="Node3D" parent="tiles/SideStrip1/SideStrip2/Tile2"]
+
+[node name="Marker1" type="Marker3D" parent="tiles/SideStrip1/SideStrip2/Tile2/PawnMarkers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.03)
+
+[node name="Marker2" type="Marker3D" parent="tiles/SideStrip1/SideStrip2/Tile2/PawnMarkers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.015, 0, 0.03)
+
+[node name="Marker3" type="Marker3D" parent="tiles/SideStrip1/SideStrip2/Tile2/PawnMarkers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.015, 0, 0.03)
+
+[node name="Marker4" type="Marker3D" parent="tiles/SideStrip1/SideStrip2/Tile2/PawnMarkers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.045)
+
+[node name="Marker5" type="Marker3D" parent="tiles/SideStrip1/SideStrip2/Tile2/PawnMarkers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.015, 0, 0.045)
+
+[node name="Marker6" type="Marker3D" parent="tiles/SideStrip1/SideStrip2/Tile2/PawnMarkers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.015, 0, 0.045)
+
+[node name="Tile3" type="Node3D" parent="tiles/SideStrip1/SideStrip2" instance=ExtResource("7_kvuet")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.098479986, 0, 0)
+script = ExtResource("6_dinhu")
+tile_color = Color(0.2509804, 0.2509804, 0.2509804, 1)
+
+[node name="Mesh" type="MeshInstance3D" parent="tiles/SideStrip1/SideStrip2/Tile3"]
+transform = Transform3D(0.4, 0, 0, 0, 0.4, 0, 0, 0, 0.4, 0, 0.002, 0)
+material_override = SubResource("StandardMaterial3D_rysoc")
+mesh = SubResource("BoxMesh_uiyn6")
+
+[node name="PawnMarkers" type="Node3D" parent="tiles/SideStrip1/SideStrip2/Tile3"]
+
+[node name="Marker1" type="Marker3D" parent="tiles/SideStrip1/SideStrip2/Tile3/PawnMarkers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.03)
+
+[node name="Marker2" type="Marker3D" parent="tiles/SideStrip1/SideStrip2/Tile3/PawnMarkers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.015, 0, 0.03)
+
+[node name="Marker3" type="Marker3D" parent="tiles/SideStrip1/SideStrip2/Tile3/PawnMarkers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.015, 0, 0.03)
+
+[node name="Marker4" type="Marker3D" parent="tiles/SideStrip1/SideStrip2/Tile3/PawnMarkers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.045)
+
+[node name="Marker5" type="Marker3D" parent="tiles/SideStrip1/SideStrip2/Tile3/PawnMarkers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.015, 0, 0.045)
+
+[node name="Marker6" type="Marker3D" parent="tiles/SideStrip1/SideStrip2/Tile3/PawnMarkers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.015, 0, 0.045)
+
+[node name="Tile4" type="Node3D" parent="tiles/SideStrip1/SideStrip2" instance=ExtResource("7_kvuet")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.1435475, 0, 0)
+script = ExtResource("6_dinhu")
+tile_color = Color(0.2509804, 0.2509804, 0.2509804, 1)
+
+[node name="Mesh" type="MeshInstance3D" parent="tiles/SideStrip1/SideStrip2/Tile4"]
+transform = Transform3D(0.4, 0, 0, 0, 0.4, 0, 0, 0, 0.4, 0, 0.002, 0)
+material_override = SubResource("StandardMaterial3D_ssvqc")
+mesh = SubResource("BoxMesh_uiyn6")
+
+[node name="PawnMarkers" type="Node3D" parent="tiles/SideStrip1/SideStrip2/Tile4"]
+
+[node name="Marker1" type="Marker3D" parent="tiles/SideStrip1/SideStrip2/Tile4/PawnMarkers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.03)
+
+[node name="Marker2" type="Marker3D" parent="tiles/SideStrip1/SideStrip2/Tile4/PawnMarkers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.015, 0, 0.03)
+
+[node name="Marker3" type="Marker3D" parent="tiles/SideStrip1/SideStrip2/Tile4/PawnMarkers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.015, 0, 0.03)
+
+[node name="Marker4" type="Marker3D" parent="tiles/SideStrip1/SideStrip2/Tile4/PawnMarkers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.045)
+
+[node name="Marker5" type="Marker3D" parent="tiles/SideStrip1/SideStrip2/Tile4/PawnMarkers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.015, 0, 0.045)
+
+[node name="Marker6" type="Marker3D" parent="tiles/SideStrip1/SideStrip2/Tile4/PawnMarkers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.015, 0, 0.045)
+
+[node name="SideStrip3" type="Node3D" parent="tiles/SideStrip1/SideStrip2" instance=ExtResource("2_s0k7h")]
+transform = Transform3D(0.49999997, 0, 0.86602545, 0, 1, 0, -0.86602545, 0, 0.49999997, 0.195, 0, 0)
+
+[node name="CornerTile" type="Node3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3" instance=ExtResource("5_kvpfn")]
+transform = Transform3D(0.8660254, 0, -0.5, 0, 1, 0, 0.5, 0, 0.8660254, 0, 0, 0)
+script = ExtResource("6_dinhu")
+tile_color = Color(1, 0.64705884, 0, 1)
+
+[node name="CSGBakedMeshInstance3D" type="MeshInstance3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/CornerTile"]
+transform = Transform3D(0.4, 0, 0, 0, 0.4, 0, 0, 0, 0.4, 0, 0.002, -0.004)
+material_override = SubResource("StandardMaterial3D_264po")
+mesh = SubResource("ArrayMesh_y8lo4")
+
+[node name="PawnMarkers" type="Node3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/CornerTile"]
+
+[node name="Marker1" type="Marker3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/CornerTile/PawnMarkers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.039)
+
+[node name="Marker2" type="Marker3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/CornerTile/PawnMarkers"]
+transform = Transform3D(0.49999997, 0, -0.86602545, 0, 1, 0, 0.86602545, 0, 0.49999997, 0.013, 0, 0.031)
+
+[node name="Marker3" type="Marker3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/CornerTile/PawnMarkers"]
+transform = Transform3D(0.49999997, 0, 0.86602545, 0, 1, 0, -0.86602545, 0, 0.49999997, -0.013314066, 0, 0.03142811)
+
+[node name="Marker4" type="Marker3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/CornerTile/PawnMarkers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.056709815)
+
+[node name="Marker5b" type="Marker3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/CornerTile/PawnMarkers"]
+transform = Transform3D(0.49999997, 0, -0.86602545, 0, 1, 0, 0.86602545, 0, 0.49999997, 0.013, 0, 0.048)
+
+[node name="Marker6b" type="Marker3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/CornerTile/PawnMarkers"]
+transform = Transform3D(0.49999997, 0, 0.86602545, 0, 1, 0, -0.86602545, 0, 0.49999997, -0.013002703, 0, 0.048442956)
+
+[node name="Marker5" type="Marker3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/CornerTile/PawnMarkers"]
+transform = Transform3D(0.49999997, 0, -0.86602545, 0, 1, 0, 0.86602545, 0, 0.49999997, 0.021, 0, 0.044)
+visible = false
+
+[node name="Marker6" type="Marker3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/CornerTile/PawnMarkers"]
+transform = Transform3D(0.49999997, 0, 0.86602545, 0, 1, 0, -0.86602545, 0, 0.49999997, -0.021, 0, 0.044)
+visible = false
+
+[node name="CSGCombiner3D" type="CSGCombiner3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/CornerTile"]
+visible = false
+
+[node name="CSGMesh3D2" type="CSGMesh3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/CornerTile/CSGCombiner3D"]
+transform = Transform3D(0.8660254, 0, -0.5, 0, 1, 0, 0.5, 0, 0.8660254, -0.018265486, 0, 0)
+mesh = SubResource("BoxMesh_wnpk2")
+
+[node name="CSGMesh3D" type="CSGMesh3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/CornerTile/CSGCombiner3D"]
+transform = Transform3D(0.8660254, 0, 0.5, 0, 1, 0, -0.5, 0, 0.8660254, 0.018265545, 0, 0)
+mesh = SubResource("BoxMesh_wnpk2")
+
+[node name="Tile2" type="Node3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3" instance=ExtResource("7_kvuet")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.053479988, 0, 0)
+script = ExtResource("6_dinhu")
+
+[node name="Mesh" type="MeshInstance3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/Tile2"]
+transform = Transform3D(0.4, 0, 0, 0, 0.4, 0, 0, 0, 0.4, 0, 0.002, 0)
+material_override = SubResource("StandardMaterial3D_1kice")
+mesh = SubResource("BoxMesh_uiyn6")
+
+[node name="PawnMarkers" type="Node3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/Tile2"]
+
+[node name="Marker1" type="Marker3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/Tile2/PawnMarkers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.03)
+
+[node name="Marker2" type="Marker3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/Tile2/PawnMarkers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.015, 0, 0.03)
+
+[node name="Marker3" type="Marker3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/Tile2/PawnMarkers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.015, 0, 0.03)
+
+[node name="Marker4" type="Marker3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/Tile2/PawnMarkers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.045)
+
+[node name="Marker5" type="Marker3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/Tile2/PawnMarkers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.015, 0, 0.045)
+
+[node name="Marker6" type="Marker3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/Tile2/PawnMarkers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.015, 0, 0.045)
+
+[node name="Tile3" type="Node3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3" instance=ExtResource("7_kvuet")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.098479986, 0, 0)
+script = ExtResource("6_dinhu")
+tile_color = Color(0.34901962, 0.34901962, 0.34901962, 1)
+
+[node name="Mesh" type="MeshInstance3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/Tile3"]
+transform = Transform3D(0.4, 0, 0, 0, 0.4, 0, 0, 0, 0.4, 0, 0.002, 0)
+material_override = SubResource("StandardMaterial3D_5newe")
+mesh = SubResource("BoxMesh_uiyn6")
+
+[node name="PawnMarkers" type="Node3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/Tile3"]
+
+[node name="Marker1" type="Marker3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/Tile3/PawnMarkers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.03)
+
+[node name="Marker2" type="Marker3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/Tile3/PawnMarkers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.015, 0, 0.03)
+
+[node name="Marker3" type="Marker3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/Tile3/PawnMarkers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.015, 0, 0.03)
+
+[node name="Marker4" type="Marker3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/Tile3/PawnMarkers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.045)
+
+[node name="Marker5" type="Marker3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/Tile3/PawnMarkers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.015, 0, 0.045)
+
+[node name="Marker6" type="Marker3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/Tile3/PawnMarkers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.015, 0, 0.045)
+
+[node name="Tile4" type="Node3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3" instance=ExtResource("7_kvuet")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.1435475, 0, 0)
+script = ExtResource("6_dinhu")
+tile_color = Color(0.34901962, 0.34901962, 0.34901962, 1)
+
+[node name="Mesh" type="MeshInstance3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/Tile4"]
+transform = Transform3D(0.4, 0, 0, 0, 0.4, 0, 0, 0, 0.4, 0, 0.002, 0)
+material_override = SubResource("StandardMaterial3D_37s47")
+mesh = SubResource("BoxMesh_uiyn6")
+
+[node name="PawnMarkers" type="Node3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/Tile4"]
+
+[node name="Marker1" type="Marker3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/Tile4/PawnMarkers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.03)
+
+[node name="Marker2" type="Marker3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/Tile4/PawnMarkers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.015, 0, 0.03)
+
+[node name="Marker3" type="Marker3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/Tile4/PawnMarkers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.015, 0, 0.03)
+
+[node name="Marker4" type="Marker3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/Tile4/PawnMarkers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.045)
+
+[node name="Marker5" type="Marker3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/Tile4/PawnMarkers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.015, 0, 0.045)
+
+[node name="Marker6" type="Marker3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/Tile4/PawnMarkers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.015, 0, 0.045)
+
+[node name="SideStrip4" type="Node3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3" instance=ExtResource("2_s0k7h")]
+transform = Transform3D(0.49999997, 0, 0.86602545, 0, 1, 0, -0.86602545, 0, 0.49999997, 0.195, 0, 0)
+
+[node name="CornerTile" type="Node3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/SideStrip4" instance=ExtResource("5_kvpfn")]
+transform = Transform3D(0.8660254, 0, -0.5, 0, 1, 0, 0.5, 0, 0.8660254, 0, 0, 0)
+script = ExtResource("6_dinhu")
+tile_color = Color(0.4117647, 0.4117647, 0.4117647, 1)
+
+[node name="CSGBakedMeshInstance3D" type="MeshInstance3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/SideStrip4/CornerTile"]
+transform = Transform3D(0.4, 0, 0, 0, 0.4, 0, 0, 0, 0.4, 0, 0.002, -0.004)
+material_override = SubResource("StandardMaterial3D_bt5mj")
+mesh = SubResource("ArrayMesh_y8lo4")
+
+[node name="PawnMarkers" type="Node3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/SideStrip4/CornerTile"]
+
+[node name="Marker1" type="Marker3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/SideStrip4/CornerTile/PawnMarkers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.039)
+
+[node name="Marker2" type="Marker3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/SideStrip4/CornerTile/PawnMarkers"]
+transform = Transform3D(0.49999997, 0, -0.86602545, 0, 1, 0, 0.86602545, 0, 0.49999997, 0.013, 0, 0.031)
+
+[node name="Marker3" type="Marker3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/SideStrip4/CornerTile/PawnMarkers"]
+transform = Transform3D(0.49999997, 0, 0.86602545, 0, 1, 0, -0.86602545, 0, 0.49999997, -0.013314066, 0, 0.03142811)
+
+[node name="Marker4" type="Marker3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/SideStrip4/CornerTile/PawnMarkers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.056709815)
+
+[node name="Marker5b" type="Marker3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/SideStrip4/CornerTile/PawnMarkers"]
+transform = Transform3D(0.49999997, 0, -0.86602545, 0, 1, 0, 0.86602545, 0, 0.49999997, 0.013, 0, 0.048)
+
+[node name="Marker6b" type="Marker3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/SideStrip4/CornerTile/PawnMarkers"]
+transform = Transform3D(0.49999997, 0, 0.86602545, 0, 1, 0, -0.86602545, 0, 0.49999997, -0.013002703, 0, 0.048442956)
+
+[node name="Marker5" type="Marker3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/SideStrip4/CornerTile/PawnMarkers"]
+transform = Transform3D(0.49999997, 0, -0.86602545, 0, 1, 0, 0.86602545, 0, 0.49999997, 0.021, 0, 0.044)
+visible = false
+
+[node name="Marker6" type="Marker3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/SideStrip4/CornerTile/PawnMarkers"]
+transform = Transform3D(0.49999997, 0, 0.86602545, 0, 1, 0, -0.86602545, 0, 0.49999997, -0.021, 0, 0.044)
+visible = false
+
+[node name="CSGCombiner3D" type="CSGCombiner3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/SideStrip4/CornerTile"]
+visible = false
+
+[node name="CSGMesh3D2" type="CSGMesh3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/SideStrip4/CornerTile/CSGCombiner3D"]
+transform = Transform3D(0.8660254, 0, -0.5, 0, 1, 0, 0.5, 0, 0.8660254, -0.018265486, 0, 0)
+mesh = SubResource("BoxMesh_wnpk2")
+
+[node name="CSGMesh3D" type="CSGMesh3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/SideStrip4/CornerTile/CSGCombiner3D"]
+transform = Transform3D(0.8660254, 0, 0.5, 0, 1, 0, -0.5, 0, 0.8660254, 0.018265545, 0, 0)
+mesh = SubResource("BoxMesh_wnpk2")
+
+[node name="Tile2" type="Node3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/SideStrip4" instance=ExtResource("7_kvuet")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.053479988, 0, 0)
+script = ExtResource("6_dinhu")
+
+[node name="Mesh" type="MeshInstance3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/SideStrip4/Tile2"]
+transform = Transform3D(0.4, 0, 0, 0, 0.4, 0, 0, 0, 0.4, 0, 0.002, 0)
+material_override = SubResource("StandardMaterial3D_e1j6l")
+mesh = SubResource("BoxMesh_uiyn6")
+
+[node name="PawnMarkers" type="Node3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/SideStrip4/Tile2"]
+
+[node name="Marker1" type="Marker3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/SideStrip4/Tile2/PawnMarkers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.03)
+
+[node name="Marker2" type="Marker3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/SideStrip4/Tile2/PawnMarkers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.015, 0, 0.03)
+
+[node name="Marker3" type="Marker3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/SideStrip4/Tile2/PawnMarkers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.015, 0, 0.03)
+
+[node name="Marker4" type="Marker3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/SideStrip4/Tile2/PawnMarkers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.045)
+
+[node name="Marker5" type="Marker3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/SideStrip4/Tile2/PawnMarkers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.015, 0, 0.045)
+
+[node name="Marker6" type="Marker3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/SideStrip4/Tile2/PawnMarkers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.015, 0, 0.045)
+
+[node name="Tile3" type="Node3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/SideStrip4" instance=ExtResource("7_kvuet")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.098479986, 0, 0)
+script = ExtResource("6_dinhu")
+tile_color = Color(0.4509804, 0.4509804, 0.4509804, 1)
+
+[node name="Mesh" type="MeshInstance3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/SideStrip4/Tile3"]
+transform = Transform3D(0.4, 0, 0, 0, 0.4, 0, 0, 0, 0.4, 0, 0.002, 0)
+material_override = SubResource("StandardMaterial3D_pl11u")
+mesh = SubResource("BoxMesh_uiyn6")
+
+[node name="PawnMarkers" type="Node3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/SideStrip4/Tile3"]
+
+[node name="Marker1" type="Marker3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/SideStrip4/Tile3/PawnMarkers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.03)
+
+[node name="Marker2" type="Marker3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/SideStrip4/Tile3/PawnMarkers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.015, 0, 0.03)
+
+[node name="Marker3" type="Marker3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/SideStrip4/Tile3/PawnMarkers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.015, 0, 0.03)
+
+[node name="Marker4" type="Marker3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/SideStrip4/Tile3/PawnMarkers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.045)
+
+[node name="Marker5" type="Marker3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/SideStrip4/Tile3/PawnMarkers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.015, 0, 0.045)
+
+[node name="Marker6" type="Marker3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/SideStrip4/Tile3/PawnMarkers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.015, 0, 0.045)
+
+[node name="Tile4" type="Node3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/SideStrip4" instance=ExtResource("7_kvuet")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.1435475, 0, 0)
+script = ExtResource("6_dinhu")
+tile_color = Color(0.4509804, 0.4509804, 0.4509804, 1)
+
+[node name="Mesh" type="MeshInstance3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/SideStrip4/Tile4"]
+transform = Transform3D(0.4, 0, 0, 0, 0.4, 0, 0, 0, 0.4, 0, 0.002, 0)
+material_override = SubResource("StandardMaterial3D_bhx41")
+mesh = SubResource("BoxMesh_uiyn6")
+
+[node name="PawnMarkers" type="Node3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/SideStrip4/Tile4"]
+
+[node name="Marker1" type="Marker3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/SideStrip4/Tile4/PawnMarkers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.03)
+
+[node name="Marker2" type="Marker3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/SideStrip4/Tile4/PawnMarkers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.015, 0, 0.03)
+
+[node name="Marker3" type="Marker3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/SideStrip4/Tile4/PawnMarkers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.015, 0, 0.03)
+
+[node name="Marker4" type="Marker3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/SideStrip4/Tile4/PawnMarkers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.045)
+
+[node name="Marker5" type="Marker3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/SideStrip4/Tile4/PawnMarkers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.015, 0, 0.045)
+
+[node name="Marker6" type="Marker3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/SideStrip4/Tile4/PawnMarkers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.015, 0, 0.045)
+
+[node name="SideStrip5" type="Node3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/SideStrip4" instance=ExtResource("2_s0k7h")]
+transform = Transform3D(0.49999997, 0, 0.86602545, 0, 1, 0, -0.86602545, 0, 0.49999997, 0.195, 0, 0)
+
+[node name="CornerTile" type="Node3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/SideStrip4/SideStrip5" instance=ExtResource("5_kvpfn")]
+transform = Transform3D(0.8660254, 0, -0.5, 0, 1, 0, 0.5, 0, 0.8660254, 0, 0, 0)
+script = ExtResource("6_dinhu")
+tile_color = Color(1, 0.64705884, 0, 1)
+
+[node name="CSGBakedMeshInstance3D" type="MeshInstance3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/SideStrip4/SideStrip5/CornerTile"]
+transform = Transform3D(0.4, 0, 0, 0, 0.4, 0, 0, 0, 0.4, 0, 0.002, -0.004)
+material_override = SubResource("StandardMaterial3D_qnb83")
+mesh = SubResource("ArrayMesh_y8lo4")
+
+[node name="PawnMarkers" type="Node3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/SideStrip4/SideStrip5/CornerTile"]
+
+[node name="Marker1" type="Marker3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/SideStrip4/SideStrip5/CornerTile/PawnMarkers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.039)
+
+[node name="Marker2" type="Marker3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/SideStrip4/SideStrip5/CornerTile/PawnMarkers"]
+transform = Transform3D(0.49999997, 0, -0.86602545, 0, 1, 0, 0.86602545, 0, 0.49999997, 0.013, 0, 0.031)
+
+[node name="Marker3" type="Marker3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/SideStrip4/SideStrip5/CornerTile/PawnMarkers"]
+transform = Transform3D(0.49999997, 0, 0.86602545, 0, 1, 0, -0.86602545, 0, 0.49999997, -0.013314066, 0, 0.03142811)
+
+[node name="Marker4" type="Marker3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/SideStrip4/SideStrip5/CornerTile/PawnMarkers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.056709815)
+
+[node name="Marker5b" type="Marker3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/SideStrip4/SideStrip5/CornerTile/PawnMarkers"]
+transform = Transform3D(0.49999997, 0, -0.86602545, 0, 1, 0, 0.86602545, 0, 0.49999997, 0.013, 0, 0.048)
+
+[node name="Marker6b" type="Marker3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/SideStrip4/SideStrip5/CornerTile/PawnMarkers"]
+transform = Transform3D(0.49999997, 0, 0.86602545, 0, 1, 0, -0.86602545, 0, 0.49999997, -0.013002703, 0, 0.048442956)
+
+[node name="Marker5" type="Marker3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/SideStrip4/SideStrip5/CornerTile/PawnMarkers"]
+transform = Transform3D(0.49999997, 0, -0.86602545, 0, 1, 0, 0.86602545, 0, 0.49999997, 0.021, 0, 0.044)
+visible = false
+
+[node name="Marker6" type="Marker3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/SideStrip4/SideStrip5/CornerTile/PawnMarkers"]
+transform = Transform3D(0.49999997, 0, 0.86602545, 0, 1, 0, -0.86602545, 0, 0.49999997, -0.021, 0, 0.044)
+visible = false
+
+[node name="CSGCombiner3D" type="CSGCombiner3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/SideStrip4/SideStrip5/CornerTile"]
+visible = false
+
+[node name="CSGMesh3D2" type="CSGMesh3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/SideStrip4/SideStrip5/CornerTile/CSGCombiner3D"]
+transform = Transform3D(0.8660254, 0, -0.5, 0, 1, 0, 0.5, 0, 0.8660254, -0.018265486, 0, 0)
+mesh = SubResource("BoxMesh_wnpk2")
+
+[node name="CSGMesh3D" type="CSGMesh3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/SideStrip4/SideStrip5/CornerTile/CSGCombiner3D"]
+transform = Transform3D(0.8660254, 0, 0.5, 0, 1, 0, -0.5, 0, 0.8660254, 0.018265545, 0, 0)
+mesh = SubResource("BoxMesh_wnpk2")
+
+[node name="Tile2" type="Node3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/SideStrip4/SideStrip5" instance=ExtResource("7_kvuet")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.053479988, 0, 0)
+script = ExtResource("6_dinhu")
+
+[node name="Mesh" type="MeshInstance3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/SideStrip4/SideStrip5/Tile2"]
+transform = Transform3D(0.4, 0, 0, 0, 0.4, 0, 0, 0, 0.4, 0, 0.002, 0)
+material_override = SubResource("StandardMaterial3D_sww3w")
+mesh = SubResource("BoxMesh_uiyn6")
+
+[node name="PawnMarkers" type="Node3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/SideStrip4/SideStrip5/Tile2"]
+
+[node name="Marker1" type="Marker3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/SideStrip4/SideStrip5/Tile2/PawnMarkers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.03)
+
+[node name="Marker2" type="Marker3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/SideStrip4/SideStrip5/Tile2/PawnMarkers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.015, 0, 0.03)
+
+[node name="Marker3" type="Marker3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/SideStrip4/SideStrip5/Tile2/PawnMarkers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.015, 0, 0.03)
+
+[node name="Marker4" type="Marker3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/SideStrip4/SideStrip5/Tile2/PawnMarkers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.045)
+
+[node name="Marker5" type="Marker3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/SideStrip4/SideStrip5/Tile2/PawnMarkers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.015, 0, 0.045)
+
+[node name="Marker6" type="Marker3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/SideStrip4/SideStrip5/Tile2/PawnMarkers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.015, 0, 0.045)
+
+[node name="Tile3" type="Node3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/SideStrip4/SideStrip5" instance=ExtResource("7_kvuet")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.098479986, 0, 0)
+script = ExtResource("6_dinhu")
+tile_color = Color(0.56078434, 0.56078434, 0.56078434, 1)
+
+[node name="Mesh" type="MeshInstance3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/SideStrip4/SideStrip5/Tile3"]
+transform = Transform3D(0.4, 0, 0, 0, 0.4, 0, 0, 0, 0.4, 0, 0.002, 0)
+material_override = SubResource("StandardMaterial3D_suyxu")
+mesh = SubResource("BoxMesh_uiyn6")
+
+[node name="PawnMarkers" type="Node3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/SideStrip4/SideStrip5/Tile3"]
+
+[node name="Marker1" type="Marker3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/SideStrip4/SideStrip5/Tile3/PawnMarkers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.03)
+
+[node name="Marker2" type="Marker3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/SideStrip4/SideStrip5/Tile3/PawnMarkers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.015, 0, 0.03)
+
+[node name="Marker3" type="Marker3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/SideStrip4/SideStrip5/Tile3/PawnMarkers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.015, 0, 0.03)
+
+[node name="Marker4" type="Marker3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/SideStrip4/SideStrip5/Tile3/PawnMarkers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.045)
+
+[node name="Marker5" type="Marker3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/SideStrip4/SideStrip5/Tile3/PawnMarkers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.015, 0, 0.045)
+
+[node name="Marker6" type="Marker3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/SideStrip4/SideStrip5/Tile3/PawnMarkers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.015, 0, 0.045)
+
+[node name="Tile4" type="Node3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/SideStrip4/SideStrip5" instance=ExtResource("7_kvuet")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.1435475, 0, 0)
+script = ExtResource("6_dinhu")
+tile_color = Color(0.56078434, 0.56078434, 0.56078434, 1)
+
+[node name="Mesh" type="MeshInstance3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/SideStrip4/SideStrip5/Tile4"]
+transform = Transform3D(0.4, 0, 0, 0, 0.4, 0, 0, 0, 0.4, 0, 0.002, 0)
+material_override = SubResource("StandardMaterial3D_sgl2t")
+mesh = SubResource("BoxMesh_uiyn6")
+
+[node name="PawnMarkers" type="Node3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/SideStrip4/SideStrip5/Tile4"]
+
+[node name="Marker1" type="Marker3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/SideStrip4/SideStrip5/Tile4/PawnMarkers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.03)
+
+[node name="Marker2" type="Marker3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/SideStrip4/SideStrip5/Tile4/PawnMarkers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.015, 0, 0.03)
+
+[node name="Marker3" type="Marker3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/SideStrip4/SideStrip5/Tile4/PawnMarkers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.015, 0, 0.03)
+
+[node name="Marker4" type="Marker3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/SideStrip4/SideStrip5/Tile4/PawnMarkers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.045)
+
+[node name="Marker5" type="Marker3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/SideStrip4/SideStrip5/Tile4/PawnMarkers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.015, 0, 0.045)
+
+[node name="Marker6" type="Marker3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/SideStrip4/SideStrip5/Tile4/PawnMarkers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.015, 0, 0.045)
+
+[node name="SideStrip6" type="Node3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/SideStrip4/SideStrip5" instance=ExtResource("2_s0k7h")]
+transform = Transform3D(0.49999997, 0, 0.86602545, 0, 1, 0, -0.86602545, 0, 0.49999997, 0.195, 0, 0)
+
+[node name="CornerTile" type="Node3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/SideStrip4/SideStrip5/SideStrip6" instance=ExtResource("5_kvpfn")]
+transform = Transform3D(0.8660254, 0, -0.5, 0, 1, 0, 0.5, 0, 0.8660254, 0, 0, 0)
+script = ExtResource("6_dinhu")
+tile_color = Color(1, 0.64705884, 0, 1)
+
+[node name="CSGBakedMeshInstance3D" type="MeshInstance3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/SideStrip4/SideStrip5/SideStrip6/CornerTile"]
+transform = Transform3D(0.4, 0, 0, 0, 0.4, 0, 0, 0, 0.4, 0, 0.002, -0.004)
+material_override = SubResource("StandardMaterial3D_qouja")
+mesh = SubResource("ArrayMesh_y8lo4")
+
+[node name="PawnMarkers" type="Node3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/SideStrip4/SideStrip5/SideStrip6/CornerTile"]
+
+[node name="Marker1" type="Marker3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/SideStrip4/SideStrip5/SideStrip6/CornerTile/PawnMarkers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.039)
+
+[node name="Marker2" type="Marker3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/SideStrip4/SideStrip5/SideStrip6/CornerTile/PawnMarkers"]
+transform = Transform3D(0.49999997, 0, -0.86602545, 0, 1, 0, 0.86602545, 0, 0.49999997, 0.013, 0, 0.031)
+
+[node name="Marker3" type="Marker3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/SideStrip4/SideStrip5/SideStrip6/CornerTile/PawnMarkers"]
+transform = Transform3D(0.49999997, 0, 0.86602545, 0, 1, 0, -0.86602545, 0, 0.49999997, -0.013314066, 0, 0.03142811)
+
+[node name="Marker4" type="Marker3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/SideStrip4/SideStrip5/SideStrip6/CornerTile/PawnMarkers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.056709815)
+
+[node name="Marker5b" type="Marker3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/SideStrip4/SideStrip5/SideStrip6/CornerTile/PawnMarkers"]
+transform = Transform3D(0.49999997, 0, -0.86602545, 0, 1, 0, 0.86602545, 0, 0.49999997, 0.013, 0, 0.048)
+
+[node name="Marker6b" type="Marker3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/SideStrip4/SideStrip5/SideStrip6/CornerTile/PawnMarkers"]
+transform = Transform3D(0.49999997, 0, 0.86602545, 0, 1, 0, -0.86602545, 0, 0.49999997, -0.013002703, 0, 0.048442956)
+
+[node name="Marker5" type="Marker3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/SideStrip4/SideStrip5/SideStrip6/CornerTile/PawnMarkers"]
+transform = Transform3D(0.49999997, 0, -0.86602545, 0, 1, 0, 0.86602545, 0, 0.49999997, 0.021, 0, 0.044)
+visible = false
+
+[node name="Marker6" type="Marker3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/SideStrip4/SideStrip5/SideStrip6/CornerTile/PawnMarkers"]
+transform = Transform3D(0.49999997, 0, 0.86602545, 0, 1, 0, -0.86602545, 0, 0.49999997, -0.021, 0, 0.044)
+visible = false
+
+[node name="CSGCombiner3D" type="CSGCombiner3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/SideStrip4/SideStrip5/SideStrip6/CornerTile"]
+visible = false
+
+[node name="CSGMesh3D2" type="CSGMesh3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/SideStrip4/SideStrip5/SideStrip6/CornerTile/CSGCombiner3D"]
+transform = Transform3D(0.8660254, 0, -0.5, 0, 1, 0, 0.5, 0, 0.8660254, -0.018265486, 0, 0)
+mesh = SubResource("BoxMesh_wnpk2")
+
+[node name="CSGMesh3D" type="CSGMesh3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/SideStrip4/SideStrip5/SideStrip6/CornerTile/CSGCombiner3D"]
+transform = Transform3D(0.8660254, 0, 0.5, 0, 1, 0, -0.5, 0, 0.8660254, 0.018265545, 0, 0)
+mesh = SubResource("BoxMesh_wnpk2")
+
+[node name="Tile2" type="Node3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/SideStrip4/SideStrip5/SideStrip6" instance=ExtResource("7_kvuet")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.053479988, 0, 0)
+script = ExtResource("6_dinhu")
+
+[node name="Mesh" type="MeshInstance3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/SideStrip4/SideStrip5/SideStrip6/Tile2"]
+transform = Transform3D(0.4, 0, 0, 0, 0.4, 0, 0, 0, 0.4, 0, 0.002, 0)
+material_override = SubResource("StandardMaterial3D_wljb1")
+mesh = SubResource("BoxMesh_uiyn6")
+
+[node name="PawnMarkers" type="Node3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/SideStrip4/SideStrip5/SideStrip6/Tile2"]
+
+[node name="Marker1" type="Marker3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/SideStrip4/SideStrip5/SideStrip6/Tile2/PawnMarkers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.03)
+
+[node name="Marker2" type="Marker3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/SideStrip4/SideStrip5/SideStrip6/Tile2/PawnMarkers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.015, 0, 0.03)
+
+[node name="Marker3" type="Marker3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/SideStrip4/SideStrip5/SideStrip6/Tile2/PawnMarkers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.015, 0, 0.03)
+
+[node name="Marker4" type="Marker3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/SideStrip4/SideStrip5/SideStrip6/Tile2/PawnMarkers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.045)
+
+[node name="Marker5" type="Marker3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/SideStrip4/SideStrip5/SideStrip6/Tile2/PawnMarkers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.015, 0, 0.045)
+
+[node name="Marker6" type="Marker3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/SideStrip4/SideStrip5/SideStrip6/Tile2/PawnMarkers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.015, 0, 0.045)
+
+[node name="Tile3" type="Node3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/SideStrip4/SideStrip5/SideStrip6" instance=ExtResource("7_kvuet")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.098479986, 0, 0)
+script = ExtResource("6_dinhu")
+tile_color = Color(0.6784314, 0.6784314, 0.6784314, 1)
+
+[node name="Mesh" type="MeshInstance3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/SideStrip4/SideStrip5/SideStrip6/Tile3"]
+transform = Transform3D(0.4, 0, 0, 0, 0.4, 0, 0, 0, 0.4, 0, 0.002, 0)
+material_override = SubResource("StandardMaterial3D_v2yb1")
+mesh = SubResource("BoxMesh_uiyn6")
+
+[node name="PawnMarkers" type="Node3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/SideStrip4/SideStrip5/SideStrip6/Tile3"]
+
+[node name="Marker1" type="Marker3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/SideStrip4/SideStrip5/SideStrip6/Tile3/PawnMarkers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.03)
+
+[node name="Marker2" type="Marker3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/SideStrip4/SideStrip5/SideStrip6/Tile3/PawnMarkers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.015, 0, 0.03)
+
+[node name="Marker3" type="Marker3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/SideStrip4/SideStrip5/SideStrip6/Tile3/PawnMarkers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.015, 0, 0.03)
+
+[node name="Marker4" type="Marker3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/SideStrip4/SideStrip5/SideStrip6/Tile3/PawnMarkers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.045)
+
+[node name="Marker5" type="Marker3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/SideStrip4/SideStrip5/SideStrip6/Tile3/PawnMarkers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.015, 0, 0.045)
+
+[node name="Marker6" type="Marker3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/SideStrip4/SideStrip5/SideStrip6/Tile3/PawnMarkers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.015, 0, 0.045)
+
+[node name="Tile4" type="Node3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/SideStrip4/SideStrip5/SideStrip6" instance=ExtResource("7_kvuet")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.1435475, 0, 0)
+script = ExtResource("6_dinhu")
+tile_color = Color(0.6784314, 0.6784314, 0.6784314, 1)
+
+[node name="Mesh" type="MeshInstance3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/SideStrip4/SideStrip5/SideStrip6/Tile4"]
+transform = Transform3D(0.4, 0, 0, 0, 0.4, 0, 0, 0, 0.4, 0, 0.002, 0)
+material_override = SubResource("StandardMaterial3D_js0lu")
+mesh = SubResource("BoxMesh_uiyn6")
+
+[node name="PawnMarkers" type="Node3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/SideStrip4/SideStrip5/SideStrip6/Tile4"]
+
+[node name="Marker1" type="Marker3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/SideStrip4/SideStrip5/SideStrip6/Tile4/PawnMarkers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.03)
+
+[node name="Marker2" type="Marker3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/SideStrip4/SideStrip5/SideStrip6/Tile4/PawnMarkers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.015, 0, 0.03)
+
+[node name="Marker3" type="Marker3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/SideStrip4/SideStrip5/SideStrip6/Tile4/PawnMarkers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.015, 0, 0.03)
+
+[node name="Marker4" type="Marker3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/SideStrip4/SideStrip5/SideStrip6/Tile4/PawnMarkers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.045)
+
+[node name="Marker5" type="Marker3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/SideStrip4/SideStrip5/SideStrip6/Tile4/PawnMarkers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.015, 0, 0.045)
+
+[node name="Marker6" type="Marker3D" parent="tiles/SideStrip1/SideStrip2/SideStrip3/SideStrip4/SideStrip5/SideStrip6/Tile4/PawnMarkers"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.015, 0, 0.045)
 
 [node name="Pawns" type="Node3D" parent="."]
 script = ExtResource("4_3k9qj")
-markers_root_path = NodePath("../tiles/SideStrip1/Tile3/PawnMarkers")
+markers_root_path = NodePath("../tiles/SideStrip1/CornerTile/PawnMarkers")
 
 [node name="Pawn1" parent="Pawns" instance=ExtResource("3_lbhrr")]
 
