@@ -120,11 +120,13 @@ albedo_color = Color(0.6784314, 0.6784314, 0.6784314, 1)
 unique_name_in_owner = true
 script = ExtResource("7_h6e2v")
 
-[node name="GameController" type="Node" parent="."]
-script = ExtResource("5_77h6y")
-
 [node name="BoardLayout" type="Node" parent="."]
+unique_name_in_owner = true
 script = ExtResource("3_tfrx2")
+
+[node name="GameController" type="Node" parent="."]
+unique_name_in_owner = true
+script = ExtResource("5_77h6y")
 
 [node name="Table" type="MeshInstance3D" parent="."]
 mesh = SubResource("PlaneMesh_8cj0n")
@@ -1111,3 +1113,14 @@ player_index = 5
 [node name="RightSidebar" parent="Control/MarginContainer" instance=ExtResource("6_p57ef")]
 unique_name_in_owner = true
 layout_mode = 2
+
+[node name="GameIdLabel" type="Label" parent="Control"]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_top = -23.0
+offset_right = 280.0
+grow_vertical = 0
+text = "Game ID: "

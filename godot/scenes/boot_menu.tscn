@@ -100,6 +100,18 @@ popup/item_1/id = 1
 popup/item_2/text = "60s"
 popup/item_2/id = 2
 
+[node name="HBoxContainerGameId" type="HBoxContainer" parent="Center/VBox"]
+layout_mode = 2
+
+[node name="Game ID Label" type="Label" parent="Center/VBox/HBoxContainerGameId"]
+layout_mode = 2
+text = "Game ID:"
+
+[node name="GameIdInput" type="LineEdit" parent="Center/VBox/HBoxContainerGameId"]
+unique_name_in_owner = true
+layout_mode = 2
+placeholder_text = "Auto-generated"
+
 [node name="StartButton" type="Button" parent="Center/VBox"]
 unique_name_in_owner = true
 layout_mode = 2

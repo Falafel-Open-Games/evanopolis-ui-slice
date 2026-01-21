@@ -48,10 +48,6 @@ func move_player(player_index: int, steps: int, board_size: int) -> Dictionary:
 	return result
 
 func _sync_from_config() -> void:
-	var config: Node = get_node_or_null("/root/GameConfig")
-	if config == null:
-		return
-	if config.has_method("get"):
-		var new_count: int = config.get("player_count")
-		if new_count >= 2 and new_count <= 6:
-			player_count = new_count
+	var new_count: int = GameConfig.get("player_count")
+	if new_count >= 2 and new_count <= 6:
+		player_count = new_count

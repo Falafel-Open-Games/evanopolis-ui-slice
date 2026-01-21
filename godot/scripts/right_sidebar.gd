@@ -2,6 +2,7 @@ class_name RightSidebar
 extends FoldableContainer
 
 signal dice_rolled(die_1: int, die_2: int, total: int)
+signal dice_requested
 
 @export_range(0, 5, 1) var player_index: int = 0:
 	set(value):
@@ -108,11 +109,9 @@ func _on_timer_value_changed(value: float) -> void:
 	timer_label.text = "%ds" % remaining_seconds
 
 func _on_roll_pressed() -> void:
-	var rng: RandomNumberGenerator = RandomNumberGenerator.new()
-	rng.randomize()
-	var die_1: int = rng.randi_range(1, 6)
-	var die_2: int = rng.randi_range(1, 6)
-	var total: int = die_1 + die_2
+	dice_requested.emit()
+
+func apply_dice_result(die_1: int, die_2: int) -> void:
 	dice_label_1.text = str(die_1)
 	dice_label_2.text = str(die_2)
 	_set_dice_panel_color(Color("#ffffdc"))
@@ -122,7 +121,7 @@ func _on_roll_pressed() -> void:
 		end_turn_button.visible = true
 	if tile_type_label != null:
 		tile_type_label.visible = true
-	dice_rolled.emit(die_1, die_2, total)
+	dice_rolled.emit(die_1, die_2, die_1 + die_2)
 
 func _set_dice_panel_color(color: Color) -> void:
 	_set_panel_color(dice_panel_1, color)
