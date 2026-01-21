@@ -33,6 +33,7 @@ signal dice_requested
 
 # Called when the node enters the scene tree for the first time.
 func _ready() -> void:
+	assert(end_turn_button)
 	_apply_player_state()
 	_reset_roll_ui()
 	_bind_timer_bar()

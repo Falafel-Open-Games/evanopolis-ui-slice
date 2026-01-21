@@ -38,11 +38,12 @@ script = ExtResource("7_h6e2v")
 unique_name_in_owner = true
 script = ExtResource("3_tfrx2")
 
-[node name="GameController" type="Node" parent="." node_paths=PackedStringArray("right_sidebar", "left_sidebar_list")]
+[node name="GameController" type="Node" parent="." node_paths=PackedStringArray("right_sidebar", "left_sidebar_list", "pawns_root")]
 unique_name_in_owner = true
 script = ExtResource("5_77h6y")
 right_sidebar = NodePath("../Control/MarginContainer/RightSidebar")
 left_sidebar_list = NodePath("../Control/MarginContainer/LeftSidebar/VBoxContainer")
+pawns_root = NodePath("../Pawns")
 
 [node name="Table" type="MeshInstance3D" parent="."]
 mesh = SubResource("PlaneMesh_8cj0n")
