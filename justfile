@@ -11,3 +11,11 @@ dev:
 build-html:
   mkdir -p build/html-client
   godot --headless --path godot --export-release "Web" build/html-client/index.html
+
+# Export the Linux client build locally.
+build-linux:
+  godot --headless --path godot --export-release "Linux" ../build/linux-client/evanopolis_client.x86_64
+
+# Run the exported Linux client.
+run-linux:
+  ./build/linux-client/evanopolis_client.x86_64
