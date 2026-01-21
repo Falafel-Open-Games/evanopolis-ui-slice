@@ -126,6 +126,12 @@ RendaFinal = RendaBase × bonusGlobal × bonusCidade
 2. Move o total
 3. Executa ação da casa (comprar, pagar, carta etc.)
 
+### Temporizador de turno (offline)
+
+- Cada turno tem um tempo limite configurável.
+- Opções atuais: 10s, 30s (padrão), 60s.
+- Quando o tempo acaba, o turno termina automaticamente (penalidade pendente).
+
 ### Passar pela SALIDA
 
 - +2 EVA

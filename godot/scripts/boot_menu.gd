@@ -2,11 +2,13 @@ extends Control
 
 @onready var board_size_selector: OptionButton = %BoardSizeSelector
 @onready var player_count_selector: OptionButton = %PlayerCountSelector
+@onready var turn_time_selector: OptionButton = %TurnTimeSelector
 @onready var start_button: Button = %StartButton
 
 const GAME_SCENE_PATH: String = "res://scenes/game.tscn"
 const BOARD_SIZES: Array[int] = [24, 30, 36]
 const PLAYER_COUNTS: Array[int] = [2, 3, 4, 5, 6]
+const TURN_DURATIONS: Array[int] = [10, 30, 60]
 
 func _ready() -> void:
 	start_button.pressed.connect(_on_start_pressed)
@@ -14,6 +16,7 @@ func _ready() -> void:
 func _on_start_pressed() -> void:
 	_apply_board_size()
 	_apply_player_count()
+	_apply_turn_duration()
 	get_tree().change_scene_to_file(GAME_SCENE_PATH)
 
 func _apply_board_size() -> void:
@@ -31,3 +34,11 @@ func _apply_player_count() -> void:
 	var selected_index: int = player_count_selector.selected
 	var clamped_index: int = clamp(selected_index, 0, PLAYER_COUNTS.size() - 1)
 	config.set("player_count", PLAYER_COUNTS[clamped_index])
+
+func _apply_turn_duration() -> void:
+	var config: Node = get_node_or_null("/root/GameConfig")
+	if config == null:
+		return
+	var selected_index: int = turn_time_selector.selected
+	var clamped_index: int = clamp(selected_index, 0, TURN_DURATIONS.size() - 1)
+	config.set("turn_duration", TURN_DURATIONS[clamped_index])
