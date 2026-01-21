@@ -36,14 +36,10 @@ func _ready() -> void:
 	_rebuild_board()
 
 func _sync_from_config() -> bool:
-	var config: Node = get_node_or_null("/root/GameConfig")
-	if config == null:
-		return false
-	if config.has_method("get"):
-		var new_size: int = config.get("board_size")
-		if new_size != board_size:
-			board_size = new_size
-			return true
+	var new_size: int = GameConfig.board_size
+	if new_size != board_size:
+		board_size = new_size
+		return true
 	return false
 
 func _rebuild_board() -> void:
@@ -66,6 +62,8 @@ func _build_board() -> void:
 		return
 	if board_size % SIDE_COUNT != 0:
 		return
+	assert(board_size % SIDE_COUNT == 0)
+	@warning_ignore("integer_division")
 	var tiles_per_side: int = board_size / SIDE_COUNT
 	if tiles_per_side < 4:
 		return
@@ -73,7 +71,7 @@ func _build_board() -> void:
 		return
 
 	var side_length: float = (BASE_TILE_OFFSET * 2.0) + (BASE_TILE_SPACING * float(tiles_per_side - 2)) + SIDE_LENGTH_FUDGE
-	var owner: Node = _get_scene_owner()
+	var scene_owner: Node = _get_scene_owner()
 	var prev_side: Node3D = null
 
 	for side_index in range(SIDE_COUNT):
@@ -89,13 +87,14 @@ func _build_board() -> void:
 			side.position = Vector3(side_length, 0.0, 0.0)
 			side.rotation = Vector3(0.0, SIDE_TURN_RADIANS, 0.0)
 
-		_set_owner_recursive(side, owner)
-		_ensure_side_tiles(side, tiles_per_side, owner)
+		if scene_owner != null:
+			side.owner = scene_owner
+		_ensure_side_tiles(side, tiles_per_side, scene_owner)
 		prev_side = side
 
 	_rebuild_tile_list(tiles_per_side)
 
-func _ensure_side_tiles(side: Node3D, tiles_per_side: int, owner: Node) -> void:
+func _ensure_side_tiles(side: Node3D, tiles_per_side: int, scene_owner: Node) -> void:
 	var base_tile: Node3D = side.get_node_or_null("Tile4") as Node3D
 	if base_tile == null:
 		return
@@ -115,7 +114,8 @@ func _ensure_side_tiles(side: Node3D, tiles_per_side: int, owner: Node) -> void:
 		tile_instance.name = tile_name
 		tile_instance.position = Vector3(start_offset + (spacing * float(index - 2)), 0.0, 0.0)
 		side.add_child(tile_instance)
-		_set_owner_recursive(tile_instance, owner)
+		if scene_owner != null:
+			tile_instance.owner = scene_owner
 
 func _rebuild_tile_list(tiles_per_side: int) -> void:
 	_tiles = []
@@ -183,6 +183,7 @@ func get_tile_markers(tile_index: int) -> Array[Marker3D]:
 			markers.append(marker_node)
 	return markers
 
+# TODO: it makes more sense for this info map to live in game config or maybe game state, I would leave board layout file only for the assembly of the board, not for query tile data as well 
 func get_tile_info(tile_index: int) -> Dictionary:
 	var info: Dictionary = {
 		"type": "unknown",
@@ -196,6 +197,7 @@ func get_tile_info(tile_index: int) -> Dictionary:
 	if tile_index < 0 or tile_index >= board_size:
 		return info
 
+	@warning_ignore("integer_division")
 	var side_index: int = tile_index / tiles_per_side
 	var side_slot: int = tile_index % tiles_per_side
 
@@ -221,6 +223,8 @@ func get_tile_info(tile_index: int) -> Dictionary:
 func _get_tiles_per_side() -> int:
 	if board_size % SIDE_COUNT != 0:
 		return 0
+	assert(board_size % SIDE_COUNT == 0)
+	@warning_ignore("integer_division")
 	return board_size / SIDE_COUNT
 
 func _incident_kind_for_side(side_index: int) -> String:
@@ -246,11 +250,3 @@ func _get_scene_owner() -> Node:
 	if not Engine.is_editor_hint():
 		return null
 	return get_tree().edited_scene_root
-
-func _set_owner_recursive(node: Node, owner: Node) -> void:
-	if node == null:
-		return
-	if owner != null:
-		node.owner = owner
-	for child in node.get_children():
-		_set_owner_recursive(child, owner)

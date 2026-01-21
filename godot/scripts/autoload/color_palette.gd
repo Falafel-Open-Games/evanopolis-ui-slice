@@ -27,6 +27,7 @@ const CITY_COLORS: Array[Color] = [
 	Color("#adadad"),
 ]
 
+# TODO: this is not related with colors, my suggestion is to move to a different autoload script, either constants.gd or enums.gd
 const CITY_ORDER: Array[String] = [
 	"Caracas",
 	"Assuncion",

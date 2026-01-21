@@ -1,53 +1,40 @@
 class_name GameState
 extends Node
 
-@export_range(2, 6, 1) var player_count: int = 6
-@export_range(0, 5, 1) var current_player_index: int = 0:
-	set(value):
-		current_player_index = value
-		player_changed.emit(current_player_index)
+var current_player_index: int
+var player_positions: Array[int]
+var tile_occupants: Array[Array]
 
 signal player_changed(new_index: int)
-
-var player_positions: Array[int] = []
-var tile_occupants: Dictionary = {}
+signal player_position_changed(new_position: int, tile_slot: int)
 
 func _ready() -> void:
-	_sync_from_config()
+	seed(GameConfig.game_id.hash())
+	current_player_index = 0
 
 func reset_positions() -> void:
 	player_positions = []
-	tile_occupants = {}
-	for index in range(player_count):
-		player_positions.append(0)
-	tile_occupants[0] = []
-	for index in range(player_count):
+	player_positions.resize(GameConfig.player_count)
+	player_positions.fill(0) # all players starts at position 0
+	
+	tile_occupants = []
+	tile_occupants.resize(GameConfig.board_size)
+	for index in range(GameConfig.player_count): # tile of position 0 starts with one player index per slot
 		tile_occupants[0].append(index)
 
 func advance_turn() -> void:
-	current_player_index = (current_player_index + 1) % player_count
+	current_player_index = (current_player_index + 1) % GameConfig.player_count
+	player_changed.emit(current_player_index)
 
-func move_player(player_index: int, steps: int, board_size: int) -> Dictionary:
-	var result: Dictionary = {}
-	if player_index < 0 or player_index >= player_positions.size():
-		return result
+func move_player(player_index: int, steps: int, board_size: int) -> void:
+	assert(player_index >= 0 and player_index < player_positions.size())
 
 	var current_tile: int = player_positions[player_index]
 	var next_tile: int = (current_tile + steps) % board_size
 
-	if tile_occupants.has(current_tile):
-		tile_occupants[current_tile].erase(player_index)
-
-	if not tile_occupants.has(next_tile):
-		tile_occupants[next_tile] = []
+	tile_occupants[current_tile].erase(player_index)
 	tile_occupants[next_tile].append(player_index)
 	player_positions[player_index] = next_tile
-
-	result["tile_index"] = next_tile
-	result["slot_index"] = tile_occupants[next_tile].size() - 1
-	return result
-
-func _sync_from_config() -> void:
-	var new_count: int = GameConfig.get("player_count")
-	if new_count >= 2 and new_count <= 6:
-		player_count = new_count
+	
+	var next_slot = tile_occupants[next_tile].size() - 1
+	player_position_changed.emit(next_tile, next_slot)

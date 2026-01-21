@@ -1,6 +1,7 @@
-[gd_scene load_steps=2 format=3 uid="uid://cvyiybwejbsha"]
+[gd_scene load_steps=3 format=3 uid="uid://cvyiybwejbsha"]
 
 [ext_resource type="Script" uid="uid://bytrvph2ds06l" path="res://scripts/boot_menu.gd" id="1_6e0d1"]
+[ext_resource type="PackedScene" uid="uid://cqmxik86m7jfl" path="res://scenes/game.tscn" id="2_1kgfj"]
 
 [node name="BootMenu" type="Control"]
 layout_mode = 3
@@ -10,6 +11,7 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_6e0d1")
+game_scene_path = ExtResource("2_1kgfj")
 
 [node name="Background" type="ColorRect" parent="."]
 layout_mode = 0
