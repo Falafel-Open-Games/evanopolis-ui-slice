@@ -19,17 +19,20 @@ signal dice_rolled(die_1: int, die_2: int, total: int)
 @onready var property_container: VBoxContainer = %PropertyContainer
 @onready var property_image: TextureRect = %Image
 @onready var movement_button: Button = %MovementButton
-@onready var dice_1_label: Label = %Dice1Label
-@onready var dice_2_label: Label = %Dice2Label
+@onready var dice_panel_1: Panel = %DicePanel1
+@onready var dice_panel_2: Panel = %DicePanel2
+@onready var dice_label_1: Label = %DiceLabel1
+@onready var dice_label_2: Label = %DiceLabel2
 @onready var tile_type_label: Label = %TileTypeLabel
 @onready var image: TextureRect = %Image
 @onready var timer_bar: ProgressBar = %TimerBar
 @onready var timer_label: Label = %TimerLabel
+@onready var movement_container: VBoxContainer = %MovementContainer
+@onready var timer_container: HBoxContainer = %TimerContainer
 
 # Called when the node enters the scene tree for the first time.
 func _ready() -> void:
 	_apply_player_state()
-	property_container.visible = false
 	_reset_roll_ui()
 	_bind_timer_bar()
 
@@ -42,15 +45,12 @@ func _bind_timer_bar() -> void:
 
 func set_current_player(index: int, player_display_name: String = "") -> void:
 	player_index = clamp(index, 0, 5)
-	if property_container:
-		property_container.visible = false
 	if player_display_name.is_empty():
 		player_name = "Player %d" % [player_index + 1]
 	else:
 		player_name = player_display_name
 	_apply_player_state()
 	_reset_roll_ui()
-	_update_tile_type_label("start", "", "")
 
 func _apply_player_state() -> void:
 	self.title = "Current Turn: %s" % [player_name]
@@ -68,13 +68,29 @@ func _apply_title_panel_color(color: Color) -> void:
 	add_theme_stylebox_override("title_panel", panel_box)
 
 func _reset_roll_ui() -> void:
-	if not dice_1_label:
+	if not dice_label_1:
 		return
-	dice_1_label.text = ""
-	dice_2_label.text = ""
+	dice_label_1.text = ""
+	dice_label_2.text = ""
+	_set_dice_panel_color(Color("#1a1a1a99"))
 	movement_button.disabled = false
+	_set_turn_start_visibility()
 	if not movement_button.pressed.is_connected(_on_roll_pressed):
 		movement_button.pressed.connect(_on_roll_pressed)
+
+func _set_turn_start_visibility() -> void:
+	if timer_container != null:
+		timer_container.visible = true
+	if movement_container != null:
+		movement_container.visible = true
+	if end_turn_button != null:
+		end_turn_button.visible = false
+	if movement_button != null:
+		movement_button.visible = true
+	if tile_type_label != null:
+		tile_type_label.visible = false
+	if property_container != null:
+		property_container.visible = false
 
 func set_turn_timer(duration_seconds: float, elapsed_seconds: float) -> void:
 	if timer_bar == null:
@@ -97,10 +113,29 @@ func _on_roll_pressed() -> void:
 	var die_1: int = rng.randi_range(1, 6)
 	var die_2: int = rng.randi_range(1, 6)
 	var total: int = die_1 + die_2
-	dice_1_label.text = str(die_1)
-	dice_2_label.text = str(die_2)
-	movement_button.disabled = true
+	dice_label_1.text = str(die_1)
+	dice_label_2.text = str(die_2)
+	_set_dice_panel_color(Color("#ffffdc"))
+	if movement_button != null:
+		movement_button.visible = false
+	if end_turn_button != null:
+		end_turn_button.visible = true
+	if tile_type_label != null:
+		tile_type_label.visible = true
 	dice_rolled.emit(die_1, die_2, total)
+
+func _set_dice_panel_color(color: Color) -> void:
+	_set_panel_color(dice_panel_1, color)
+	_set_panel_color(dice_panel_2, color)
+
+func _set_panel_color(panel: Panel, color: Color) -> void:
+	if panel == null:
+		return
+	var base_box: StyleBox = panel.get_theme_stylebox("panel")
+	var panel_box: StyleBox = base_box.duplicate() if base_box != null else StyleBoxFlat.new()
+	if panel_box is StyleBoxFlat:
+		panel_box.bg_color = color
+	panel.add_theme_stylebox_override("panel", panel_box)
 
 func update_tile_info(tile_type: String, city: String, incident_kind: String) -> void:
 	_update_tile_type_label(tile_type, city, incident_kind)
