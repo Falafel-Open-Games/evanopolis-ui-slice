@@ -12,6 +12,9 @@ signal player_changed(new_index: int)
 var player_positions: Array[int] = []
 var tile_occupants: Dictionary = {}
 
+func _ready() -> void:
+	_sync_from_config()
+
 func reset_positions() -> void:
 	player_positions = []
 	tile_occupants = {}
@@ -43,3 +46,12 @@ func move_player(player_index: int, steps: int, board_size: int) -> Dictionary:
 	result["tile_index"] = next_tile
 	result["slot_index"] = tile_occupants[next_tile].size() - 1
 	return result
+
+func _sync_from_config() -> void:
+	var config: Node = get_node_or_null("/root/GameConfig")
+	if config == null:
+		return
+	if config.has_method("get"):
+		var new_count: int = config.get("player_count")
+		if new_count >= 2 and new_count <= 6:
+			player_count = new_count

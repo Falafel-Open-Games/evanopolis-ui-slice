@@ -2,23 +2,27 @@ extends Node
 
 @export var game_state_path: NodePath = NodePath("../GameState")
 @export var right_sidebar_path: NodePath = NodePath("../Control/MarginContainer/RightSidebar")
+@export var left_sidebar_list_path: NodePath = NodePath("../Control/MarginContainer/LeftSidebar/VBoxContainer")
 @export var board_layout_path: NodePath = NodePath("../BoardLayout")
 @export var pawns_root_path: NodePath = NodePath("../Pawns")
 
 var game_state: GameState = null
 var right_sidebar: RightSidebar = null
+var left_sidebar_list: Node = null
 var board_layout: Node = null
 var pawns_root: Node = null
 
 func _ready() -> void:
 	game_state = get_node_or_null(game_state_path) as GameState
 	right_sidebar = get_node_or_null(right_sidebar_path) as RightSidebar
+	left_sidebar_list = get_node_or_null(left_sidebar_list_path)
 	board_layout = get_node_or_null(board_layout_path)
 	pawns_root = get_node_or_null(pawns_root_path)
 
 	if game_state != null:
 		game_state.reset_positions()
 		game_state.player_changed.connect(_on_player_changed)
+		_apply_player_visibility(game_state.player_count)
 		_on_player_changed(game_state.current_player_index)
 		_place_all_pawns_at_start()
 		_update_tile_info(0)
@@ -83,6 +87,17 @@ func _place_all_pawns_at_start() -> void:
 		return
 	for index in range(game_state.player_count):
 		_place_pawn(index, 0, index)
+
+func _apply_player_visibility(count: int) -> void:
+	if left_sidebar_list != null:
+		for index in range(left_sidebar_list.get_child_count()):
+			var child: Node = left_sidebar_list.get_child(index)
+			child.visible = index < count
+	if pawns_root != null:
+		for index in range(1, 7):
+			var pawn: Node = pawns_root.get_node_or_null("Pawn%d" % index)
+			if pawn != null:
+				pawn.visible = index <= count
 
 func _place_pawn(player_index: int, tile_index: int, slot_index: int) -> void:
 	if board_layout == null or pawns_root == null:
