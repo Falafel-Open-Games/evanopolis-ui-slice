@@ -11,6 +11,9 @@ var right_sidebar: RightSidebar = null
 var left_sidebar_list: Node = null
 var board_layout: Node = null
 var pawns_root: Node = null
+var turn_duration: float = 30.0
+var turn_elapsed: float = 0.0
+var turn_timer_active: bool = false
 
 func _ready() -> void:
 	game_state = get_node_or_null(game_state_path) as GameState
@@ -18,6 +21,7 @@ func _ready() -> void:
 	left_sidebar_list = get_node_or_null(left_sidebar_list_path)
 	board_layout = get_node_or_null(board_layout_path)
 	pawns_root = get_node_or_null(pawns_root_path)
+	_sync_turn_duration()
 
 	if game_state != null:
 		game_state.reset_positions()
@@ -28,6 +32,7 @@ func _ready() -> void:
 		_update_tile_info(0)
 
 	call_deferred("_bind_sidebar")
+	set_process(true)
 
 func _bind_sidebar() -> void:
 	if right_sidebar == null:
@@ -48,6 +53,7 @@ func _on_player_changed(new_index: int) -> void:
 	if right_sidebar == null:
 		return
 	right_sidebar.set_current_player(new_index)
+	_reset_turn_timer()
 
 func _on_dice_rolled(_die_1: int, _die_2: int, total: int) -> void:
 	if game_state == null or board_layout == null:
@@ -98,6 +104,33 @@ func _apply_player_visibility(count: int) -> void:
 			var pawn: Node = pawns_root.get_node_or_null("Pawn%d" % index)
 			if pawn != null:
 				pawn.visible = index <= count
+
+func _process(delta: float) -> void:
+	if not turn_timer_active:
+		return
+	if turn_duration <= 0.0:
+		return
+	turn_elapsed += delta
+	if right_sidebar != null:
+		right_sidebar.set_turn_timer(turn_duration, turn_elapsed)
+	if turn_elapsed >= turn_duration:
+		turn_timer_active = false
+		_on_end_turn_pressed()
+
+func _reset_turn_timer() -> void:
+	turn_elapsed = 0.0
+	turn_timer_active = true
+	if right_sidebar != null:
+		right_sidebar.set_turn_timer(turn_duration, turn_elapsed)
+
+func _sync_turn_duration() -> void:
+	var config: Node = get_node_or_null("/root/GameConfig")
+	if config == null:
+		return
+	if config.has_method("get"):
+		var new_duration: float = float(config.get("turn_duration"))
+		if new_duration > 0.0:
+			turn_duration = new_duration
 
 func _place_pawn(player_index: int, tile_index: int, slot_index: int) -> void:
 	if board_layout == null or pawns_root == null:

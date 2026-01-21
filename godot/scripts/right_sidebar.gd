@@ -23,12 +23,22 @@ signal dice_rolled(die_1: int, die_2: int, total: int)
 @onready var dice_2_label: Label = %Dice2Label
 @onready var tile_type_label: Label = %TileTypeLabel
 @onready var image: TextureRect = %Image
+@onready var timer_bar: ProgressBar = %TimerBar
+@onready var timer_label: Label = %TimerLabel
 
 # Called when the node enters the scene tree for the first time.
 func _ready() -> void:
 	_apply_player_state()
 	property_container.visible = false
 	_reset_roll_ui()
+	_bind_timer_bar()
+
+func _bind_timer_bar() -> void:
+	if timer_bar == null:
+		return
+	if not timer_bar.value_changed.is_connected(_on_timer_value_changed):
+		timer_bar.value_changed.connect(_on_timer_value_changed)
+	_on_timer_value_changed(timer_bar.value)
 
 func set_current_player(index: int, player_display_name: String = "") -> void:
 	player_index = clamp(index, 0, 5)
@@ -65,6 +75,21 @@ func _reset_roll_ui() -> void:
 	movement_button.disabled = false
 	if not movement_button.pressed.is_connected(_on_roll_pressed):
 		movement_button.pressed.connect(_on_roll_pressed)
+
+func set_turn_timer(duration_seconds: float, elapsed_seconds: float) -> void:
+	if timer_bar == null:
+		return
+	var max_value: float = max(1.0, duration_seconds)
+	var remaining: float = max(0.0, max_value - elapsed_seconds)
+	timer_bar.max_value = max_value
+	timer_bar.value = clamp(remaining, 0.0, max_value)
+	timer_bar.show_percentage = false
+
+func _on_timer_value_changed(value: float) -> void:
+	if timer_label == null:
+		return
+	var remaining_seconds: int = int(value)
+	timer_label.text = "%ds" % remaining_seconds
 
 func _on_roll_pressed() -> void:
 	var rng: RandomNumberGenerator = RandomNumberGenerator.new()
