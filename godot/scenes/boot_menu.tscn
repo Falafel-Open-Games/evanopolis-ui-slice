@@ -7,6 +7,8 @@ layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 script = ExtResource("1_6e0d1")
 
 [node name="Background" type="ColorRect" parent="."]
@@ -36,6 +38,25 @@ layout_mode = 2
 text = "Offline prototype"
 horizontal_alignment = 1
 vertical_alignment = 1
+
+[node name="HBoxContainer" type="HBoxContainer" parent="Center/VBox"]
+layout_mode = 2
+
+[node name="Board Size Label" type="Label" parent="Center/VBox/HBoxContainer"]
+layout_mode = 2
+text = "Board Size:"
+
+[node name="BoardSizeSelector" type="OptionButton" parent="Center/VBox/HBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+selected = 0
+item_count = 3
+popup/item_0/text = "24"
+popup/item_0/id = 0
+popup/item_1/text = "30"
+popup/item_1/id = 1
+popup/item_2/text = "36"
+popup/item_2/id = 2
 
 [node name="StartButton" type="Button" parent="Center/VBox"]
 unique_name_in_owner = true
