@@ -7,5 +7,9 @@
 *~
 .DS_Store
 build/**
+!build/
 !build/.gitkeep
+!build/html-client/
 !build/html-client/.gitkeep
+!build/linux-client/
+!build/linux-client/.gitkeep

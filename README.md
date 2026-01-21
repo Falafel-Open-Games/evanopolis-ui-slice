@@ -11,18 +11,20 @@ Offline UI slice for the Evanopolis tabletop game. This repo focuses on a playab
 ## Repo Layout
 
 - `docs/` - game specification and design decisions
-- `godot/` - Godot project (added in a later step)
+- `godot/` - Godot project
 - `justfile` - local commands
 
 ## Commands
 
 - `just dev` - launch the offline game (requires `godot` in PATH)
+- `just build-linux` - export the Linux client build
+- `just run-linux` - run the exported Linux client
 
 ## Incremental Plan
 
-1. Repo scaffolding (this step)
+1. Repo scaffolding
 2. Godot project skeleton and basic scene
-3. Offline game loop v0 (movement + buy/rent)
+3. Offline game loop v0 (movement + buy/rent) (this step)
 4. Property interactions v0 (buy, rent, ownership)
 5. Cards + jail + salida rules
 6. Economy extras (jackpot, capital vote, endgame triggers)
