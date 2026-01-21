@@ -41,3 +41,7 @@ Done means:
 
 - Avoid type inference syntax like `:=`.
 - Use explicit types to prevent Variant inference warnings (treated as errors).
+- Prefer fail-fast checks for required nodes; avoid silent `null` guards.
+- Use direct autoload access (e.g. `GameConfig.board_size = ...`) instead of `get_node_or_null` when the dependency is required.
+- Avoid redundant clamps when UI options are controlled and aligned with code enums.
+- Avoid variable names that shadow Node properties (e.g. `name`, `owner`, `hash`).

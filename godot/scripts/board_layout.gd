@@ -89,7 +89,8 @@ func _build_board() -> void:
 			side.position = Vector3(side_length, 0.0, 0.0)
 			side.rotation = Vector3(0.0, SIDE_TURN_RADIANS, 0.0)
 
-		_set_owner_recursive(side, owner)
+		if owner != null:
+			side.owner = owner
 		_ensure_side_tiles(side, tiles_per_side, owner)
 		prev_side = side
 
@@ -115,7 +116,8 @@ func _ensure_side_tiles(side: Node3D, tiles_per_side: int, owner: Node) -> void:
 		tile_instance.name = tile_name
 		tile_instance.position = Vector3(start_offset + (spacing * float(index - 2)), 0.0, 0.0)
 		side.add_child(tile_instance)
-		_set_owner_recursive(tile_instance, owner)
+		if owner != null:
+			tile_instance.owner = owner
 
 func _rebuild_tile_list(tiles_per_side: int) -> void:
 	_tiles = []
@@ -246,11 +248,3 @@ func _get_scene_owner() -> Node:
 	if not Engine.is_editor_hint():
 		return null
 	return get_tree().edited_scene_root
-
-func _set_owner_recursive(node: Node, owner: Node) -> void:
-	if node == null:
-		return
-	if owner != null:
-		node.owner = owner
-	for child in node.get_children():
-		_set_owner_recursive(child, owner)
