@@ -45,10 +45,13 @@ const CITY_BOTTOM_MATERIALS: Dictionary = {
 @export var side_strip_scene: PackedScene = preload("res://scenes/side_strip.tscn")
 @export var tile_scene: PackedScene = preload("res://scenes/tile.tscn")
 
+@onready var game_state: GameState = %GameState
+
 var _tiles: Array[Node3D] = []
 
 func _ready() -> void:
 	if not Engine.is_editor_hint():
+		assert(game_state)
 		if _sync_from_config():
 			return
 	_rebuild_board()
@@ -152,12 +155,14 @@ func _rebuild_tile_list(tiles_per_side: int) -> void:
 				_tiles.append(tile)
 
 func _apply_colors() -> void:
+	if game_state == null:
+		return
 	for tile_index in range(_tiles.size()):
 		var tile: Node3D = _tiles[tile_index]
 		if not tile is BoardTile:
 			continue
-		var info: Dictionary = get_tile_info(tile_index)
-		var tile_type: String = info.get("type", "unknown")
+		var info: TileInfo = game_state.get_tile_info(tile_index)
+		var tile_type: String = info.tile_type
 		var tile_color: Color = Color.WHITE
 		var top_material: Material = null
 		var bottom_material: Material = null
@@ -171,7 +176,7 @@ func _apply_colors() -> void:
 			"special_property":
 				tile_color = Color.WHITE
 			"property":
-				var city: String = info.get("city", "")
+				var city: String = info.city
 				tile_color = Palette.CITY_COLORS_BY_NAME.get(city, Color.WHITE)
 				top_material = CITY_TOP_MATERIALS.get(city, null)
 				bottom_material = CITY_BOTTOM_MATERIALS.get(city, null)
@@ -206,63 +211,6 @@ func get_tile_markers(tile_index: int) -> Array[Marker3D]:
 		if marker_node is Marker3D:
 			markers.append(marker_node)
 	return markers
-
-# TODO: it makes more sense for this info map to live in game config or maybe game state, I would leave board layout file only for the assembly of the board, not for query tile data as well 
-func get_tile_info(tile_index: int) -> Dictionary:
-	var info: Dictionary = {
-		"type": "unknown",
-		"city": "",
-		"incident_kind": "",
-	}
-
-	var tiles_per_side: int = _get_tiles_per_side()
-	if tiles_per_side == 0:
-		return info
-	if tile_index < 0 or tile_index >= board_size:
-		return info
-
-	@warning_ignore("integer_division")
-	var side_index: int = tile_index / tiles_per_side
-	var side_slot: int = tile_index % tiles_per_side
-
-	if side_slot == 0:
-		match side_index:
-			0:
-				info["type"] = "start"
-			3:
-				info["type"] = "inspection"
-			1, 2, 4, 5:
-				info["type"] = "incident"
-				info["incident_kind"] = _incident_kind_for_side(side_index)
-		return info
-
-	if side_slot == 1:
-		info["type"] = "special_property"
-		return info
-
-	info["type"] = "property"
-	info["city"] = _city_for_side(side_index)
-	return info
-
-func _get_tiles_per_side() -> int:
-	if board_size % SIDE_COUNT != 0:
-		return 0
-	assert(board_size % SIDE_COUNT == 0)
-	@warning_ignore("integer_division")
-	return board_size / SIDE_COUNT
-
-func _incident_kind_for_side(side_index: int) -> String:
-	match side_index:
-		1, 4:
-			return "suerte"
-		2, 5:
-			return "destino"
-	return ""
-
-func _city_for_side(side_index: int) -> String:
-	if side_index < 0 or side_index >= Palette.CITY_ORDER.size():
-		return ""
-	return Palette.CITY_ORDER[side_index]
 
 func _get_tile_names_for_side(tiles_per_side: int) -> Array[String]:
 	var names: Array[String] = [CORNER_TILE_NAME]

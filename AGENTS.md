@@ -6,6 +6,8 @@ the source of truth for project constraints while working in this repo.
 ## Workflow Notes
 
 - For PR workflow and version control guidance, use `jj` (not git).
+- Always track PR bookmarks with origin using `jj bookmark track <branch-name>@origin`.
+- Push is the final step and is done by the user (keyed); do not run `jj git push` yourself.
 - If you need broader AI instructions, see `/home/fcz/falafel/AGENTS.md`.
 
 ## Scope

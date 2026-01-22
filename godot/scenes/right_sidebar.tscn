@@ -30,6 +30,7 @@ theme_override_constants/margin_bottom = 20
 
 [node name="Content" type="VBoxContainer" parent="MarginContainer"]
 clip_contents = true
+custom_minimum_size = Vector2(600, 0)
 layout_mode = 2
 theme_override_constants/separation = 20
 
@@ -54,23 +55,30 @@ unique_name_in_owner = true
 layout_mode = 2
 text = "30s"
 
-[node name="MovementContainer" type="VBoxContainer" parent="MarginContainer/Content"]
-unique_name_in_owner = true
-layout_mode = 2
-theme_override_constants/separation = 15
-
-[node name="MovementResult" type="HBoxContainer" parent="MarginContainer/Content/MovementContainer"]
+[node name="HBoxContainer" type="BoxContainer" parent="MarginContainer/Content"]
 layout_mode = 2
 theme_override_constants/separation = 20
+vertical = true
 
-[node name="EndTurnButton" type="Button" parent="MarginContainer/Content/MovementContainer/MovementResult"]
+[node name="MovementContainer" type="BoxContainer" parent="MarginContainer/Content/HBoxContainer"]
 unique_name_in_owner = true
 layout_mode = 2
-size_flags_horizontal = 3
-size_flags_vertical = 3
-text = " End  Turn"
+size_flags_vertical = 0
+theme_override_constants/separation = 15
+vertical = true
 
-[node name="MovementButton" type="Button" parent="MarginContainer/Content/MovementContainer/MovementResult"]
+[node name="TileTypeLabel" type="Label" parent="MarginContainer/Content/HBoxContainer/MovementContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "You landed on a: Property"
+horizontal_alignment = 1
+
+[node name="MovementResult" type="BoxContainer" parent="MarginContainer/Content/HBoxContainer/MovementContainer"]
+layout_mode = 2
+size_flags_horizontal = 4
+theme_override_constants/separation = 20
+
+[node name="MovementButton" type="Button" parent="MarginContainer/Content/HBoxContainer/MovementContainer/MovementResult"]
 unique_name_in_owner = true
 visible = false
 custom_minimum_size = Vector2(100, 50)
@@ -78,13 +86,15 @@ layout_mode = 2
 size_flags_horizontal = 3
 text = "Roll Dices"
 
-[node name="DicePanel1" type="Panel" parent="MarginContainer/Content/MovementContainer/MovementResult"]
+[node name="DicePanel1" type="Panel" parent="MarginContainer/Content/HBoxContainer/MovementContainer/MovementResult"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(50, 50)
 layout_mode = 2
+size_flags_horizontal = 0
+size_flags_vertical = 0
 theme_override_styles/panel = SubResource("StyleBoxFlat_u5sy4")
 
-[node name="DiceLabel1" type="Label" parent="MarginContainer/Content/MovementContainer/MovementResult/DicePanel1"]
+[node name="DiceLabel1" type="Label" parent="MarginContainer/Content/HBoxContainer/MovementContainer/MovementResult/DicePanel1"]
 unique_name_in_owner = true
 layout_mode = 1
 anchors_preset = 8
@@ -103,13 +113,15 @@ text = " "
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="DicePanel2" type="Panel" parent="MarginContainer/Content/MovementContainer/MovementResult"]
+[node name="DicePanel2" type="Panel" parent="MarginContainer/Content/HBoxContainer/MovementContainer/MovementResult"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(50, 50)
 layout_mode = 2
+size_flags_horizontal = 0
+size_flags_vertical = 0
 theme_override_styles/panel = SubResource("StyleBoxFlat_u5sy4")
 
-[node name="DiceLabel2" type="Label" parent="MarginContainer/Content/MovementContainer/MovementResult/DicePanel2"]
+[node name="DiceLabel2" type="Label" parent="MarginContainer/Content/HBoxContainer/MovementContainer/MovementResult/DicePanel2"]
 unique_name_in_owner = true
 layout_mode = 1
 anchors_preset = 8
@@ -128,35 +140,47 @@ text = " "
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="TileTypeLabel" type="Label" parent="MarginContainer/Content"]
+[node name="PropertyContainer" type="VBoxContainer" parent="MarginContainer/Content/HBoxContainer"]
 unique_name_in_owner = true
+custom_minimum_size = Vector2(300, 0)
 layout_mode = 2
-text = "You landed on a: Property"
-
-[node name="PropertyContainer" type="VBoxContainer" parent="MarginContainer/Content"]
-unique_name_in_owner = true
-layout_mode = 2
+size_flags_vertical = 3
 theme_override_constants/separation = 10
 
-[node name="Image" type="TextureRect" parent="MarginContainer/Content/PropertyContainer"]
+[node name="HBoxContainer" type="HBoxContainer" parent="MarginContainer/Content/HBoxContainer/PropertyContainer"]
+layout_mode = 2
+
+[node name="BoxContainer" type="BoxContainer" parent="MarginContainer/Content/HBoxContainer/PropertyContainer/HBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+vertical = true
+
+[node name="HBoxContainer" type="HBoxContainer" parent="MarginContainer/Content/HBoxContainer/PropertyContainer/HBoxContainer/BoxContainer"]
+layout_mode = 2
+
+[node name="PriceLabel" type="Label" parent="MarginContainer/Content/HBoxContainer/PropertyContainer/HBoxContainer/BoxContainer/HBoxContainer"]
 unique_name_in_owner = true
-clip_contents = true
 layout_mode = 2
+size_flags_horizontal = 3
+text = "1"
+
+[node name="Image" type="TextureRect" parent="MarginContainer/Content/HBoxContainer/PropertyContainer/HBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
 texture = ExtResource("1_jxb3w")
-expand_mode = 4
+expand_mode = 5
 
-[node name="HBoxContainer" type="HBoxContainer" parent="MarginContainer/Content/PropertyContainer"]
-layout_mode = 2
-
-[node name="Label" type="Label" parent="MarginContainer/Content/PropertyContainer/HBoxContainer"]
-layout_mode = 2
-text = "Price:"
-
-[node name="Label2" type="Label" parent="MarginContainer/Content/PropertyContainer/HBoxContainer"]
-layout_mode = 2
-text = "1 EVA"
-
-[node name="Button2" type="Button" parent="MarginContainer/Content/PropertyContainer"]
+[node name="Button2" type="Button" parent="MarginContainer/Content/HBoxContainer/PropertyContainer"]
 custom_minimum_size = Vector2(0, 50)
 layout_mode = 2
 text = "Buy Property"
+
+[node name="EndTurnButton" type="Button" parent="MarginContainer/Content/HBoxContainer"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 50)
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 10
+text = " End  Turn"
