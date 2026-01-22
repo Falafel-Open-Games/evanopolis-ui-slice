@@ -19,3 +19,8 @@ build-linux:
 # Run the exported Linux client.
 run-linux:
   ./build/linux-client/evanopolis_client.x86_64
+
+# Update build_id in game_config.gd with the current jj revision id.
+sync-build-id:
+  build_id=$(jj log -r @ --no-graph -T 'change_id.short()' | tr -d '\n') && \
+    sed -i -e "s|^@export var build_id: String = \".*\"|@export var build_id: String = \"${build_id}\"|" godot/scripts/autoload/game_config.gd

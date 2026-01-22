@@ -27,6 +27,7 @@ anchor_bottom = 1.0
 [node name="VBox" type="VBoxContainer" parent="Center"]
 custom_minimum_size = Vector2(480, 320)
 layout_mode = 2
+theme_override_constants/separation = 24
 alignment = 1
 
 [node name="Title" type="Label" parent="Center/VBox"]
@@ -36,19 +37,23 @@ horizontal_alignment = 1
 vertical_alignment = 1
 
 [node name="Subtitle" type="Label" parent="Center/VBox"]
+unique_name_in_owner = true
 layout_mode = 2
 text = "Offline prototype"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="HBoxContainer" type="HBoxContainer" parent="Center/VBox"]
+[node name="HBoxContainer2" type="HBoxContainer" parent="Center/VBox"]
 layout_mode = 2
 
-[node name="Board Size Label" type="Label" parent="Center/VBox/HBoxContainer"]
+[node name="HBoxContainer" type="HBoxContainer" parent="Center/VBox/HBoxContainer2"]
+layout_mode = 2
+
+[node name="Board Size Label" type="Label" parent="Center/VBox/HBoxContainer2/HBoxContainer"]
 layout_mode = 2
 text = "Board Size:"
 
-[node name="BoardSizeSelector" type="OptionButton" parent="Center/VBox/HBoxContainer"]
+[node name="BoardSizeSelector" type="OptionButton" parent="Center/VBox/HBoxContainer2/HBoxContainer"]
 unique_name_in_owner = true
 layout_mode = 2
 selected = 0
@@ -60,14 +65,14 @@ popup/item_1/id = 1
 popup/item_2/text = "36"
 popup/item_2/id = 2
 
-[node name="HBoxContainerPlayers" type="HBoxContainer" parent="Center/VBox"]
+[node name="HBoxContainerPlayers" type="HBoxContainer" parent="Center/VBox/HBoxContainer2"]
 layout_mode = 2
 
-[node name="Player Count Label" type="Label" parent="Center/VBox/HBoxContainerPlayers"]
+[node name="Player Count Label" type="Label" parent="Center/VBox/HBoxContainer2/HBoxContainerPlayers"]
 layout_mode = 2
 text = "Players:"
 
-[node name="PlayerCountSelector" type="OptionButton" parent="Center/VBox/HBoxContainerPlayers"]
+[node name="PlayerCountSelector" type="OptionButton" parent="Center/VBox/HBoxContainer2/HBoxContainerPlayers"]
 unique_name_in_owner = true
 layout_mode = 2
 selected = 4
@@ -83,14 +88,14 @@ popup/item_3/id = 3
 popup/item_4/text = "6"
 popup/item_4/id = 4
 
-[node name="HBoxContainerTurnTime" type="HBoxContainer" parent="Center/VBox"]
+[node name="HBoxContainerTurnTime" type="HBoxContainer" parent="Center/VBox/HBoxContainer2"]
 layout_mode = 2
 
-[node name="Turn Time Label" type="Label" parent="Center/VBox/HBoxContainerTurnTime"]
+[node name="Turn Time Label" type="Label" parent="Center/VBox/HBoxContainer2/HBoxContainerTurnTime"]
 layout_mode = 2
 text = "Turn Time:"
 
-[node name="TurnTimeSelector" type="OptionButton" parent="Center/VBox/HBoxContainerTurnTime"]
+[node name="TurnTimeSelector" type="OptionButton" parent="Center/VBox/HBoxContainer2/HBoxContainerTurnTime"]
 unique_name_in_owner = true
 layout_mode = 2
 selected = 1
@@ -111,6 +116,7 @@ text = "Game ID:"
 
 [node name="GameIdInput" type="LineEdit" parent="Center/VBox/HBoxContainerGameId"]
 unique_name_in_owner = true
+custom_minimum_size = Vector2(170, 0)
 layout_mode = 2
 placeholder_text = "Auto-generated"
 

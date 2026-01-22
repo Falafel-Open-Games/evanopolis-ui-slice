@@ -9,6 +9,7 @@ extends Node
 @onready var board_layout: Node = %BoardLayout
 @onready var game_state: GameState = %GameState
 @onready var game_id_label: Label = %GameIdLabel
+@onready var build_id_label: Label = %BuildIdLabel
 
 var turn_elapsed: float = 0.0
 var turn_timer_active: bool = false
@@ -18,8 +19,10 @@ func _ready() -> void:
 	assert(right_sidebar)
 	assert(left_sidebar_list)
 	assert(game_id_label)
+	assert(build_id_label)
 	assert(pawns_root)
 	game_id_label.text = "Game ID: %s" % GameConfig.game_id
+	build_id_label.text = "Build ID: %s" % GameConfig.build_id
 	_apply_player_visibility(GameConfig.player_count)
 	_on_player_changed(game_state.current_player_index)
 	_place_all_pawns_at_start()

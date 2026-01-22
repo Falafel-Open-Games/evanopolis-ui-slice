@@ -5,6 +5,7 @@ extends Control
 @onready var turn_time_selector: OptionButton = %TurnTimeSelector
 @onready var game_id_input: LineEdit = %GameIdInput
 @onready var start_button: Button = %StartButton
+@onready var subtitle: Label = %Subtitle
 
 @export var game_scene_path: PackedScene
 
@@ -15,6 +16,7 @@ const TURN_DURATIONS: Array[int] = [10, 30, 60]
 func _ready() -> void:
 	game_id_input.text = Crypto.new().generate_random_bytes(5).hex_encode()
 	start_button.pressed.connect(_on_start_pressed)
+	subtitle.text = "Offline prototype (build %s)" % [GameConfig.build_id]
 
 func _on_start_pressed() -> void:
 	GameConfig.board_size = BOARD_SIZES[board_size_selector.selected]
