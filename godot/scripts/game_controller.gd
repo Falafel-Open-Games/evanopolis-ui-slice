@@ -85,12 +85,19 @@ func _on_dice_requested() -> void:
 	right_sidebar.apply_dice_result(die_1, die_2)
 
 func _update_tile_info(tile_index: int) -> void:
-	assert(board_layout.has_method("get_tile_info"))
-	var info: Dictionary = board_layout.get_tile_info(tile_index)
-	var tile_type: String = info.get("type", "unknown")
-	var city: String = info.get("city", "")
-	var incident_kind: String = info.get("incident_kind", "")
-	right_sidebar.update_tile_info(tile_type, city, incident_kind)
+	assert(game_state)
+	var info: TileInfo = game_state.get_tile_info(tile_index)
+	var tile_type: String = info.tile_type
+	var city: String = info.city
+	var incident_kind: String = info.incident_kind
+	right_sidebar.update_tile_info(
+		tile_type,
+		city,
+		incident_kind,
+		info.property_price,
+		info.special_property_name,
+		info.special_property_price
+	)
 
 func _place_all_pawns_at_start() -> void:
 	if game_state == null:

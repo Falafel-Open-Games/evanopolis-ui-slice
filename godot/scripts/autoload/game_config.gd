@@ -4,4 +4,4 @@ extends Node
 @export_range(2, 6, 1) var player_count: int = 6
 @export_enum("10:10", "30:30", "60:60") var turn_duration: int = 30
 @export var game_id: String = ""
-@export var build_id: String = "woozlnwkwzlr"
+@export var build_id: String = "smtuovkzywqr"

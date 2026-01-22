@@ -17,7 +17,7 @@ signal dice_requested
 			_apply_player_state()
 
 @onready var end_turn_button: Button = %EndTurnButton
-@onready var property_container: VBoxContainer = %PropertyContainer
+@onready var property_container: BoxContainer = %PropertyContainer
 @onready var property_image: TextureRect = %Image
 @onready var movement_button: Button = %MovementButton
 @onready var dice_panel_1: Panel = %DicePanel1
@@ -28,8 +28,10 @@ signal dice_requested
 @onready var image: TextureRect = %Image
 @onready var timer_bar: ProgressBar = %TimerBar
 @onready var timer_label: Label = %TimerLabel
-@onready var movement_container: VBoxContainer = %MovementContainer
-@onready var timer_container: HBoxContainer = %TimerContainer
+@onready var movement_container: BoxContainer = %MovementContainer
+@onready var timer_container: BoxContainer = %TimerContainer
+@onready var price_label: Label = %PriceLabel
+
 
 # Called when the node enters the scene tree for the first time.
 func _ready() -> void:
@@ -93,6 +95,8 @@ func _set_turn_start_visibility() -> void:
 		tile_type_label.visible = false
 	if property_container != null:
 		property_container.visible = false
+	if price_label != null:
+		price_label.visible = false
 
 func set_turn_timer(duration_seconds: float, elapsed_seconds: float) -> void:
 	if timer_bar == null:
@@ -137,19 +141,34 @@ func _set_panel_color(panel: Panel, color: Color) -> void:
 		panel_box.bg_color = color
 	panel.add_theme_stylebox_override("panel", panel_box)
 
-func update_tile_info(tile_type: String, city: String, incident_kind: String) -> void:
-	_update_tile_type_label(tile_type, city, incident_kind)
+func update_tile_info(
+	tile_type: String,
+	city: String,
+	incident_kind: String,
+	property_price: float,
+	special_name: String,
+	special_price: float
+) -> void:
+	_update_tile_type_label(tile_type, city, incident_kind, special_name)
 	if property_container == null:
 		return
 	if tile_type == "property" or tile_type == "special_property":
 		property_container.visible = true
 		_update_property_image(city)
+		_update_price_label(tile_type, property_price, special_name, special_price)
 	else:
 		property_container.visible = false
 		if property_image != null:
 			property_image.texture = null
+		if price_label != null:
+			price_label.visible = false
 
-func _update_tile_type_label(tile_type: String, city: String, incident_kind: String) -> void:
+func _update_tile_type_label(
+	tile_type: String,
+	city: String,
+	incident_kind: String,
+	special_name: String
+) -> void:
 	if tile_type_label == null:
 		return
 	var label_text: String = "You landed on a: "
@@ -164,8 +183,8 @@ func _update_tile_type_label(tile_type: String, city: String, incident_kind: Str
 				label_text += " (%s)" % [incident_kind.capitalize()]
 		"special_property":
 			label_text += "Special Property"
-			if not city.is_empty():
-				label_text += " (%s)" % [city]
+			if not special_name.is_empty():
+				label_text += " (%s)" % [special_name]
 		"property":
 			label_text += "Property"
 			if not city.is_empty():
@@ -173,6 +192,23 @@ func _update_tile_type_label(tile_type: String, city: String, incident_kind: Str
 		_:
 			label_text += "Unknown"
 	tile_type_label.text = label_text
+
+func _update_price_label(
+	tile_type: String,
+	property_price: float,
+	special_name: String,
+	special_price: float
+) -> void:
+	if price_label == null:
+		return
+	if tile_type == "property":
+		price_label.text = "Price: %.1f" % property_price
+		price_label.visible = true
+	elif tile_type == "special_property":
+		price_label.text = "Price: %.1f" % special_price
+		price_label.visible = true
+	else:
+		price_label.visible = false
 
 func _update_property_image(city: String) -> void:
 	if property_image == null:
