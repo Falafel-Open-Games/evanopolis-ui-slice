@@ -126,6 +126,12 @@ RendaFinal = RendaBase × bonusGlobal × bonusCidade
 2. Move o total
 3. Executa ação da casa (comprar, pagar, carta etc.)
 
+### Compra de propriedades (offline slice)
+
+- Propriedades e especiais sem dono podem ser compradas no turno atual.
+- Se o saldo do jogador for menor que o custo, a compra fica indisponível.
+- Ao comprar, o custo é descontado do saldo do jogador e a casa passa a ter dono.
+
 ### Temporizador de turno (offline)
 
 - Cada turno tem um tempo limite configurável.

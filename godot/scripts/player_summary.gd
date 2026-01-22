@@ -1,12 +1,19 @@
+class_name PlayerSummary
 extends FoldableContainer
 
-@export_range(0, 5, 1) var player_index = 0
+@export_range(0, 5, 1) var player_index: int = 0
+@onready var balance_label: Label = %BalanceLabel
 
 func _ready() -> void:
+	assert(balance_label)
 	_apply_title_panel_style(Palette.get_player_dark(player_index))
 	
 	# set panel title based on player index
 	self.title = "Player %d" % [player_index + 1]
+
+func set_balance(balance: float) -> void:
+	assert(balance_label)
+	balance_label.text = "%.1f" % balance
 
 func _apply_title_panel_style(dark_color: Color) -> void:
 	self.add_theme_color_override("font_color", Color.WHITE)

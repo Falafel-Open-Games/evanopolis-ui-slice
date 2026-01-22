@@ -8,6 +8,8 @@ the source of truth for project constraints while working in this repo.
 - For PR workflow and version control guidance, use `jj` (not git).
 - Always track PR bookmarks with origin using `jj bookmark track <branch-name>@origin`.
 - Push is the final step and is done by the user (keyed); do not run `jj git push` yourself.
+- Before opening a PR, run `just sync-build-id` so the build displays the correct build id.
+- When cutting a PR, pick a branch name yourself and track the bookmark with origin without asking.
 - If you need broader AI instructions, see `/home/fcz/falafel/AGENTS.md`.
 
 ## Scope
@@ -44,6 +46,7 @@ Done means:
 - Avoid type inference syntax like `:=`.
 - Use explicit types to prevent Variant inference warnings (treated as errors).
 - Prefer fail-fast checks for required nodes; avoid silent `null` guards.
+- Use asserts and fail-fast behavior instead of defensive early returns when invariants are under our control. Do not add defensive guards for expected game flow.
 - Use direct autoload access (e.g. `GameConfig.board_size = ...`) instead of `get_node_or_null` when the dependency is required.
 - Avoid redundant clamps when UI options are controlled and aligned with code enums.
 - Avoid variable names that shadow Node properties (e.g. `name`, `owner`, `hash`).

@@ -5,12 +5,10 @@
 [node name="Player  Summary" type="FoldableContainer"]
 theme_override_colors/font_color = Color(0, 0.6343567, 0.8745098, 1)
 theme_override_colors/collapsed_font_color = Color(0, 0.63529414, 0.8745098, 1)
-folded = true
 title = "Player 1"
 script = ExtResource("1_d6wb6")
 
 [node name="VBoxContainer" type="VBoxContainer" parent="."]
-visible = false
 layout_mode = 2
 
 [node name="MarginContainer" type="MarginContainer" parent="VBoxContainer"]
@@ -23,10 +21,8 @@ theme_override_constants/margin_bottom = 20
 [node name="HBoxContainer" type="HBoxContainer" parent="VBoxContainer/MarginContainer"]
 layout_mode = 2
 
-[node name="Label" type="Label" parent="VBoxContainer/MarginContainer/HBoxContainer"]
+[node name="BalanceLabel" type="Label" parent="VBoxContainer/MarginContainer/HBoxContainer"]
+unique_name_in_owner = true
 layout_mode = 2
-text = "EVA"
-
-[node name="Label2" type="Label" parent="VBoxContainer/MarginContainer/HBoxContainer"]
-layout_mode = 2
-text = "1500"
+size_flags_horizontal = 3
+text = "0.0"
