@@ -1,6 +1,41 @@
-[gd_scene load_steps=5 format=4 uid="uid://75mr7nsx53p0"]
+[gd_scene load_steps=8 format=4 uid="uid://75mr7nsx53p0"]
 
 [ext_resource type="Script" uid="uid://kkctmgrcsfau" path="res://scripts/board_tile.gd" id="1_4kwbn"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_j6a7j"]
+resource_name = "Material_0"
+
+[sub_resource type="ArrayMesh" id="ArrayMesh_q2bnu"]
+_surfaces = [{
+"aabb": AABB(-0.08656675, 0.005, -0.06830127, 0.17313357, 1e-05, 0.1365819),
+"format": 34896613377,
+"index_count": 24,
+"index_data": PackedByteArray("AAABAAIAAgABAAMABAADAAEAAgADAAUABAAGAAMABQADAAcABgAIAAMABwADAAgA"),
+"name": "Material_0",
+"primitive": 3,
+"uv_scale": Vector4(0, 0, 0, 0),
+"vertex_count": 9,
+"vertex_data": PackedByteArray("7kkAAAAAAAD/fwAAkScAAAAAAABRogAA+8kAALddAAAQtgAAAAAAAOR/AADr/wAA//8AAFGiAAD/fwAA//8AABqAAADr/wAA")
+}]
+blend_shape_mode = 0
+
+[sub_resource type="ArrayMesh" id="ArrayMesh_shinn"]
+resource_name = "corner_tile_face_Mesh_0_001"
+_surfaces = [{
+"aabb": AABB(-0.08656675, 0.005, -0.06830127, 0.17313357, 1e-05, 0.1365819),
+"attribute_data": PackedByteArray("qqr//6KG//+qqv9/qqr/f6KG//9VVf//qqr/f1VV//9wVf9/cFX/f1VV//9eVf9/XlX/f1VV//9VVRaAVVX//7Zg879cef//VVX//1VV/3+2YPO/VVX/f46q/3+2YPO/"),
+"format": 34896613399,
+"index_count": 24,
+"index_data": PackedByteArray("AAABAAIAAwAEAAUABgAHAAgACQAKAAsADAANAA4ADwAQABEAEgATABQAFQAWABcA"),
+"material": SubResource("StandardMaterial3D_j6a7j"),
+"name": "Material_0",
+"primitive": 3,
+"uv_scale": Vector4(0, 0, 0, 0),
+"vertex_count": 24,
+"vertex_data": PackedByteArray("7kkAAAAA//D/fwAAkSf/8AAAAABRov/wAAAAAFGi//D/fwAAkSf/8PvJAAC3Xf/wAAAAAFGi//D7yQAAt13/8OR/AADr///w5H8AAOv///D7yQAAt13/8P9/AAD////w/38AAP////D7yQAAt13/8BqAAADr/wDxELYAAAAA//D7yQAAt13/8P9/AACRJ//wELYAAAAA//D//wAAUaL/8PvJAAC3Xf/w//8AAFGi//AagAAA6///8PvJAAC3Xf/wjscfD47HHw+Oxx8PjscfD47HHw+Oxx8PjscfD47HHw+Oxx8PjscfD47HHw+Oxx8PjscfD47HHw+Oxx4PHo9vuB6Pb7gej2+4Ho9vuB6Pb7gej2+4Ho9vuB6Pb7gej2+4")
+}]
+blend_shape_mode = 0
+shadow_mesh = SubResource("ArrayMesh_q2bnu")
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_wnpk2"]
 
@@ -18,13 +53,26 @@ _surfaces = [{
 [sub_resource type="BoxMesh" id="BoxMesh_wnpk2"]
 size = Vector3(0.1, 0.01, 0.1)
 
-[node name="CornerTile" type="Node3D"]
+[node name="CornerTile" type="Node3D" node_paths=PackedStringArray("top_face", "bottom_face", "side_mesh")]
 script = ExtResource("1_4kwbn")
+top_face = NodePath("TopFace")
+bottom_face = NodePath("BottomFace")
+side_mesh = NodePath("SideMesh")
 
-[node name="CSGBakedMeshInstance3D" type="MeshInstance3D" parent="."]
+[node name="TopFace" type="MeshInstance3D" parent="."]
+transform = Transform3D(0.4, 0, 0, 0, 0.4, 0, 0, 0, 0.4, 0, 0.0031615188, -0.004)
+mesh = SubResource("ArrayMesh_shinn")
+skeleton = NodePath("")
+
+[node name="SideMesh" type="MeshInstance3D" parent="."]
 transform = Transform3D(0.4, 0, 0, 0, 0.4, 0, 0, 0, 0.4, 0, 0.002, -0.004)
 material_override = SubResource("StandardMaterial3D_wnpk2")
 mesh = SubResource("ArrayMesh_y8lo4")
+
+[node name="BottomFace" type="MeshInstance3D" parent="."]
+transform = Transform3D(-0.4, -3.4969112e-08, 0, 3.4969112e-08, -0.4, 0, 0, 0, 0.4, 0, 0.0006854078, -0.004)
+mesh = SubResource("ArrayMesh_shinn")
+skeleton = NodePath("")
 
 [node name="PawnMarkers" type="Node3D" parent="."]
 

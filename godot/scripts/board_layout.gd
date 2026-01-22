@@ -18,6 +18,24 @@ const BASE_TILE_SPACING: float = 0.045
 const SIDE_LENGTH_FUDGE: float = 0.00152004
 const SIDE_TURN_RADIANS: float = 1.0471976
 
+const CITY_TOP_MATERIALS: Dictionary = {
+	"Caracas": preload("res://materials/caracas-top.tres"),
+	"Assuncion": preload("res://materials/assuncion-top.tres"),
+	"Ciudad del Este": preload("res://materials/ciudad-del-este-top.tres"),
+	"Minsk": preload("res://materials/minsk-top.tres"),
+	"Irkutsk": preload("res://materials/irkutsk-top.tres"),
+	"Rockdale": preload("res://materials/rockdale-top.tres"),
+}
+
+const CITY_BOTTOM_MATERIALS: Dictionary = {
+	"Caracas": preload("res://materials/caracas-bottom.tres"),
+	"Assuncion": preload("res://materials/assuncion-bottom.tres"),
+	"Ciudad del Este": preload("res://materials/ciudad-del-este-bottom.tres"),
+	"Minsk": preload("res://materials/minsk-bottom.tres"),
+	"Irkutsk": preload("res://materials/irkutsk-bottom.tres"),
+	"Rockdale": preload("res://materials/rockdale-bottom.tres"),
+}
+
 @export_enum("24:24", "30:30", "36:36") var board_size: int = 24:
 	set(value):
 		board_size = value
@@ -141,6 +159,8 @@ func _apply_colors() -> void:
 		var info: Dictionary = get_tile_info(tile_index)
 		var tile_type: String = info.get("type", "unknown")
 		var tile_color: Color = Color.WHITE
+		var top_material: Material = null
+		var bottom_material: Material = null
 		match tile_type:
 			"start":
 				tile_color = Color.CORAL
@@ -153,7 +173,11 @@ func _apply_colors() -> void:
 			"property":
 				var city: String = info.get("city", "")
 				tile_color = Palette.CITY_COLORS_BY_NAME.get(city, Color.WHITE)
+				top_material = CITY_TOP_MATERIALS.get(city, null)
+				bottom_material = CITY_BOTTOM_MATERIALS.get(city, null)
 		tile.tile_color = tile_color
+		tile.top_material = top_material
+		tile.bottom_material = bottom_material
 
 func get_board_tiles() -> Array[Node3D]:
 	if _tiles.is_empty():
