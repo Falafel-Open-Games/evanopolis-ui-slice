@@ -1,18 +1,38 @@
-[gd_scene load_steps=4 format=3 uid="uid://q6cux836c2th"]
+[gd_scene load_steps=7 format=3 uid="uid://q6cux836c2th"]
 
 [ext_resource type="Script" uid="uid://kkctmgrcsfau" path="res://scripts/board_tile.gd" id="1_u6qf7"]
+[ext_resource type="Material" uid="uid://bx7h555sdo2hu" path="res://materials/caracas-top.tres" id="2_jy7pm"]
+[ext_resource type="Material" uid="uid://crqytprwpd4h8" path="res://materials/caracas-bottom.tres" id="3_q7utx"]
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_3dk36"]
+[sub_resource type="PlaneMesh" id="PlaneMesh_6p3j2"]
+size = Vector2(0.1, 0.1)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_jy7pm"]
 
 [sub_resource type="BoxMesh" id="BoxMesh_uiyn6"]
 size = Vector3(0.1, 0.01, 0.1)
 
-[node name="Tile" type="Node3D"]
+[node name="Tile" type="Node3D" node_paths=PackedStringArray("top_face", "bottom_face", "side_mesh")]
 script = ExtResource("1_u6qf7")
+top_face = NodePath("TopFace")
+bottom_face = NodePath("BottomFace")
+side_mesh = NodePath("HeigthMesh")
+top_material = ExtResource("2_jy7pm")
+bottom_material = ExtResource("3_q7utx")
 
-[node name="Mesh" type="MeshInstance3D" parent="."]
+[node name="TopFace" type="MeshInstance3D" parent="."]
+transform = Transform3D(0.4, 0, 0, 0, 0.4, 0, 0, 0, 0.4, 0, 0.004966775, 0)
+mesh = SubResource("PlaneMesh_6p3j2")
+surface_material_override/0 = ExtResource("2_jy7pm")
+
+[node name="BottomFace" type="MeshInstance3D" parent="."]
+transform = Transform3D(-0.4, 3.4969112e-08, 0, -3.4969112e-08, -0.4, 0, 0, 0, 0.4, 0, -0.000548854, 0)
+mesh = SubResource("PlaneMesh_6p3j2")
+surface_material_override/0 = ExtResource("3_q7utx")
+
+[node name="HeigthMesh" type="MeshInstance3D" parent="."]
 transform = Transform3D(0.4, 0, 0, 0, 0.4, 0, 0, 0, 0.4, 0, 0.002, 0)
-material_override = SubResource("StandardMaterial3D_3dk36")
+material_override = SubResource("StandardMaterial3D_jy7pm")
 mesh = SubResource("BoxMesh_uiyn6")
 
 [node name="PawnMarkers" type="Node3D" parent="."]
