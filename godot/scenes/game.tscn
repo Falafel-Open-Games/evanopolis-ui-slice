@@ -163,13 +163,17 @@ player_index = 5
 unique_name_in_owner = true
 layout_mode = 2
 
-[node name="GameIdLabel" type="Label" parent="Control"]
+[node name="GameIdLabel" type="Label" parent="Control/MarginContainer"]
 unique_name_in_owner = true
-layout_mode = 1
-anchors_preset = 2
-anchor_top = 1.0
-anchor_bottom = 1.0
-offset_top = -23.0
-offset_right = 280.0
-grow_vertical = 0
+layout_mode = 2
+size_flags_horizontal = 0
+size_flags_vertical = 8
 text = "Game ID: "
+
+[node name="BuildIdLabel" type="Label" parent="Control/MarginContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 8
+size_flags_vertical = 8
+text = " Build ID:"
+horizontal_alignment = 2
