@@ -38,3 +38,9 @@ Log small decisions here so we can track why the UI slice behaves the way it doe
 - Decision: Centralize player and city color constants in the `Palette` autoload.
 - Rationale: Avoids color duplication across UI components and board logic.
 - Consequences: UI scripts should reference `Palette` for player colors.
+
+## 2026-01-12: Tile ownership visual cue in offline slice
+
+- Decision: Flip owned property tiles 180 degrees on the Z axis to expose the bottom face.
+- Rationale: Provides a fast, low-cost visual cue for ownership in the offline build.
+- Consequences: Board tiles are expected to support a distinct bottom face material.

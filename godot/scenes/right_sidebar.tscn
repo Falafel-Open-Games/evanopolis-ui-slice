@@ -155,10 +155,17 @@ layout_mode = 2
 size_flags_horizontal = 3
 vertical = true
 
-[node name="HBoxContainer" type="HBoxContainer" parent="MarginContainer/Content/HBoxContainer/PropertyContainer/HBoxContainer/BoxContainer"]
+[node name="HBoxContainer" type="BoxContainer" parent="MarginContainer/Content/HBoxContainer/PropertyContainer/HBoxContainer/BoxContainer"]
 layout_mode = 2
+vertical = true
 
 [node name="PriceLabel" type="Label" parent="MarginContainer/Content/HBoxContainer/PropertyContainer/HBoxContainer/BoxContainer/HBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+text = "1"
+
+[node name="OwnerLabel" type="Label" parent="MarginContainer/Content/HBoxContainer/PropertyContainer/HBoxContainer/BoxContainer/HBoxContainer"]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
@@ -172,7 +179,8 @@ size_flags_vertical = 3
 texture = ExtResource("1_jxb3w")
 expand_mode = 5
 
-[node name="Button2" type="Button" parent="MarginContainer/Content/HBoxContainer/PropertyContainer"]
+[node name="BuyButton" type="Button" parent="MarginContainer/Content/HBoxContainer/PropertyContainer"]
+unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 50)
 layout_mode = 2
 text = "Buy Property"

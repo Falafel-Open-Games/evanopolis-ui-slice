@@ -12,25 +12,28 @@ size = Vector2(0.1, 0.1)
 [sub_resource type="BoxMesh" id="BoxMesh_uiyn6"]
 size = Vector3(0.1, 0.01, 0.1)
 
-[node name="Tile" type="Node3D" node_paths=PackedStringArray("top_face", "bottom_face", "side_mesh")]
+[node name="Tile" type="Node3D" node_paths=PackedStringArray("mesh_root", "top_face", "bottom_face", "side_mesh")]
 script = ExtResource("1_u6qf7")
-top_face = NodePath("TopFace")
-bottom_face = NodePath("BottomFace")
-side_mesh = NodePath("HeigthMesh")
+mesh_root = NodePath("MeshRoot")
+top_face = NodePath("MeshRoot/TopFace")
+bottom_face = NodePath("MeshRoot/BottomFace")
+side_mesh = NodePath("MeshRoot/HeigthMesh")
 top_material = ExtResource("2_jy7pm")
 bottom_material = ExtResource("3_q7utx")
 
-[node name="TopFace" type="MeshInstance3D" parent="."]
+[node name="MeshRoot" type="Node3D" parent="."]
+
+[node name="TopFace" type="MeshInstance3D" parent="MeshRoot"]
 transform = Transform3D(0.4, 0, 0, 0, 0.4, 0, 0, 0, 0.4, 0, 0.004966775, 0)
 mesh = SubResource("PlaneMesh_6p3j2")
 surface_material_override/0 = ExtResource("2_jy7pm")
 
-[node name="BottomFace" type="MeshInstance3D" parent="."]
+[node name="BottomFace" type="MeshInstance3D" parent="MeshRoot"]
 transform = Transform3D(-0.4, 3.4969112e-08, 0, -3.4969112e-08, -0.4, 0, 0, 0, 0.4, 0, -0.000548854, 0)
 mesh = SubResource("PlaneMesh_6p3j2")
 surface_material_override/0 = ExtResource("3_q7utx")
 
-[node name="HeigthMesh" type="MeshInstance3D" parent="."]
+[node name="HeigthMesh" type="MeshInstance3D" parent="MeshRoot"]
 transform = Transform3D(0.4, 0, 0, 0, 0.4, 0, 0, 0, 0.4, 0, 0.002, 0)
 material_override = SubResource("StandardMaterial3D_jy7pm")
 mesh = SubResource("BoxMesh_uiyn6")
