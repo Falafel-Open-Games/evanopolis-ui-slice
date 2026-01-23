@@ -157,6 +157,10 @@ func _rebuild_tile_list(tiles_per_side: int) -> void:
 func _apply_colors() -> void:
 	if game_state == null:
 		return
+	if Engine.is_editor_hint():
+		var script: Script = game_state.get_script()
+		if script == null or not script.is_tool():
+			return
 	for tile_index in range(_tiles.size()):
 		var tile: Node3D = _tiles[tile_index]
 		if not tile is BoardTile:
