@@ -61,21 +61,24 @@ bottom_face = NodePath("MeshRoot/BottomFace")
 side_mesh = NodePath("MeshRoot/SideMesh")
 
 [node name="MeshRoot" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.0019139657, 0)
 
 [node name="TopFace" type="MeshInstance3D" parent="MeshRoot"]
-transform = Transform3D(0.4, 0, 0, 0, 0.4, 0, 0, 0, 0.4, 0, 0.0031615188, -0.004)
+transform = Transform3D(0.4, 0, 0, 0, 0.4, 0, 0, 0, 0.4, 0, 0.0012475541, -0.004)
 mesh = SubResource("ArrayMesh_shinn")
 skeleton = NodePath("")
+surface_material_override/0 = SubResource("StandardMaterial3D_wnpk2")
 
 [node name="SideMesh" type="MeshInstance3D" parent="MeshRoot"]
-transform = Transform3D(0.4, 0, 0, 0, 0.4, 0, 0, 0, 0.4, 0, 0.002, -0.004)
+transform = Transform3D(0.4, 0, 0, 0, 0.4, 0, 0, 0, 0.4, 0, 8.603535e-05, -0.004)
 material_override = SubResource("StandardMaterial3D_wnpk2")
 mesh = SubResource("ArrayMesh_y8lo4")
 
 [node name="BottomFace" type="MeshInstance3D" parent="MeshRoot"]
-transform = Transform3D(-0.4, -3.4969112e-08, 0, 3.4969112e-08, -0.4, 0, 0, 0, 0.4, 0, 0.0006854078, -0.004)
+transform = Transform3D(-0.4, -3.4969112e-08, 0, 3.4969112e-08, -0.4, 0, 0, 0, 0.4, 0, -0.001228557, -0.004)
 mesh = SubResource("ArrayMesh_shinn")
 skeleton = NodePath("")
+surface_material_override/0 = SubResource("StandardMaterial3D_wnpk2")
 
 [node name="PawnMarkers" type="Node3D" parent="."]
 
