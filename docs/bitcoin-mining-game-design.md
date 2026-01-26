@@ -18,27 +18,31 @@ Reference: brainstorm notes in `docs/bitcoin-mining-rules-exploration.md`.
   - Players earn BTC by constructing mining stations on their properties and collecting payouts.
 
 ## Game Setup & Start
-- Each player starts with 1,200,000 fiat tokens.
-- Each player starts with no BTC, no properties, and no mining stations.
-- Cycle 1 payments are fiat-only; cycle 2+ allows BTC payments at a 10% discount.
+- Each player starts with 1,000,000 fiat tokens and 1 BTC.
+- Each player starts with no properties and no mining stations.
+- Fiat and BTC payments are allowed in all cycles; BTC payments are priced at a 10% discount using the base (cycle 1) fiat price.
+- Exchange rate reference for UI: 1 BTC = 100,000 fiat.
 
 ## Buying Properties & Mining Rigs
 - Properties are bought with fiat; regular properties can host up to 4 miner batches.
 - Property prices scale by tier (20k/50k/80k/110k/150k/200k).
 - Miner batches cost 320k fiat per unit.
 - Each miner piece represents a batch of 50 hydro miners (e.g., Antminer S21 Hydro).
-- Properties and miner batches can be bought with BTC in cycle 2+ at a 10% discount.
+- Properties and miner batches can be bought with BTC at a 10% discount.
 
 ## Owned Property Landing
 - When landing on an owned property, the visitor pays a fiat energy toll.
 - The owner receives a BTC payout for block discovery equal to `base * miner_batches` on that property.
-- Tolls: fiat energy toll = 10% of property price.
+- Tolls: fiat energy toll = 10% of property price + 2.5% of property price per miner batch.
+  - BTC tolls use the same 10% discount as other BTC prices, anchored to base (cycle 1) fiat values.
 
 ## Incidents
 - Landing exactly on a corner incident tile triggers an incident; the tile flip determines bull or bear.
 - The game runs for four cycles; the start tile flip alternates cycle effects:
   - Halving side: base payout is halved for that cycle.
   - Fiat Inflation side: fiat prices and energy tolls inflate by 10% for that cycle.
+  - Inflation persists; once increased, fiat prices do not drop on later halving cycles.
+  - BTC prices remain anchored to base (cycle 1) fiat values.
 
 ## Inspection
 - Landing on Inspection blocks the player's mining payouts.

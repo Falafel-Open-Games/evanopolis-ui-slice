@@ -68,3 +68,67 @@ layout_mode = 2
 size_flags_horizontal = 3
 text = "0"
 horizontal_alignment = 2
+
+[node name="ViewPropertiesButton" type="Button" parent="VBoxContainer/MarginContainer/VBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "View Properties"
+
+[node name="PropertiesPanel" type="PanelContainer" parent="VBoxContainer/MarginContainer/VBoxContainer"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+
+[node name="PropertiesMargin" type="MarginContainer" parent="VBoxContainer/MarginContainer/VBoxContainer/PropertiesPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 10
+
+[node name="PropertiesContent" type="VBoxContainer" parent="VBoxContainer/MarginContainer/VBoxContainer/PropertiesPanel/PropertiesMargin"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="PropertiesTitle" type="Label" parent="VBoxContainer/MarginContainer/VBoxContainer/PropertiesPanel/PropertiesMargin/PropertiesContent"]
+layout_mode = 2
+text = "Properties"
+horizontal_alignment = 1
+
+[node name="OrderLockedLabel" type="Label" parent="VBoxContainer/MarginContainer/VBoxContainer/PropertiesPanel/PropertiesMargin/PropertiesContent"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Order locked until end of turn"
+visible = false
+horizontal_alignment = 1
+
+[node name="PropertiesList" type="VBoxContainer" parent="VBoxContainer/MarginContainer/VBoxContainer/PropertiesPanel/PropertiesMargin/PropertiesContent"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="OrderTotalLabel" type="Label" parent="VBoxContainer/MarginContainer/VBoxContainer/PropertiesPanel/PropertiesMargin/PropertiesContent"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Order Total: 0"
+
+[node name="OrderButtons" type="HBoxContainer" parent="VBoxContainer/MarginContainer/VBoxContainer/PropertiesPanel/PropertiesMargin/PropertiesContent"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="ConfirmFiatButton" type="Button" parent="VBoxContainer/MarginContainer/VBoxContainer/PropertiesPanel/PropertiesMargin/PropertiesContent/OrderButtons"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Confirm (fiat)"
+
+[node name="ConfirmBtcButton" type="Button" parent="VBoxContainer/MarginContainer/VBoxContainer/PropertiesPanel/PropertiesMargin/PropertiesContent/OrderButtons"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Confirm (btc)"
+
+[node name="ClosePropertiesButton" type="Button" parent="VBoxContainer/MarginContainer/VBoxContainer/PropertiesPanel/PropertiesMargin/PropertiesContent"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Close"

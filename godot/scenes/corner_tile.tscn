@@ -77,12 +77,13 @@ albedo_color = Color(0.05989945, 0.6639494, 1, 1)
 [sub_resource type="BoxMesh" id="BoxMesh_wnpk2"]
 size = Vector3(0.1, 0.01, 0.1)
 
-[node name="CornerTile" type="Node3D" node_paths=PackedStringArray("mesh_root", "top_face", "bottom_face", "side_mesh")]
+[node name="CornerTile" type="Node3D" node_paths=PackedStringArray("mesh_root", "top_face", "bottom_face", "side_mesh", "miner_markers")]
 script = ExtResource("1_4kwbn")
 mesh_root = NodePath("MeshRoot")
 top_face = NodePath("MeshRoot/TopFace")
 bottom_face = NodePath("MeshRoot/BottomFace")
 side_mesh = NodePath("MeshRoot/SideMesh")
+miner_markers = NodePath("MinerMarkers")
 
 [node name="MeshRoot" type="Node3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.0019139657, 0)
@@ -105,6 +106,8 @@ skeleton = NodePath("")
 surface_material_override/0 = SubResource("StandardMaterial3D_rqfrv")
 
 [node name="PawnMarkers" type="Node3D" parent="."]
+
+[node name="MinerMarkers" type="Node3D" parent="."]
 
 [node name="Marker1" type="Marker3D" parent="PawnMarkers"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.039)

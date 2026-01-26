@@ -211,6 +211,7 @@ func update_tile_info(
 	toll_btc: float,
 	payout_cycle_1_2: float,
 	payout_cycle_3_4: float,
+	miner_batches: int,
 	is_owned: bool,
 	owner_name: String,
 	buy_visible: bool,
@@ -224,7 +225,7 @@ func update_tile_info(
 		_update_property_image(city, is_owned)
 		_update_price_label(tile_type, property_price, special_price, bitcoin_price)
 		_update_owner_label(is_owned, owner_name)
-		_update_toll_label(toll_fiat, toll_btc)
+		_update_toll_label(toll_fiat, toll_btc, miner_batches)
 		_update_payout_label(payout_cycle_1_2, payout_cycle_3_4)
 		_update_buy_buttons(
 			buy_visible,
@@ -319,9 +320,12 @@ func _update_buy_buttons(buy_visible: bool, buy_fiat_enabled: bool, buy_btc_enab
 	buy_fiat_button.disabled = not buy_fiat_enabled
 	buy_bitcoin_button.disabled = not buy_btc_enabled
 
-func _update_toll_label(toll_fiat: float, toll_btc: float) -> void:
+func _update_toll_label(toll_fiat: float, toll_btc: float, miner_batches: int) -> void:
 	assert(toll_label)
-	toll_label.text = "Energy Toll\nFiat: %s\nBTC: %s" % [
+	var batch_label: String = "batch" if miner_batches == 1 else "batches"
+	toll_label.text = "Energy Toll (%d miner %s)\nFiat: %s\nBTC: %s" % [
+		miner_batches,
+		batch_label,
 		NumberFormat.format_fiat(toll_fiat),
 		NumberFormat.format_btc(toll_btc),
 	]
