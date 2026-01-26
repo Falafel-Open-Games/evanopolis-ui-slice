@@ -3,12 +3,12 @@ extends Node
 
 const SIDE_COUNT: int = 6
 const CITY_BASE_PRICE: Dictionary = {
-	"Caracas": 1.0,
-	"Assuncion": 2.0,
-	"Ciudad del Este": 2.0,
-	"Minsk": 3.0,
-	"Irkutsk": 3.0,
-	"Rockdale": 4.0,
+	"Caracas": 20000.0,
+	"Assuncion": 50000.0,
+	"Ciudad del Este": 80000.0,
+	"Minsk": 110000.0,
+	"Irkutsk": 150000.0,
+	"Rockdale": 200000.0,
 }
 const SPECIAL_PROPERTIES: Array[Dictionary] = [
 	{"name": "Importadora 1", "price": 5.0},
@@ -22,11 +22,11 @@ const SPECIAL_PROPERTIES: Array[Dictionary] = [
 var current_player_index: int
 var player_positions: Array[int]
 var tiles: Array[TileInfo]
-var balances: Array[float] = []
+var players: Array[PlayerData] = []
 
 signal player_changed(new_index: int)
 signal player_position_changed(new_position: int, tile_slot: int)
-signal balance_changed(player_index: int, new_balance: float)
+signal player_data_changed(player_index: int, player_data: PlayerData)
 
 func _ready() -> void:
 	seed(GameConfig.game_id.hash())
@@ -40,11 +40,15 @@ func reset_positions() -> void:
 	player_positions.resize(GameConfig.player_count)
 	player_positions.fill(0) # all players starts at position 0
 
-	balances = []
-	balances.resize(GameConfig.player_count)
+	players = []
+	players.resize(GameConfig.player_count)
 	for index in range(GameConfig.player_count):
-		balances[index] = GameConfig.starting_balance
-		balance_changed.emit(index, balances[index])
+		var data: PlayerData = PlayerData.new()
+		data.fiat_balance = GameConfig.starting_fiat_balance
+		data.bitcoin_balance = GameConfig.starting_bitcoin_balance
+		data.mining_power = GameConfig.starting_mining_power
+		players[index] = data
+		player_data_changed.emit(index, data)
 
 	# Clear stale occupants from previous runs before seeding start tile.
 	for tile_index in range(tiles.size()):
@@ -78,12 +82,12 @@ func get_tile_info(tile_index: int) -> TileInfo:
 	assert(tile_index >= 0 and tile_index < tiles.size())
 	return tiles[tile_index]
 
-func get_player_balance(player_index: int) -> float:
-	assert(player_index >= 0 and player_index < balances.size())
-	return balances[player_index]
+func get_player_fiat_balance(player_index: int) -> float:
+	assert(player_index >= 0 and player_index < players.size())
+	return players[player_index].fiat_balance
 
 func purchase_tile(player_index: int, tile_index: int) -> bool:
-	assert(player_index >= 0 and player_index < balances.size())
+	assert(player_index >= 0 and player_index < players.size())
 	assert(tile_index >= 0 and tile_index < tiles.size())
 	var tile: TileInfo = tiles[tile_index]
 	if not _is_tile_buyable(tile):
@@ -91,10 +95,11 @@ func purchase_tile(player_index: int, tile_index: int) -> bool:
 	var price: float = _get_tile_price(tile)
 	if price <= 0.0:
 		return false
-	if balances[player_index] < price:
+	var player_data: PlayerData = players[player_index]
+	if player_data.fiat_balance < price:
 		return false
-	balances[player_index] -= price
-	balance_changed.emit(player_index, balances[player_index])
+	player_data.fiat_balance -= price
+	player_data_changed.emit(player_index, player_data)
 	tile.owner_index = player_index
 	return true
 
@@ -120,11 +125,16 @@ func _build_tile_info() -> void:
 					info.tile_type = "incident"
 					info.incident_kind = _incident_kind_for_side(side_index)
 		elif side_slot == 1:
-			info.tile_type = "special_property"
-			var special_index: int = side_index
-			if special_index >= 0 and special_index < SPECIAL_PROPERTIES.size():
-				info.special_property_name = SPECIAL_PROPERTIES[special_index]["name"]
-				info.special_property_price = SPECIAL_PROPERTIES[special_index]["price"]
+			if GameConfig.disable_special_properties:
+				info.tile_type = "property"
+				info.city = _city_for_side(side_index)
+				info.property_price = CITY_BASE_PRICE.get(info.city, 0.0)
+			else:
+				info.tile_type = "special_property"
+				var special_index: int = side_index
+				if special_index >= 0 and special_index < SPECIAL_PROPERTIES.size():
+					info.special_property_name = SPECIAL_PROPERTIES[special_index]["name"]
+					info.special_property_price = SPECIAL_PROPERTIES[special_index]["price"]
 		else:
 			info.tile_type = "property"
 			info.city = _city_for_side(side_index)

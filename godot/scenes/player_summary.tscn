@@ -18,11 +18,51 @@ theme_override_constants/margin_top = 20
 theme_override_constants/margin_right = 20
 theme_override_constants/margin_bottom = 20
 
-[node name="HBoxContainer" type="HBoxContainer" parent="VBoxContainer/MarginContainer"]
+[node name="VBoxContainer" type="VBoxContainer" parent="VBoxContainer/MarginContainer"]
 layout_mode = 2
+theme_override_constants/separation = 8
 
-[node name="BalanceLabel" type="Label" parent="VBoxContainer/MarginContainer/HBoxContainer"]
+[node name="FiatRow" type="HBoxContainer" parent="VBoxContainer/MarginContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="FiatLabel" type="Label" parent="VBoxContainer/MarginContainer/VBoxContainer/FiatRow"]
+layout_mode = 2
+text = "Fiat"
+
+[node name="FiatBalanceLabel" type="Label" parent="VBoxContainer/MarginContainer/VBoxContainer/FiatRow"]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 text = "0.0"
+horizontal_alignment = 2
+
+[node name="BitcoinRow" type="HBoxContainer" parent="VBoxContainer/MarginContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="BitcoinLabel" type="Label" parent="VBoxContainer/MarginContainer/VBoxContainer/BitcoinRow"]
+layout_mode = 2
+text = "Bitcoin"
+
+[node name="BitcoinBalanceLabel" type="Label" parent="VBoxContainer/MarginContainer/VBoxContainer/BitcoinRow"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+text = "0.0"
+horizontal_alignment = 2
+
+[node name="MiningPowerRow" type="HBoxContainer" parent="VBoxContainer/MarginContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="MiningPowerLabelTitle" type="Label" parent="VBoxContainer/MarginContainer/VBoxContainer/MiningPowerRow"]
+layout_mode = 2
+text = "Mining Power"
+
+[node name="MiningPowerLabel" type="Label" parent="VBoxContainer/MarginContainer/VBoxContainer/MiningPowerRow"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+text = "0"
+horizontal_alignment = 2

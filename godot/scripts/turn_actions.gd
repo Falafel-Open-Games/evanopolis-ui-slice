@@ -1,4 +1,4 @@
-class_name RightSidebar
+class_name TurnActions
 extends FoldableContainer
 
 signal dice_rolled(die_1: int, die_2: int, total: int)
@@ -228,10 +228,10 @@ func _update_price_label(
 ) -> void:
 	assert(price_label)
 	if tile_type == "property":
-		price_label.text = "Price: %.1f" % property_price
+		price_label.text = "Price: %s" % NumberFormat.format_fiat(property_price)
 		price_label.visible = true
 	elif tile_type == "special_property":
-		price_label.text = "Price: %.1f" % special_price
+		price_label.text = "Price: %s" % NumberFormat.format_fiat(special_price)
 		price_label.visible = true
 	else:
 		price_label.visible = false
