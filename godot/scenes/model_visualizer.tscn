@@ -1,0 +1,23 @@
+[gd_scene load_steps=3 format=3 uid="uid://bku8uhg2yp0qs"]
+
+[ext_resource type="Script" uid="uid://cjtkh0nrgmtuo" path="res://scripts/model_visualizer.gd" id="1_i6ky5"]
+[ext_resource type="PackedScene" uid="uid://cfl52okmfktdq" path="res://meshes/antminer_s21_hydro.tscn" id="2_i6ky5"]
+
+[node name="ModelVisualizer" type="Node3D"]
+script = ExtResource("1_i6ky5")
+model_scene = ExtResource("2_i6ky5")
+
+[node name="ColorPicker" type="ColorPicker" parent="."]
+offset_right = 298.0
+offset_bottom = 607.0
+
+[node name="ModelRoot" type="Node3D" parent="."]
+
+[node name="Camera3D" type="Camera3D" parent="."]
+transform = Transform3D(0.7071068, -0.27059805, 0.6532815, 0, 0.9238795, 0.38268352, -0.7071068, -0.27059805, 0.6532815, 7.8008227, 5.547959, 7.621682)
+projection = 1
+size = 5.469
+far = 2000.0
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+transform = Transform3D(0.24603513, 0.65313023, -0.7161617, -0.6140072, 0.67673475, 0.406233, 0.7499746, 0.3397809, 0.5675272, -7.485319, 10.553407, 13.285263)
