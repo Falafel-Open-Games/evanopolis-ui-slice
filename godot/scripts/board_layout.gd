@@ -48,6 +48,8 @@ const CITY_BOTTOM_MATERIALS: Dictionary = {
 @onready var game_state: GameState = %GameState
 
 var _tiles: Array[Node3D] = []
+var _start_top_material: StandardMaterial3D
+var _start_bottom_material: StandardMaterial3D
 
 func _ready() -> void:
 	if not Engine.is_editor_hint():
@@ -161,6 +163,7 @@ func _apply_colors() -> void:
 		var script: Script = game_state.get_script()
 		if script == null or not script.is_tool():
 			return
+	_ensure_start_materials()
 	for tile_index in range(_tiles.size()):
 		var tile: Node3D = _tiles[tile_index]
 		if not tile is BoardTile:
@@ -172,7 +175,9 @@ func _apply_colors() -> void:
 		var bottom_material: Material = null
 		match tile_type:
 			"start":
-				tile_color = Color.CORAL
+				tile_color = Color.DIM_GRAY
+				top_material = _start_top_material
+				bottom_material = _start_bottom_material
 			"inspection":
 				tile_color = Color.DIM_GRAY
 			"incident":
@@ -187,6 +192,14 @@ func _apply_colors() -> void:
 		tile.tile_color = tile_color
 		tile.top_material = top_material
 		tile.bottom_material = bottom_material
+
+func _ensure_start_materials() -> void:
+	if _start_top_material == null:
+		_start_top_material = StandardMaterial3D.new()
+		_start_top_material.albedo_color = Color.WHITE
+	if _start_bottom_material == null:
+		_start_bottom_material = StandardMaterial3D.new()
+		_start_bottom_material.albedo_color = Color.BLACK
 
 func get_board_tiles() -> Array[Node3D]:
 	if _tiles.is_empty():

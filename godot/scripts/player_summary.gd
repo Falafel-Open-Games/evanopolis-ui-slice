@@ -27,7 +27,7 @@ func set_fiat_balance(balance: float) -> void:
 
 func set_bitcoin_balance(balance: float) -> void:
 	assert(bitcoin_balance_label)
-	bitcoin_balance_label.text = "%.1f" % balance
+	bitcoin_balance_label.text = "%.8f" % balance
 
 func set_mining_power(power: int) -> void:
 	assert(mining_power_label)
