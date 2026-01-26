@@ -171,6 +171,18 @@ layout_mode = 2
 size_flags_horizontal = 3
 text = "1"
 
+[node name="TollLabel" type="Label" parent="MarginContainer/Content/HBoxContainer/PropertyContainer/HBoxContainer/BoxContainer/HBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Energy Toll"
+
+[node name="PayoutLabel" type="Label" parent="MarginContainer/Content/HBoxContainer/PropertyContainer/HBoxContainer/BoxContainer/HBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Payout"
+
 [node name="Image" type="TextureRect" parent="MarginContainer/Content/HBoxContainer/PropertyContainer/HBoxContainer"]
 unique_name_in_owner = true
 layout_mode = 2
@@ -179,11 +191,65 @@ size_flags_vertical = 3
 texture = ExtResource("1_jxb3w")
 expand_mode = 5
 
-[node name="BuyButton" type="Button" parent="MarginContainer/Content/HBoxContainer/PropertyContainer"]
+[node name="BuyContainer" type="VBoxContainer" parent="MarginContainer/Content/HBoxContainer/PropertyContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="BuyLabel" type="Label" parent="MarginContainer/Content/HBoxContainer/PropertyContainer/BuyContainer"]
+layout_mode = 2
+text = "Buy Property"
+horizontal_alignment = 1
+
+[node name="BuyButtons" type="HBoxContainer" parent="MarginContainer/Content/HBoxContainer/PropertyContainer/BuyContainer"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="BuyFiatButton" type="Button" parent="MarginContainer/Content/HBoxContainer/PropertyContainer/BuyContainer/BuyButtons"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 50)
 layout_mode = 2
-text = "Buy Property"
+size_flags_horizontal = 3
+text = "0.00 (fiat)"
+
+[node name="BuyBitcoinButton" type="Button" parent="MarginContainer/Content/HBoxContainer/PropertyContainer/BuyContainer/BuyButtons"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 50)
+layout_mode = 2
+size_flags_horizontal = 3
+text = "0.0000 (btc)"
+disabled = true
+
+[node name="PayTollContainer" type="VBoxContainer" parent="MarginContainer/Content/HBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+visible = false
+theme_override_constants/separation = 8
+
+[node name="PayTollLabel" type="Label" parent="MarginContainer/Content/HBoxContainer/PayTollContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Pay Energy Toll"
+horizontal_alignment = 1
+
+[node name="PayTollButtons" type="HBoxContainer" parent="MarginContainer/Content/HBoxContainer/PayTollContainer"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="PayTollFiatButton" type="Button" parent="MarginContainer/Content/HBoxContainer/PayTollContainer/PayTollButtons"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 44)
+layout_mode = 2
+size_flags_horizontal = 3
+text = "0.00 (fiat)"
+
+[node name="PayTollBitcoinButton" type="Button" parent="MarginContainer/Content/HBoxContainer/PayTollContainer/PayTollButtons"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 44)
+layout_mode = 2
+size_flags_horizontal = 3
+text = "0.00 (btc)"
+disabled = true
 
 [node name="EndTurnButton" type="Button" parent="MarginContainer/Content/HBoxContainer"]
 unique_name_in_owner = true

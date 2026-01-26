@@ -1,4 +1,4 @@
-[gd_scene load_steps=8 format=4 uid="uid://75mr7nsx53p0"]
+[gd_scene load_steps=11 format=4 uid="uid://75mr7nsx53p0"]
 
 [ext_resource type="Script" uid="uid://kkctmgrcsfau" path="res://scripts/board_tile.gd" id="1_4kwbn"]
 
@@ -19,7 +19,7 @@ _surfaces = [{
 }]
 blend_shape_mode = 0
 
-[sub_resource type="ArrayMesh" id="ArrayMesh_shinn"]
+[sub_resource type="ArrayMesh" id="ArrayMesh_wnpk2"]
 resource_name = "corner_tile_face_Mesh_0_001"
 _surfaces = [{
 "aabb": AABB(-0.08656675, 0.005, -0.06830127, 0.17313357, 1e-05, 0.1365819),
@@ -37,7 +37,10 @@ _surfaces = [{
 blend_shape_mode = 0
 shadow_mesh = SubResource("ArrayMesh_q2bnu")
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_wnpk2"]
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_7tauj"]
+albedo_color = Color(0.38459516, 0.70416814, 1, 1)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_ldtcb"]
 
 [sub_resource type="ArrayMesh" id="ArrayMesh_y8lo4"]
 _surfaces = [{
@@ -49,6 +52,27 @@ _surfaces = [{
 "vertex_count": 120,
 "vertex_data": PackedByteArray("BscVvQrXo7uJ4Yu96UmxvQrXozuL7JU86UmxvQrXo7uL7JU8BscVvQrXo7uJ4Yu9ABYWOArXo7uJ4Ys9AAAAMwrXo7uzSUG9BscVvQrXo7uJ4Yu9AAAAMwrXo7uzSUG9BscVvQrXozuJ4Yu9BscVvQrXo7uJ4Yu96UmxvQrXo7uL7JU8AOaVuArXo7sRwYs9BscVvQrXo7uJ4Yu9AOaVuArXo7sRwYs9AAAAMwrXo7u21os9ABYWOArXo7uJ4Ys9BscVvQrXo7uJ4Yu9AAAAMwrXo7u21os96UmxvQrXo7uL7JU8AOaVuArXozsRwYs9AOaVuArXo7sRwYs9BscVvQrXo7uJ4Yu9BscVvQrXozuJ4Yu96UmxvQrXozuL7JU8BscVvQrXozuJ4Yu9AAAAMwrXo7uzSUG9AAAAMwrXozuzSUG9BscVvQrXozuJ4Yu9AAAAMwrXozuzSUG96UmxvQrXozuL7JU86UmxvQrXozuL7JU8AAAAMwrXozuzSUG9UvJMPQrXozuL7JW86UmxvQrXo7uL7JU86UmxvQrXozuL7JU8AOaVuArXozsRwYs96UmxvQrXozuL7JU8UvJMPQrXozuL7JW8AOaVuArXozsRwYs9AAAAMwrXo7uzSUG9AAaWOArXo7sRwYs9UvJMPQrXo7uL7JW8AAAAMwrXo7uzSUG9ABYWOArXo7uJ4Ys9AAaWOArXo7sRwYs9ABYWOArXo7uJ4Ys9AAAAMwrXo7u21os9ABYWOArXozuJ4Ys9ABYWOArXo7uJ4Ys9AAaWOArXozsRwYs9AAaWOArXo7sRwYs9ABYWOArXozuJ4Ys9AAAAMwrXo7u21os9AAAAMwrXozu21os9ABYWOArXo7uJ4Ys9ABYWOArXozuJ4Ys9AAaWOArXozsRwYs9AOaVuArXozsRwYs9UvJMPQrXozuL7JW8AAAAMwrXozu21os9AAAAMwrXozu21os9UvJMPQrXozuL7JW8AAaWOArXozsRwYs9AAAAMwrXozu21os9AAaWOArXozsRwYs9ABYWOArXozuJ4Ys9ANYVuArXo7uJ4Ys9AAAAMwrXo7u21os9AOaVuArXo7sRwYs9ANYVuArXo7uJ4Ys9AOaVuArXo7sRwYs9AOaVuArXozsRwYs9ANYVuArXo7uJ4Ys9ANYVuArXozuJ4Ys9AAAAMwrXo7u21os9ANYVuArXo7uJ4Ys9AOaVuArXozsRwYs9ANYVuArXozuJ4Ys9ANYVuArXozuJ4Ys9AAAAMwrXozu21os9AAAAMwrXo7u21os9ANYVuArXozuJ4Ys9AOaVuArXozsRwYs9AAAAMwrXozu21os9FscVPQrXo7uJ4Yu9AAAAMwrXo7uzSUG9UvJMPQrXo7uL7JW8FscVPQrXo7uJ4Yu9FscVPQrXozuJ4Yu9AAAAMwrXo7uzSUG9FscVPQrXo7uJ4Yu9UvJMPQrXo7uL7JW88UmxPQrXo7uL7JU8FscVPQrXo7uJ4Yu98UmxPQrXo7uL7JU8FscVPQrXozuJ4Yu98UmxPQrXo7uL7JU8AAaWOArXo7sRwYs9AAaWOArXozsRwYs98UmxPQrXo7uL7JU8UvJMPQrXo7uL7JW8AAaWOArXo7sRwYs9FscVPQrXozuJ4Yu9AAAAMwrXozuzSUG9AAAAMwrXo7uzSUG9FscVPQrXozuJ4Yu9UvJMPQrXozuL7JW8AAAAMwrXozuzSUG98UmxPQrXo7uL7JU88UmxPQrXozuL7JU8FscVPQrXozuJ4Yu9FscVPQrXozuJ4Yu98UmxPQrXozuL7JU8UvJMPQrXozuL7JW88UmxPQrXo7uL7JU8AAaWOArXozsRwYs98UmxPQrXozuL7JU88UmxPQrXozuL7JU8AAaWOArXozsRwYs9UvJMPQrXozuL7JW8AADZriVR/78AANmuJVH/vwAA2a4lUf+//38AACXR/7//fwAAJtH/v/9/AAAl0f+///8l0QAAbNf//yXRAABs1///JdEAAGzX/38AACXR/7//fwAAJdH/v/9/AAAk0f+//38AACXR/7//fwAAJNH/v/9/AAAk0f+//38AACbR/7//fwAAJdH/v/9/AAAk0f+/JVH/fyXR/78lUf9/JdH/vyVR/38l0f+/AADZriVR/78AANmuJVH/vwAA2a4lUf+///8l0QAAbNf//yXRAABs1///JdEAAGzX/3///wAAbNf/f///AABs1/9///8AAGzX/3///wAAbNf/f///AABs1/9///8AAGzXJVH/fyXR/78lUf9/JdH/vyVR/38l0f+//3///wAAbNf/f///AABs1/9///8AAGzX/38AACXR/7//fwAAKNH/v/9/AAAl0f+//38AACXR/7//fwAAJtH/v/9/AAAo0f+/JFH/fyTR/78kUf9/JNH/vyRR/38k0f+/JdH/f///kugl0f9///+S6CXR/3///5LoJFH/fyTR/78kUf9/JNH/vyRR/38k0f+/JdH/f///kugl0f9///+S6CXR/3///5Lo/3///wAAbNf/f///AABs1/9///8AAGzX/3///wAAbNf/f///AABs1/9///8AAGvX/3///wAAbNf/f///AABr1/9///8AAGzX/38AAP//bNf/fwAA//9s1/9/AAD//2zX2S7/f9iu/7/ZLv9/2K7/v9ku/3/Yrv+/2q7/f///bNfarv9///9s19qu/3///2zX2S7/f9iu/7/ZLv9/2K7/v9ku/3/Yrv+/2q7/f///bNfarv9///9s19qu/3///2zX/3///9ou/7//f///2i7/v/9////aLv+//38AAP//bNf/fwAA//9s1/9/AAD//2zXAAAl0dku/78AACXR2S7/vwAAJdHZLv+//38AAP//bNf/fwAA//9s1/9/AAD//2zX///ZrgAAkuj//9muAACS6P//2a4AAJLo2a7/f///bNfZrv9///9s19mu/3///2zX/38AAP//bNf/fwAA//9s1/9/AAD//2zXAAAl0dku/78AACXR2S7/vwAAJdHZLv+//3///9ku/7//f///2S7/v/9////ZLv+////ZrgAAkuj//9muAACS6P//2a4AAJLo/3///9ku/7//f///2S7/v/9////ZLv+/2a7/f///bNfZrv9///9s19mu/3///2zX/3///9ku/7//f///2S7/v/9////ZLv+/")
 }]
+
+[sub_resource type="ArrayMesh" id="ArrayMesh_c87mu"]
+resource_name = "corner_tile_face_Mesh_0_001"
+_surfaces = [{
+"aabb": AABB(-0.08656675, 0.005, -0.06830127, 0.17313357, 1e-05, 0.1365819),
+"attribute_data": PackedByteArray("qqr//6KG//+qqv9/qqr/f6KG//9VVf//qqr/f1VV//9wVf9/cFX/f1VV//9eVf9/XlX/f1VV//9VVRaAVVX//7Zg879cef//VVX//1VV/3+2YPO/VVX/f46q/3+2YPO/"),
+"format": 34896613399,
+"index_count": 24,
+"index_data": PackedByteArray("AAABAAIAAwAEAAUABgAHAAgACQAKAAsADAANAA4ADwAQABEAEgATABQAFQAWABcA"),
+"material": SubResource("StandardMaterial3D_j6a7j"),
+"name": "Material_0",
+"primitive": 3,
+"uv_scale": Vector4(0, 0, 0, 0),
+"vertex_count": 24,
+"vertex_data": PackedByteArray("7kkAAAAA//D/fwAAkSf/8AAAAABRov/wAAAAAFGi//D/fwAAkSf/8PvJAAC3Xf/wAAAAAFGi//D7yQAAt13/8OR/AADr///w5H8AAOv///D7yQAAt13/8P9/AAD////w/38AAP////D7yQAAt13/8BqAAADr/wDxELYAAAAA//D7yQAAt13/8P9/AACRJ//wELYAAAAA//D//wAAUaL/8PvJAAC3Xf/w//8AAFGi//AagAAA6///8PvJAAC3Xf/wjscfD47HHw+Oxx8PjscfD47HHw+Oxx8PjscfD47HHw+Oxx8PjscfD47HHw+Oxx8PjscfD47HHw+Oxx4PHo9vuB6Pb7gej2+4Ho9vuB6Pb7gej2+4Ho9vuB6Pb7gej2+4")
+}]
+blend_shape_mode = 0
+shadow_mesh = SubResource("ArrayMesh_q2bnu")
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_rqfrv"]
+albedo_color = Color(0.05989945, 0.6639494, 1, 1)
 
 [sub_resource type="BoxMesh" id="BoxMesh_wnpk2"]
 size = Vector3(0.1, 0.01, 0.1)
@@ -65,20 +89,20 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.0019139657, 0)
 
 [node name="TopFace" type="MeshInstance3D" parent="MeshRoot"]
 transform = Transform3D(0.4, 0, 0, 0, 0.4, 0, 0, 0, 0.4, 0, 0.0012475541, -0.004)
-mesh = SubResource("ArrayMesh_shinn")
+mesh = SubResource("ArrayMesh_wnpk2")
 skeleton = NodePath("")
-surface_material_override/0 = SubResource("StandardMaterial3D_wnpk2")
+surface_material_override/0 = SubResource("StandardMaterial3D_7tauj")
 
 [node name="SideMesh" type="MeshInstance3D" parent="MeshRoot"]
 transform = Transform3D(0.4, 0, 0, 0, 0.4, 0, 0, 0, 0.4, 0, 8.603535e-05, -0.004)
-material_override = SubResource("StandardMaterial3D_wnpk2")
+material_override = SubResource("StandardMaterial3D_ldtcb")
 mesh = SubResource("ArrayMesh_y8lo4")
 
 [node name="BottomFace" type="MeshInstance3D" parent="MeshRoot"]
 transform = Transform3D(-0.4, -3.4969112e-08, 0, 3.4969112e-08, -0.4, 0, 0, 0, 0.4, 0, -0.001228557, -0.004)
-mesh = SubResource("ArrayMesh_shinn")
+mesh = SubResource("ArrayMesh_c87mu")
 skeleton = NodePath("")
-surface_material_override/0 = SubResource("StandardMaterial3D_wnpk2")
+surface_material_override/0 = SubResource("StandardMaterial3D_rqfrv")
 
 [node name="PawnMarkers" type="Node3D" parent="."]
 

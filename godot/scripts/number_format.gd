@@ -12,6 +12,9 @@ static func format_fiat(value: float) -> String:
 		integer_part = integer_part.substr(1, integer_part.length() - 1)
 	return "%s%s.%s" % [sign, _format_with_commas(integer_part), fractional]
 
+static func format_btc(value: float) -> String:
+	return "%.4f" % value
+
 static func _format_with_commas(digits: String) -> String:
 	if digits.length() <= 3:
 		return digits
