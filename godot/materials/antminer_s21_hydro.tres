@@ -1,4 +1,4 @@
-[gd_resource type="StandardMaterial3D" format=3 uid="uid://wjuxy47kms6v"]
+[gd_resource type="StandardMaterial3D" load_steps=0 format=3 uid="uid://wjuxy47kms6v"]
 
 [resource]
 vertex_color_use_as_albedo = true

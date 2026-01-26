@@ -2,18 +2,37 @@ class_name PlayerSummary
 extends FoldableContainer
 
 @export_range(0, 5, 1) var player_index: int = 0
-@onready var balance_label: Label = %BalanceLabel
+@onready var fiat_balance_label: Label = %FiatBalanceLabel
+@onready var bitcoin_balance_label: Label = %BitcoinBalanceLabel
+@onready var mining_power_label: Label = %MiningPowerLabel
 
 func _ready() -> void:
-	assert(balance_label)
+	assert(fiat_balance_label)
+	assert(bitcoin_balance_label)
+	assert(mining_power_label)
 	_apply_title_panel_style(Palette.get_player_dark(player_index))
 	
 	# set panel title based on player index
 	self.title = "Player %d" % [player_index + 1]
 
-func set_balance(balance: float) -> void:
-	assert(balance_label)
-	balance_label.text = "%.1f" % balance
+func set_player_data(player_data: PlayerData) -> void:
+	assert(player_data)
+	set_fiat_balance(player_data.fiat_balance)
+	set_bitcoin_balance(player_data.bitcoin_balance)
+	set_mining_power(player_data.mining_power)
+
+func set_fiat_balance(balance: float) -> void:
+	assert(fiat_balance_label)
+	fiat_balance_label.text = NumberFormat.format_fiat(balance)
+
+func set_bitcoin_balance(balance: float) -> void:
+	assert(bitcoin_balance_label)
+	bitcoin_balance_label.text = "%.1f" % balance
+
+func set_mining_power(power: int) -> void:
+	assert(mining_power_label)
+	mining_power_label.text = str(power)
+
 
 func _apply_title_panel_style(dark_color: Color) -> void:
 	self.add_theme_color_override("font_color", Color.WHITE)

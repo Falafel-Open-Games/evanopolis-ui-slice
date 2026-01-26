@@ -1,7 +1,7 @@
 class_name GameController
 extends Node
 
-@export var right_sidebar: RightSidebar
+@export var turn_actions: TurnActions
 @export var left_sidebar_list: VBoxContainer
 @export var pawns_root: Node3D
 
@@ -17,12 +17,12 @@ var current_tile_index: int = 0
 
 func _ready() -> void:
 	assert(game_state)
-	assert(right_sidebar)
+	assert(turn_actions)
 	assert(left_sidebar_list)
 	assert(game_id_label)
 	assert(build_id_label)
 	assert(pawns_root)
-	await right_sidebar.ready
+	await turn_actions.ready
 	_bind_game_state()
 	game_id_label.text = "Game ID: %s" % GameConfig.game_id
 	build_id_label.text = "Build ID: %s" % GameConfig.build_id
@@ -40,25 +40,25 @@ func _bind_game_state() -> void:
 		game_state.player_changed.connect(_on_player_changed)
 	if not game_state.player_position_changed.is_connected(_on_player_position_changed):
 		game_state.player_position_changed.connect(_on_player_position_changed)
-	if not game_state.balance_changed.is_connected(_on_balance_changed):
-		game_state.balance_changed.connect(_on_balance_changed)
+	if not game_state.player_data_changed.is_connected(_on_player_data_changed):
+		game_state.player_data_changed.connect(_on_player_data_changed)
 
 func _bind_sidebar() -> void:
-	if not right_sidebar.end_turn_button.pressed.is_connected(_on_end_turn_pressed):
-		right_sidebar.end_turn_button.pressed.connect(_on_end_turn_pressed)
-	if not right_sidebar.dice_requested.is_connected(_on_dice_requested):
-		right_sidebar.dice_requested.connect(_on_dice_requested)
-	if not right_sidebar.dice_rolled.is_connected(_on_dice_rolled):
-		right_sidebar.dice_rolled.connect(_on_dice_rolled)
-	if not right_sidebar.buy_pressed.is_connected(_on_buy_pressed):
-		right_sidebar.buy_pressed.connect(_on_buy_pressed)
+	if not turn_actions.end_turn_button.pressed.is_connected(_on_end_turn_pressed):
+		turn_actions.end_turn_button.pressed.connect(_on_end_turn_pressed)
+	if not turn_actions.dice_requested.is_connected(_on_dice_requested):
+		turn_actions.dice_requested.connect(_on_dice_requested)
+	if not turn_actions.dice_rolled.is_connected(_on_dice_rolled):
+		turn_actions.dice_rolled.connect(_on_dice_rolled)
+	if not turn_actions.buy_pressed.is_connected(_on_buy_pressed):
+		turn_actions.buy_pressed.connect(_on_buy_pressed)
 
 func _on_end_turn_pressed() -> void:
 	assert(game_state)
 	game_state.advance_turn()
 
 func _on_player_changed(new_index: int) -> void:
-	right_sidebar.set_current_player(new_index)
+	turn_actions.set_current_player(new_index)
 	_reset_turn_timer()
 
 func _on_dice_rolled(_die_1: int, _die_2: int, total: int) -> void:
@@ -82,10 +82,10 @@ func _on_player_position_changed(tile_index, slot_index):
 	_update_tile_info(tile_index)
 
 func _on_dice_requested() -> void:
-	assert(right_sidebar)
+	assert(turn_actions)
 	var die_1: int = randi_range(1, 6)
 	var die_2: int = randi_range(1, 6)
-	right_sidebar.apply_dice_result(die_1, die_2)
+	turn_actions.apply_dice_result(die_1, die_2)
 
 func _update_tile_info(tile_index: int) -> void:
 	assert(game_state)
@@ -108,9 +108,9 @@ func _update_tile_info(tile_index: int) -> void:
 		owner_name = "Player %d" % (info.owner_index + 1)
 	var buy_enabled: bool = false
 	if buy_visible:
-		var balance: float = game_state.get_player_balance(game_state.current_player_index)
+		var balance: float = game_state.get_player_fiat_balance(game_state.current_player_index)
 		buy_enabled = price > 0.0 and balance >= price
-	right_sidebar.update_tile_info(
+	turn_actions.update_tile_info(
 		tile_type,
 		city,
 		incident_kind,
@@ -144,7 +144,7 @@ func _process(delta: float) -> void:
 	if not turn_timer_active:
 		return
 	turn_elapsed += delta
-	right_sidebar.set_turn_timer(GameConfig.turn_duration, turn_elapsed)
+	turn_actions.set_turn_timer(GameConfig.turn_duration, turn_elapsed)
 	if turn_elapsed >= GameConfig.turn_duration:
 		turn_timer_active = false
 		_on_end_turn_pressed()
@@ -152,7 +152,7 @@ func _process(delta: float) -> void:
 func _reset_turn_timer() -> void:
 	turn_elapsed = 0.0
 	turn_timer_active = true
-	right_sidebar.set_turn_timer(GameConfig.turn_duration, turn_elapsed)
+	turn_actions.set_turn_timer(GameConfig.turn_duration, turn_elapsed)
 
 func _place_pawn(player_index: int, tile_index: int, slot_index: int) -> void:
 	assert(board_layout)
@@ -187,10 +187,10 @@ func _flip_tile(tile_index: int) -> void:
 	assert(board_tile)
 	board_tile.set_owned_visual(true)
 
-func _on_balance_changed(player_index: int, new_balance: float) -> void:
+func _on_player_data_changed(player_index: int, player_data: PlayerData) -> void:
 	assert(player_index >= 0 and player_index < GameConfig.player_count)
 	var summaries: Array = left_sidebar_list.get_children()
 	assert(player_index < summaries.size())
 	var summary: PlayerSummary = summaries[player_index] as PlayerSummary
 	assert(summary)
-	summary.set_balance(new_balance)
+	summary.set_player_data(player_data)

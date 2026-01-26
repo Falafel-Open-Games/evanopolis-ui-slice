@@ -120,6 +120,12 @@ custom_minimum_size = Vector2(170, 0)
 layout_mode = 2
 placeholder_text = "Auto-generated"
 
+[node name="DisableSpecialPropertiesToggle" type="CheckBox" parent="Center/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+button_pressed = true
+text = "Disable Special Properties"
+
 [node name="StartButton" type="Button" parent="Center/VBox"]
 unique_name_in_owner = true
 layout_mode = 2

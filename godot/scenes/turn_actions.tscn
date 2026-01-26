@@ -1,7 +1,7 @@
-[gd_scene load_steps=4 format=3 uid="uid://b5npd6qgidiyl"]
+[gd_scene load_steps=4 format=3 uid="uid://ckbnfxtwa4po5"]
 
 [ext_resource type="Texture2D" uid="uid://bdwf03025qcs" path="res://textures/1-caracas-without-mining.png" id="1_jxb3w"]
-[ext_resource type="Script" path="res://scripts/right_sidebar.gd" id="1_tu0j1"]
+[ext_resource type="Script" uid="uid://bxk7s0313hxvr" path="res://scripts/turn_actions.gd" id="1_tu0j1"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_u5sy4"]
 content_margin_left = 0.0

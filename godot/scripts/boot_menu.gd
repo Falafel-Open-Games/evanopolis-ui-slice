@@ -6,6 +6,7 @@ extends Control
 @onready var game_id_input: LineEdit = %GameIdInput
 @onready var start_button: Button = %StartButton
 @onready var subtitle: Label = %Subtitle
+@onready var disable_special_properties_toggle: CheckBox = %DisableSpecialPropertiesToggle
 
 @export var game_scene_path: PackedScene
 
@@ -23,4 +24,5 @@ func _on_start_pressed() -> void:
 	GameConfig.player_count = PLAYER_COUNTS[player_count_selector.selected]
 	GameConfig.turn_duration = TURN_DURATIONS[turn_time_selector.selected]
 	GameConfig.game_id = game_id_input.text.strip_edges()
+	GameConfig.disable_special_properties = disable_special_properties_toggle.button_pressed
 	get_tree().change_scene_to_packed(game_scene_path)

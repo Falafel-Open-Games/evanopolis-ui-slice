@@ -1,4 +1,4 @@
-[gd_scene load_steps=14 format=3 uid="uid://cqmxik86m7jfl"]
+[gd_scene load_steps=15 format=3 uid="uid://cqmxik86m7jfl"]
 
 [ext_resource type="PackedScene" uid="uid://belar34400qbw" path="res://scenes/side_strip.tscn" id="2_s0k7h"]
 [ext_resource type="PackedScene" uid="uid://cf3ptmh3a1lsi" path="res://scenes/player_summary.tscn" id="2_yqjtg"]
@@ -6,8 +6,9 @@
 [ext_resource type="Script" uid="uid://csigfifodnx75" path="res://scripts/board_layout.gd" id="3_tfrx2"]
 [ext_resource type="Script" uid="uid://b4b2jj7a5a3fy" path="res://scripts/pawns_start.gd" id="4_3k9qj"]
 [ext_resource type="Script" uid="uid://e1pe74jhpbxc" path="res://scripts/game_controller.gd" id="5_77h6y"]
-[ext_resource type="PackedScene" uid="uid://ckbnfxtwa4po5" path="res://scenes/right_sidebar.tscn" id="6_p57ef"]
+[ext_resource type="PackedScene" uid="uid://ckbnfxtwa4po5" path="res://scenes/turn_actions.tscn" id="6_p57ef"]
 [ext_resource type="Script" uid="uid://c6s7q4d0p7qrx" path="res://scripts/game_state.gd" id="7_h6e2v"]
+[ext_resource type="Script" path="res://scripts/turn_actions.gd" id="9_0tnpc"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_8cj0n"]
 albedo_color = Color(0.05857501, 0.15, 0.0465, 1)
@@ -38,10 +39,10 @@ script = ExtResource("7_h6e2v")
 unique_name_in_owner = true
 script = ExtResource("3_tfrx2")
 
-[node name="GameController" type="Node" parent="." node_paths=PackedStringArray("right_sidebar", "left_sidebar_list", "pawns_root")]
+[node name="GameController" type="Node" parent="." node_paths=PackedStringArray("turn_actions", "left_sidebar_list", "pawns_root")]
 unique_name_in_owner = true
 script = ExtResource("5_77h6y")
-right_sidebar = NodePath("../Control/MarginContainer/RightSidebar")
+turn_actions = NodePath("../Control/MarginContainer/TurnActions")
 left_sidebar_list = NodePath("../Control/MarginContainer/LeftSidebar/VBoxContainer")
 pawns_root = NodePath("../Pawns")
 
@@ -159,11 +160,12 @@ player_index = 4
 layout_mode = 2
 player_index = 5
 
-[node name="RightSidebar" parent="Control/MarginContainer" instance=ExtResource("6_p57ef")]
+[node name="TurnActions" parent="Control/MarginContainer" instance=ExtResource("6_p57ef")]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 0
 size_flags_vertical = 0
+script = ExtResource("9_0tnpc")
 
 [node name="GameIdLabel" type="Label" parent="Control/MarginContainer"]
 unique_name_in_owner = true
