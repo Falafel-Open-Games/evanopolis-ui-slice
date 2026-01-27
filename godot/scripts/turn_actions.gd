@@ -213,6 +213,7 @@ func update_tile_info(
 	payout_cycle_3_4: float,
 	miner_batches: int,
 	is_owned: bool,
+	owner_index: int,
 	owner_name: String,
 	buy_visible: bool,
 	buy_fiat_enabled: bool,
@@ -224,7 +225,7 @@ func update_tile_info(
 		property_container.visible = true
 		_update_property_image(city, is_owned)
 		_update_price_label(tile_type, property_price, special_price, bitcoin_price)
-		_update_owner_label(is_owned, owner_name)
+		_update_owner_label(is_owned, owner_index, owner_name)
 		_update_toll_label(toll_fiat, toll_btc, miner_batches)
 		_update_payout_label(payout_cycle_1_2, payout_cycle_3_4)
 		_update_buy_buttons(
@@ -302,12 +303,14 @@ func _update_price_label(
 	else:
 		price_label.visible = false
 
-func _update_owner_label(is_owned: bool, owner_name: String) -> void:
+func _update_owner_label(is_owned: bool, owner_index: int, owner_name: String) -> void:
 	assert(owner_label)
 	if not is_owned or owner_name.is_empty():
 		owner_label.visible = false
+		owner_label.add_theme_color_override("font_color", Color.WHITE)
 		return
 	owner_label.text = "Owner: %s" % owner_name
+	owner_label.add_theme_color_override("font_color", Palette.get_player_light(owner_index))
 	owner_label.visible = true
 
 func _update_buy_buttons(buy_visible: bool, buy_fiat_enabled: bool, buy_btc_enabled: bool, price_fiat: float, price_btc: float) -> void:
@@ -339,7 +342,7 @@ func _update_payout_label(payout_cycle_1_2: float, payout_cycle_3_4: float) -> v
 	]
 	payout_label.visible = true
 
-func show_toll_actions(toll_fiat: float, toll_btc: float, bitcoin_enabled: bool) -> void:
+func show_toll_actions(toll_fiat: float, toll_btc: float, fiat_enabled: bool, bitcoin_enabled: bool) -> void:
 	assert(pay_toll_container)
 	assert(pay_toll_label)
 	assert(pay_toll_fiat_button)
@@ -348,7 +351,7 @@ func show_toll_actions(toll_fiat: float, toll_btc: float, bitcoin_enabled: bool)
 	pay_toll_container.visible = true
 	pay_toll_label.text = "Pay Energy Toll"
 	pay_toll_fiat_button.text = "%s (fiat)" % NumberFormat.format_fiat(toll_fiat)
-	pay_toll_fiat_button.disabled = false
+	pay_toll_fiat_button.disabled = not fiat_enabled
 	pay_toll_bitcoin_button.text = "%s (btc)" % NumberFormat.format_btc(toll_btc)
 	pay_toll_bitcoin_button.disabled = not bitcoin_enabled
 	end_turn_button.visible = false

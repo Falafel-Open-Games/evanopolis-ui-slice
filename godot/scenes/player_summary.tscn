@@ -107,10 +107,22 @@ unique_name_in_owner = true
 layout_mode = 2
 theme_override_constants/separation = 6
 
-[node name="OrderTotalLabel" type="Label" parent="VBoxContainer/MarginContainer/VBoxContainer/PropertiesPanel/PropertiesMargin/PropertiesContent"]
+[node name="OrderTotalRow" type="HBoxContainer" parent="VBoxContainer/MarginContainer/VBoxContainer/PropertiesPanel/PropertiesMargin/PropertiesContent"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="OrderTotalFiatLabel" type="Label" parent="VBoxContainer/MarginContainer/VBoxContainer/PropertiesPanel/PropertiesMargin/PropertiesContent/OrderTotalRow"]
 unique_name_in_owner = true
 layout_mode = 2
-text = "Order Total: 0"
+size_flags_horizontal = 3
+text = "Fiat: 0"
+
+[node name="OrderTotalBtcLabel" type="Label" parent="VBoxContainer/MarginContainer/VBoxContainer/PropertiesPanel/PropertiesMargin/PropertiesContent/OrderTotalRow"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+text = "BTC: 0"
+horizontal_alignment = 2
 
 [node name="OrderButtons" type="HBoxContainer" parent="VBoxContainer/MarginContainer/VBoxContainer/PropertiesPanel/PropertiesMargin/PropertiesContent"]
 layout_mode = 2

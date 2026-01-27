@@ -10,6 +10,8 @@ the source of truth for project constraints while working in this repo.
 - Push is the final step and is done by the user (keyed); do not run `jj git push` yourself.
 - Before opening a PR, run `just sync-build-id` so the build displays the correct build id.
 - When cutting a PR, pick a branch name yourself and track the bookmark with origin without asking.
+- Commit messages must use a one-line conventional commit summary, then a blank line, then a fuller descriptive summary.
+- Use `jj describe` to finalize PR changes instead of `jj commit` to avoid creating a new empty revision.
 - If you need broader AI instructions, see `/home/fcz/falafel/AGENTS.md`.
 
 ## Scope
