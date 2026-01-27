@@ -24,11 +24,17 @@ Reference: brainstorm notes in `docs/bitcoin-mining-rules-exploration.md`.
 - Exchange rate reference for UI: 1 BTC = 100,000 fiat.
 
 ## Buying Properties & Mining Rigs
-- Properties are bought with fiat; regular properties can host up to 4 miner batches.
+- Properties are bought with fiat or BTC; regular properties can host up to 4 miner batches.
 - Property prices scale by tier (20k/50k/80k/110k/150k/200k).
 - Miner batches cost 320k fiat per unit.
 - Each miner piece represents a batch of 50 hydro miners (e.g., Antminer S21 Hydro).
-- Properties and miner batches can be bought with BTC at a 10% discount.
+- Properties and miner batches can be bought with BTC at a 10% discount (anchored to base fiat prices).
+- Miner batch fiat prices inflate with fiat inflation; BTC prices remain anchored to base values.
+
+## Miner Batch Orders (Flow)
+- Any player can place miner batch orders at any time.
+- Confirming an order deducts the chosen balance immediately and locks the order until end of turn.
+- Pending orders are applied at the end of each turn (not just the owner's turn).
 
 ## Owned Property Landing
 - When landing on an owned property, the visitor pays a fiat energy toll.
@@ -61,15 +67,17 @@ Reference: brainstorm notes in `docs/bitcoin-mining-rules-exploration.md`.
 ```
 +------------------------------------------------------+
 |                    CARACAS (Tier 1)                  |
-|              Max Miner Batches: 3                    |
+|              Max Miner Batches: 4                    |
 +-------------------+-----------+----------------------+
-| Cycle             | Fiat Price| Energy Toll (10%)     |
+| Cycle             | Fiat Price| Energy Toll (base)    |
 +-------------------+-----------+----------------------+
 | 1 (Halving)       | 20,000    | 2,000                |
 | 2 (Inflation +10%)| 22,000    | 2,200                |
 | 3 (Halving)       | 22,000    | 2,200                |
 | 4 (Inflation +10%)| 24,200    | 2,420                |
 +-------------------+-----------+----------------------+
+| Energy toll values shown assume 0 miner batches.     |
+| Add 2.5% of price per miner batch.                   |
 | BTC Payout per Miner Batch when landed on:           |
 | Cycle 1: 2.0 BTC                                   |
 | Cycle 2: 2.0 BTC                                   |
