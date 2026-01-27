@@ -31,6 +31,7 @@ func _ready() -> void:
 	game_id_label.text = "Game ID: %s" % GameConfig.game_id
 	build_id_label.text = "Build ID: %s" % GameConfig.build_id
 	_apply_player_visibility(GameConfig.player_count)
+	_bind_player_summaries()
 	_on_player_changed(game_state.current_player_index)
 	game_state.reset_positions()
 	_place_all_pawns_at_start()
@@ -48,6 +49,8 @@ func _bind_game_state() -> void:
 		game_state.player_data_changed.connect(_on_player_data_changed)
 	if not game_state.turn_state_changed.is_connected(_on_turn_state_changed):
 		game_state.turn_state_changed.connect(_on_turn_state_changed)
+	if not game_state.miner_batches_changed.is_connected(_on_miner_batches_changed):
+		game_state.miner_batches_changed.connect(_on_miner_batches_changed)
 
 func _bind_sidebar() -> void:
 	if not turn_actions.end_turn_button.pressed.is_connected(_on_end_turn_pressed):
@@ -63,6 +66,7 @@ func _bind_sidebar() -> void:
 
 func _on_end_turn_pressed() -> void:
 	assert(game_state)
+	game_state.apply_all_pending_miner_orders()
 	game_state.advance_turn()
 
 func _on_player_changed(new_index: int) -> void:
@@ -131,6 +135,7 @@ func _update_tile_info(tile_index: int) -> void:
 		game_state.get_energy_toll_btc(info),
 		game_state.get_payout_per_miner_for_cycle(1),
 		game_state.get_payout_per_miner_for_cycle(3),
+		info.miner_batches,
 		is_owned,
 		owner_name,
 		buy_visible,
@@ -172,6 +177,12 @@ func _apply_player_visibility(count: int) -> void:
 		var pawn: Node3D = pawns_root.get_node("Pawn%d" % index)
 		assert(pawn)
 		pawn.visible = index <= count
+
+func _bind_player_summaries() -> void:
+	for child in left_sidebar_list.get_children():
+		var summary: PlayerSummary = child as PlayerSummary
+		assert(summary)
+		summary.set_game_state(game_state)
 
 func _process(delta: float) -> void:
 	if not turn_timer_active:
@@ -245,11 +256,25 @@ func _on_player_data_changed(player_index: int, player_data: PlayerData) -> void
 	assert(summary)
 	summary.set_player_data(player_data)
 
-func _on_turn_state_changed(player_index: int, turn_number: int, cycle_number: int) -> void:
+func _on_turn_state_changed(_player_index: int, turn_number: int, cycle_number: int) -> void:
 	turn_actions.set_turn_state(turn_number, cycle_number)
 	if cycle_number != last_cycle:
 		_update_cycle_visual(cycle_number)
 		last_cycle = cycle_number
+
+func _on_miner_batches_changed(tile_index: int, miner_batches: int, owner_index: int) -> void:
+	assert(board_layout)
+	assert(board_layout.has_method("get_board_tiles"))
+	var board_tiles: Array = board_layout.get_board_tiles()
+	assert(tile_index >= 0 and tile_index < board_tiles.size())
+	var tile: Node3D = board_tiles[tile_index]
+	var board_tile: BoardTile = tile as BoardTile
+	assert(board_tile)
+	if owner_index < 0:
+		board_tile.set_miner_batches(0, Color.WHITE)
+		return
+	var owner_color: Color = Palette.get_player_light(owner_index)
+	board_tile.set_miner_batches(miner_batches, owner_color)
 
 func _update_cycle_visual(cycle_number: int) -> void:
 	assert(board_layout)

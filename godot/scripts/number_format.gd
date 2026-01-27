@@ -6,11 +6,11 @@ static func format_fiat(value: float) -> String:
 	var parts: PackedStringArray = text.split(".")
 	var integer_part: String = parts[0]
 	var fractional: String = parts[1] if parts.size() > 1 else "00"
-	var sign: String = ""
+	var sign_text: String = ""
 	if integer_part.begins_with("-"):
-		sign = "-"
+		sign_text = "-"
 		integer_part = integer_part.substr(1, integer_part.length() - 1)
-	return "%s%s.%s" % [sign, _format_with_commas(integer_part), fractional]
+	return "%s%s.%s" % [sign_text, _format_with_commas(integer_part), fractional]
 
 static func format_btc(value: float) -> String:
 	return "%.4f" % value

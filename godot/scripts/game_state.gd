@@ -20,6 +20,8 @@ const SPECIAL_PROPERTIES: Array[Dictionary] = [
 ]
 const PAYOUT_PER_MINER_CYCLE_1_2: float = 2.0
 const PAYOUT_PER_MINER_CYCLE_3_4: float = 1.0
+const MAX_MINER_BATCHES_PER_PROPERTY: int = 4
+const MINER_BATCH_PRICE_FIAT_BASE: float = 320000.0
 
 var current_player_index: int
 var player_positions: Array[int]
@@ -28,11 +30,16 @@ var players: Array[PlayerData] = []
 var current_cycle: int = 1
 var turn_count: int = 1
 var player_laps: Array[int] = []
+var pending_miner_orders: Array[Dictionary] = []
+var pending_miner_order_locked: Array[bool] = []
 
 signal player_changed(new_index: int)
 signal player_position_changed(new_position: int, tile_slot: int)
 signal player_data_changed(player_index: int, player_data: PlayerData)
 signal turn_state_changed(player_index: int, turn_number: int, cycle_number: int)
+signal miner_order_locked(player_index: int, locked: bool)
+signal miner_order_committed(player_index: int)
+signal miner_batches_changed(tile_index: int, miner_batches: int, owner_index: int)
 
 func _ready() -> void:
 	seed(GameConfig.game_id.hash())
@@ -50,6 +57,11 @@ func reset_positions() -> void:
 	player_laps.resize(GameConfig.player_count)
 	player_laps.fill(0)
 
+	pending_miner_orders = []
+	pending_miner_orders.resize(GameConfig.player_count)
+	pending_miner_order_locked = []
+	pending_miner_order_locked.resize(GameConfig.player_count)
+
 	players = []
 	players.resize(GameConfig.player_count)
 	for index in range(GameConfig.player_count):
@@ -59,11 +71,15 @@ func reset_positions() -> void:
 		data.mining_power = GameConfig.starting_mining_power
 		players[index] = data
 		player_data_changed.emit(index, data)
+		pending_miner_orders[index] = {}
+		pending_miner_order_locked[index] = false
 
 	# Clear stale occupants from previous runs before seeding start tile.
 	for tile_index in range(tiles.size()):
 		tiles[tile_index].occupants = []
 		tiles[tile_index].owner_index = -1
+		tiles[tile_index].miner_batches = 0
+		miner_batches_changed.emit(tile_index, 0, -1)
 	# tile of position 0 starts with one player index per slot
 	for index in range(GameConfig.player_count):
 		tiles[0].occupants.append(index)
@@ -116,11 +132,14 @@ func get_player_bitcoin_balance(player_index: int) -> float:
 	return players[player_index].bitcoin_balance
 
 func get_energy_toll(tile: TileInfo) -> float:
-	return get_tile_price(tile) * 0.1
+	var price: float = get_tile_price(tile)
+	return (price * 0.1) + (price * 0.025 * float(tile.miner_batches))
 
 func get_energy_toll_btc(tile: TileInfo) -> float:
 	var exchange_rate: float = max(1.0, GameConfig.btc_exchange_rate_fiat)
-	return get_energy_toll(tile) / exchange_rate
+	var base_price: float = _get_base_tile_price(tile)
+	var base_toll: float = (base_price * 0.1) + (base_price * 0.025 * float(tile.miner_batches))
+	return (base_toll * 0.9) / exchange_rate
 
 func get_payout_per_miner_for_cycle(cycle_number: int) -> float:
 	if cycle_number <= 2:
@@ -132,7 +151,81 @@ func get_tile_price(tile: TileInfo) -> float:
 
 func get_tile_price_btc(tile: TileInfo) -> float:
 	var exchange_rate: float = max(1.0, GameConfig.btc_exchange_rate_fiat)
-	return get_tile_price(tile) / exchange_rate
+	return (_get_base_tile_price(tile) * 0.9) / exchange_rate
+
+func get_miner_batch_price_fiat() -> float:
+	return MINER_BATCH_PRICE_FIAT_BASE * _get_inflation_multiplier()
+
+func get_miner_batch_price_btc() -> float:
+	var exchange_rate: float = max(1.0, GameConfig.btc_exchange_rate_fiat)
+	return (MINER_BATCH_PRICE_FIAT_BASE * 0.9) / exchange_rate
+
+func get_owned_property_indices(player_index: int) -> Array[int]:
+	assert(player_index >= 0 and player_index < GameConfig.player_count)
+	var results: Array[int] = []
+	for tile_index in range(tiles.size()):
+		var tile: TileInfo = tiles[tile_index]
+		if tile.tile_type == "property" and tile.owner_index == player_index:
+			results.append(tile_index)
+	return results
+
+func get_pending_miner_order(player_index: int) -> Dictionary:
+	assert(player_index >= 0 and player_index < GameConfig.player_count)
+	return pending_miner_orders[player_index]
+
+func can_place_miner_order(player_index: int) -> bool:
+	assert(player_index >= 0 and player_index < GameConfig.player_count)
+	return not pending_miner_order_locked[player_index]
+
+func set_pending_miner_order(player_index: int, order: Dictionary, use_bitcoin: bool) -> bool:
+	assert(player_index >= 0 and player_index < players.size())
+	assert(can_place_miner_order(player_index))
+	var total_batches: int = 0
+	for tile_key in order.keys():
+		var tile_index: int = int(tile_key)
+		assert(tile_index >= 0 and tile_index < tiles.size())
+		var tile: TileInfo = tiles[tile_index]
+		assert(tile.tile_type == "property")
+		assert(tile.owner_index == player_index)
+		var batches: int = int(order[tile_key])
+		if batches <= 0:
+			continue
+		assert(batches <= MAX_MINER_BATCHES_PER_PROPERTY - tile.miner_batches)
+		total_batches += batches
+	if total_batches == 0:
+		return false
+	var player_data: PlayerData = players[player_index]
+	if use_bitcoin:
+		player_data.bitcoin_balance -= float(total_batches) * get_miner_batch_price_btc()
+	else:
+		player_data.fiat_balance -= float(total_batches) * get_miner_batch_price_fiat()
+	pending_miner_orders[player_index] = order.duplicate(true)
+	pending_miner_order_locked[player_index] = true
+	player_data_changed.emit(player_index, player_data)
+	miner_order_locked.emit(player_index, true)
+	return true
+
+func apply_pending_miner_orders(player_index: int) -> void:
+	assert(player_index >= 0 and player_index < players.size())
+	if not pending_miner_order_locked[player_index]:
+		return
+	var order: Dictionary = pending_miner_orders[player_index]
+	for tile_key in order.keys():
+		var tile_index: int = int(tile_key)
+		assert(tile_index >= 0 and tile_index < tiles.size())
+		var tile: TileInfo = tiles[tile_index]
+		var batches: int = int(order[tile_key])
+		if batches > 0:
+			tile.miner_batches += batches
+			miner_batches_changed.emit(tile_index, tile.miner_batches, tile.owner_index)
+	pending_miner_orders[player_index] = {}
+	pending_miner_order_locked[player_index] = false
+	miner_order_locked.emit(player_index, false)
+	miner_order_committed.emit(player_index)
+
+func apply_all_pending_miner_orders() -> void:
+	for player_index in range(pending_miner_orders.size()):
+		apply_pending_miner_orders(player_index)
 
 func pay_energy_toll(
 	payer_index: int,
@@ -143,15 +236,15 @@ func pay_energy_toll(
 	assert(payer_index >= 0 and payer_index < players.size())
 	assert(owner_index >= 0 and owner_index < players.size())
 	var payer: PlayerData = players[payer_index]
-	var owner: PlayerData = players[owner_index]
+	var owner_data: PlayerData = players[owner_index]
 	if use_bitcoin:
 		payer.bitcoin_balance -= amount
-		owner.bitcoin_balance += amount
+		owner_data.bitcoin_balance += amount
 	else:
 		payer.fiat_balance -= amount
-		owner.fiat_balance += amount
+		owner_data.fiat_balance += amount
 	player_data_changed.emit(payer_index, payer)
-	player_data_changed.emit(owner_index, owner)
+	player_data_changed.emit(owner_index, owner_data)
 
 func _emit_turn_state() -> void:
 	turn_state_changed.emit(current_player_index, turn_count, current_cycle)

@@ -9,6 +9,7 @@ var property_price: float
 var special_property_name: String
 var special_property_price: float
 var owner_index: int
+var miner_batches: int
 
 func _init() -> void:
 	tile_type = "unknown"
@@ -19,3 +20,4 @@ func _init() -> void:
 	special_property_name = ""
 	special_property_price = 0.0
 	owner_index = -1
+	miner_batches = 0
