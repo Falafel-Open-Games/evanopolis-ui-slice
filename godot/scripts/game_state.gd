@@ -196,9 +196,15 @@ func set_pending_miner_order(player_index: int, order: Dictionary, use_bitcoin: 
 		return false
 	var player_data: PlayerData = players[player_index]
 	if use_bitcoin:
-		player_data.bitcoin_balance -= float(total_batches) * get_miner_batch_price_btc()
+		var total_btc: float = float(total_batches) * get_miner_batch_price_btc()
+		if player_data.bitcoin_balance < total_btc:
+			return false
+		player_data.bitcoin_balance -= total_btc
 	else:
-		player_data.fiat_balance -= float(total_batches) * get_miner_batch_price_fiat()
+		var total_fiat: float = float(total_batches) * get_miner_batch_price_fiat()
+		if player_data.fiat_balance < total_fiat:
+			return false
+		player_data.fiat_balance -= total_fiat
 	pending_miner_orders[player_index] = order.duplicate(true)
 	pending_miner_order_locked[player_index] = true
 	player_data_changed.emit(player_index, player_data)
@@ -232,19 +238,25 @@ func pay_energy_toll(
 	owner_index: int,
 	amount: float,
 	use_bitcoin: bool
-) -> void:
+) -> bool:
 	assert(payer_index >= 0 and payer_index < players.size())
 	assert(owner_index >= 0 and owner_index < players.size())
+	assert(amount >= 0.0)
 	var payer: PlayerData = players[payer_index]
 	var owner_data: PlayerData = players[owner_index]
 	if use_bitcoin:
+		if payer.bitcoin_balance < amount:
+			return false
 		payer.bitcoin_balance -= amount
 		owner_data.bitcoin_balance += amount
 	else:
+		if payer.fiat_balance < amount:
+			return false
 		payer.fiat_balance -= amount
 		owner_data.fiat_balance += amount
 	player_data_changed.emit(payer_index, payer)
 	player_data_changed.emit(owner_index, owner_data)
+	return true
 
 func _emit_turn_state() -> void:
 	turn_state_changed.emit(current_player_index, turn_count, current_cycle)
@@ -261,6 +273,8 @@ func purchase_tile(player_index: int, tile_index: int, use_bitcoin: bool) -> boo
 	var player_data: PlayerData = players[player_index]
 	if use_bitcoin:
 		var price_btc: float = get_tile_price_btc(tile)
+		if player_data.bitcoin_balance < price_btc:
+			return false
 		player_data.bitcoin_balance -= price_btc
 	else:
 		if player_data.fiat_balance < price:

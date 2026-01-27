@@ -8,7 +8,8 @@ extends FoldableContainer
 @onready var view_properties_button: Button = %ViewPropertiesButton
 @onready var properties_panel: PanelContainer = %PropertiesPanel
 @onready var properties_list: VBoxContainer = %PropertiesList
-@onready var order_total_label: Label = %OrderTotalLabel
+@onready var order_total_fiat_label: Label = %OrderTotalFiatLabel
+@onready var order_total_btc_label: Label = %OrderTotalBtcLabel
 @onready var confirm_fiat_button: Button = %ConfirmFiatButton
 @onready var confirm_btc_button: Button = %ConfirmBtcButton
 @onready var close_properties_button: Button = %ClosePropertiesButton
@@ -25,7 +26,8 @@ func _ready() -> void:
 	assert(view_properties_button)
 	assert(properties_panel)
 	assert(properties_list)
-	assert(order_total_label)
+	assert(order_total_fiat_label)
+	assert(order_total_btc_label)
 	assert(confirm_fiat_button)
 	assert(confirm_btc_button)
 	assert(close_properties_button)
@@ -48,6 +50,8 @@ func set_player_data(player_data: PlayerData) -> void:
 	set_fiat_balance(player_data.fiat_balance)
 	set_bitcoin_balance(player_data.bitcoin_balance)
 	set_mining_power(player_data.mining_power)
+	if properties_panel.visible:
+		_update_confirm_buttons()
 
 func set_game_state(game_state: GameState) -> void:
 	assert(game_state)
@@ -134,30 +138,40 @@ func _add_property_row(tile_index: int, pending_order: Dictionary) -> void:
 	info_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	var pending_count: int = int(pending_order.get(tile_index, 0))
 	if _can_edit_order:
-		info_label.text = "%s\nMiners: %d" % [tile.city, tile.miner_batches]
+		info_label.text = "%s\nMiners" % [tile.city]
 	else:
-		info_label.text = "%s\nMiners: %d (+%d pending)" % [tile.city, tile.miner_batches, pending_count]
+		info_label.text = "%s\nMiners (+%d pending)" % [tile.city, pending_count]
 	row.add_child(info_label)
 
 	var spinner: SpinBox = SpinBox.new()
 	spinner.step = 1.0
-	spinner.min_value = 0.0
+	var base_miners: int = tile.miner_batches
+	spinner.min_value = float(base_miners)
 	var max_additional: int = GameState.MAX_MINER_BATCHES_PER_PROPERTY - tile.miner_batches
 	if max_additional < 0:
 		max_additional = 0
-	spinner.max_value = float(max_additional)
-	spinner.value = float(pending_count if not _can_edit_order else 0)
+	spinner.max_value = float(base_miners + max_additional)
+	if _can_edit_order:
+		spinner.value = float(base_miners)
+	else:
+		spinner.value = float(base_miners + pending_count)
 	spinner.editable = _can_edit_order
 	spinner.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	if _can_edit_order:
 		spinner.value_changed.connect(_on_spinner_changed.bind(tile_index))
-	_order_counts[tile_index] = int(spinner.value)
+	_order_counts[tile_index] = int(spinner.value) - base_miners
 	row.add_child(spinner)
 
 	properties_list.add_child(row)
 
 func _on_spinner_changed(value: float, tile_index: int) -> void:
-	_order_counts[tile_index] = int(value)
+	assert(_game_state)
+	var tile: TileInfo = _game_state.get_tile_info(tile_index)
+	var base_miners: int = tile.miner_batches
+	var additional: int = int(value) - base_miners
+	if additional < 0:
+		additional = 0
+	_order_counts[tile_index] = additional
 	_update_order_total()
 	_update_confirm_buttons()
 
@@ -168,18 +182,41 @@ func _update_order_total() -> void:
 		total_batches += int(count)
 	var total_fiat: float = float(total_batches) * _game_state.get_miner_batch_price_fiat()
 	var total_btc: float = float(total_batches) * _game_state.get_miner_batch_price_btc()
-	order_total_label.text = "Order Total: %s fiat | %s BTC" % [
-		NumberFormat.format_fiat(total_fiat),
-		NumberFormat.format_btc(total_btc),
-	]
+	order_total_fiat_label.text = "Fiat: %s" % NumberFormat.format_fiat(total_fiat)
+	order_total_btc_label.text = "BTC: %s" % NumberFormat.format_btc(total_btc)
+	_update_order_total_color(total_fiat, total_btc)
 
 func _update_confirm_buttons() -> void:
+	assert(_game_state)
 	var total_batches: int = 0
 	for count in _order_counts.values():
 		total_batches += int(count)
-	var disabled: bool = total_batches == 0 or not _can_edit_order
-	confirm_fiat_button.disabled = disabled
-	confirm_btc_button.disabled = disabled
+	if total_batches == 0 or not _can_edit_order:
+		confirm_fiat_button.disabled = true
+		confirm_btc_button.disabled = true
+		_update_order_total_color(0.0, 0.0)
+		return
+	var total_fiat: float = float(total_batches) * _game_state.get_miner_batch_price_fiat()
+	var total_btc: float = float(total_batches) * _game_state.get_miner_batch_price_btc()
+	var fiat_balance: float = _game_state.get_player_fiat_balance(player_index)
+	var btc_balance: float = _game_state.get_player_bitcoin_balance(player_index)
+	confirm_fiat_button.disabled = fiat_balance < total_fiat
+	confirm_btc_button.disabled = btc_balance < total_btc
+
+func _update_order_total_color(total_fiat: float, total_btc: float) -> void:
+	assert(_game_state)
+	var fiat_balance: float = _game_state.get_player_fiat_balance(player_index)
+	var btc_balance: float = _game_state.get_player_bitcoin_balance(player_index)
+	var insufficient_fiat: bool = total_fiat > 0.0 and fiat_balance < total_fiat
+	var insufficient_btc: bool = total_btc > 0.0 and btc_balance < total_btc
+	if insufficient_fiat:
+		order_total_fiat_label.add_theme_color_override("font_color", Color("#f2c94c"))
+	else:
+		order_total_fiat_label.add_theme_color_override("font_color", Color.WHITE)
+	if insufficient_btc:
+		order_total_btc_label.add_theme_color_override("font_color", Color("#f2c94c"))
+	else:
+		order_total_btc_label.add_theme_color_override("font_color", Color.WHITE)
 
 func _clear_property_list() -> void:
 	for child in properties_list.get_children():
