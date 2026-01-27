@@ -189,10 +189,10 @@ horizontal_alignment = 2
 [node name="CameraPositions" type="Node3D" parent="."]
 
 [node name="Marker3D" type="Marker3D" parent="CameraPositions"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.18448187, 0.09739789, 0.40265304)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.18448187, 0.20962125, 0.40265304)
 
 [node name="Marker3D2" type="Marker3D" parent="CameraPositions"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.32851642, 0.09739789, 0.13582872)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.32851642, 0.20962125, 0.13582872)
 
 [node name="Marker3D3" type="Marker3D" parent="CameraPositions"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.15872602, 0.09739789, -0.111434385)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.15872602, 0.20962125, -0.111434385)
