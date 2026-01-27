@@ -1,9 +1,10 @@
-[gd_scene load_steps=14 format=3 uid="uid://cqmxik86m7jfl"]
+[gd_scene load_steps=15 format=3 uid="uid://cqmxik86m7jfl"]
 
 [ext_resource type="PackedScene" uid="uid://belar34400qbw" path="res://scenes/side_strip.tscn" id="2_s0k7h"]
 [ext_resource type="PackedScene" uid="uid://cf3ptmh3a1lsi" path="res://scenes/player_summary.tscn" id="2_yqjtg"]
 [ext_resource type="PackedScene" uid="uid://hsaj4hgpu7a6" path="res://scenes/pawn.tscn" id="3_lbhrr"]
 [ext_resource type="Script" uid="uid://csigfifodnx75" path="res://scripts/board_layout.gd" id="3_tfrx2"]
+[ext_resource type="Script" uid="uid://mgkcqra2dc4p" path="res://scripts/camera_controller.gd" id="4_0tnpc"]
 [ext_resource type="Script" uid="uid://b4b2jj7a5a3fy" path="res://scripts/pawns_start.gd" id="4_3k9qj"]
 [ext_resource type="Script" uid="uid://e1pe74jhpbxc" path="res://scripts/game_controller.gd" id="5_77h6y"]
 [ext_resource type="PackedScene" uid="uid://ckbnfxtwa4po5" path="res://scenes/turn_actions.tscn" id="6_p57ef"]
@@ -44,6 +45,8 @@ script = ExtResource("5_77h6y")
 turn_actions = NodePath("../Control/MarginContainer/TurnActions")
 left_sidebar_list = NodePath("../Control/MarginContainer/LeftSidebar/VBoxContainer")
 pawns_root = NodePath("../Pawns")
+pawn_movement_peak = Vector2(0.1, 0.1)
+pawn_wait_time_per_tile = 0.2
 
 [node name="Table" type="MeshInstance3D" parent="."]
 mesh = SubResource("PlaneMesh_8cj0n")
@@ -57,9 +60,12 @@ environment = SubResource("Environment_yqjtg")
 transform = Transform3D(-0.8660254, -0.43301278, 0.25, 0, 0.49999997, 0.86602545, -0.50000006, 0.75, -0.43301266, 0, 0, 0)
 shadow_enabled = true
 
-[node name="Camera3D" type="Camera3D" parent="Environment"]
+[node name="Camera3D" type="Camera3D" parent="Environment" node_paths=PackedStringArray("camera_positions", "debug_target_node")]
 transform = Transform3D(1, 0, 0, 0, 0.84463644, 0.5353404, 0, -0.5353404, 0.84463644, 0, 0.4244808, 0.7434412)
 fov = 53.9
+script = ExtResource("4_0tnpc")
+camera_positions = [NodePath("../../CameraPositions/Marker3D"), NodePath("../../CameraPositions/Marker3D2"), NodePath("../../CameraPositions/Marker3D3")]
+debug_target_node = NodePath("../../Pawns/Pawn1")
 
 [node name="tiles" type="Node3D" parent="."]
 transform = Transform3D(0.8660254, 0, 0.5, 0, 1, 0, -0.5, 0, 0.8660254, 0, 0, 0.33)
@@ -179,3 +185,14 @@ size_flags_horizontal = 8
 size_flags_vertical = 8
 text = " Build ID:"
 horizontal_alignment = 2
+
+[node name="CameraPositions" type="Node3D" parent="."]
+
+[node name="Marker3D" type="Marker3D" parent="CameraPositions"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.18448187, 0.09739789, 0.40265304)
+
+[node name="Marker3D2" type="Marker3D" parent="CameraPositions"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.32851642, 0.09739789, 0.13582872)
+
+[node name="Marker3D3" type="Marker3D" parent="CameraPositions"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.15872602, 0.09739789, -0.111434385)

@@ -4,6 +4,9 @@ extends Node
 @export var turn_actions: TurnActions
 @export var left_sidebar_list: VBoxContainer
 @export var pawns_root: Node3D
+@export var pawn_movement_peak: Vector2 = Vector2(0.15, 0.15)
+@export var pawn_jump_height: float = 0.05
+@export var pawn_wait_time_per_tile: float = 0.3
 
 # TODO: review the methods of thid board layout, it looks like they should be processed once in the beginning and then be part of the game state until the end of the match
 @onready var board_layout: Node = %BoardLayout
@@ -210,17 +213,68 @@ func _reset_turn_timer() -> void:
 	turn_timer_active = true
 	turn_actions.set_turn_timer(GameConfig.turn_duration, turn_elapsed)
 
-func _place_pawn(player_index: int, tile_index: int, slot_index: int) -> void:
-	assert(board_layout)
-	assert(pawns_root)
-	assert(board_layout.has_method("get_tile_markers"))
-	var markers: Array = board_layout.get_tile_markers(tile_index)
-	assert(markers.size() > 0)
-	var clamped_slot: int = clamp(slot_index, 0, markers.size() - 1)
-	var marker: Marker3D = markers[clamped_slot]
-	var pawn: Node3D = pawns_root.get_node("Pawn%d" % (player_index + 1))
-	assert(pawn)
-	pawn.global_transform = marker.global_transform
+    turn_elapsed = 0.0
+    turn_timer_active = true
+    turn_actions.set_turn_timer(GameConfig.turn_duration, turn_elapsed)
+
+func _place_pawn(player_index: int, target_tile_index: int, slot_index: int) -> void:
+    # 1. Validation and Setup
+    assert(board_layout)
+    assert(pawns_root)
+
+    var pawn_name = "Pawn%d" % (player_index + 1)
+    var pawn: Node3D = pawns_root.get_node(pawn_name)
+    assert(pawn, "Pawn node not found: " + pawn_name)
+
+    # 2. Determine Start Position (Use metadata to remember logical index)
+    # If "current_tile" is missing (first run), assume we are already at the target (teleport)
+    var current_tile_index: int = pawn.get_meta("current_tile", target_tile_index)
+
+    # Update meta immediately for the next call
+    pawn.set_meta("current_tile", target_tile_index)
+
+    # 3. Handle Initialization or Teleport (Zero distance)
+    if current_tile_index == target_tile_index:
+        var markers = board_layout.get_tile_markers(target_tile_index)
+        var clamped_slot = clamp(slot_index, 0, markers.size() - 1)
+        pawn.global_transform = markers[clamped_slot].global_transform
+        return
+
+    # 4. Calculate Path Steps
+    # We need board size to handle the wrap-around (e.g., moving from Tile 58 to Tile 2)
+    # Assuming board_layout has a way to get total count, or we infer from the layout array
+    var board_size: int = board_layout.board_size
+
+    var steps_needed: int = (target_tile_index - current_tile_index + board_size) % board_size
+
+    # 5. Loop through every tile in the way
+    for i in range(1, steps_needed + 1):
+        var next_index = (current_tile_index + i) % board_size
+
+        # Determine slot: Final tile uses the requested slot, intermediate tiles use slot 0 (center)
+        var target_slot = slot_index if next_index == target_tile_index else 0
+
+        var markers = board_layout.get_tile_markers(next_index)
+        if markers.size() == 0: continue
+
+        var clamped_slot = clamp(target_slot, 0, markers.size() - 1)
+        var target_marker: Marker3D = markers[clamped_slot]
+
+        var tween = create_tween()
+        tween.set_trans(Tween.TRANS_SINE)
+        tween.set_ease(Tween.EASE_IN_OUT)
+
+        tween.tween_property(pawn, "global_position", target_marker.global_position, pawn_wait_time_per_tile)
+        tween.parallel().tween_property(pawn, "global_rotation", target_marker.global_rotation, pawn_wait_time_per_tile)
+
+        var peak_y = target_marker.global_position.y + pawn_jump_height
+        var base_y = target_marker.global_position.y
+
+        var jump_tween = create_tween()
+        jump_tween.tween_property(pawn, "global_position:y", peak_y, pawn_movement_peak.y).set_ease(Tween.EASE_OUT)
+        jump_tween.tween_property(pawn, "global_position:y", base_y, pawn_movement_peak.x).set_ease(Tween.EASE_IN)
+
+        await tween.finished
 
 func _on_buy_requested(use_bitcoin: bool) -> void:
 	assert(game_state)
