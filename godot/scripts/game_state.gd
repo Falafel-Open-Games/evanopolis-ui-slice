@@ -30,6 +30,7 @@ var players: Array[PlayerData] = []
 var current_cycle: int = 1
 var turn_count: int = 1
 var player_laps: Array[int] = []
+var player_progress: Array[int] = []
 var pending_miner_orders: Array[Dictionary] = []
 var pending_miner_order_locked: Array[bool] = []
 
@@ -56,6 +57,10 @@ func reset_positions() -> void:
 	player_laps = []
 	player_laps.resize(GameConfig.player_count)
 	player_laps.fill(0)
+
+	player_progress = []
+	player_progress.resize(GameConfig.player_count)
+	player_progress.fill(0)
 
 	pending_miner_orders = []
 	pending_miner_orders.resize(GameConfig.player_count)
@@ -96,10 +101,12 @@ func advance_turn() -> void:
 func move_player(player_index: int, steps: int, board_size: int) -> void:
 	assert(player_index >= 0 and player_index < player_positions.size())
 	assert(player_index >= 0 and player_index < player_laps.size())
+	assert(player_index >= 0 and player_index < player_progress.size())
 
 	var current_tile: int = player_positions[player_index]
 	var next_tile: int = (current_tile + steps) % board_size
 	var cycle_changed: bool = false
+	player_progress[player_index] += steps
 	if current_tile + steps >= board_size:
 		player_laps[player_index] += 1
 		var next_cycle: int = player_laps[player_index] + 1

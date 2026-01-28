@@ -1,10 +1,10 @@
-[gd_scene load_steps=15 format=3 uid="uid://cqmxik86m7jfl"]
+[gd_scene load_steps=16 format=3 uid="uid://cqmxik86m7jfl"]
 
 [ext_resource type="PackedScene" uid="uid://belar34400qbw" path="res://scenes/side_strip.tscn" id="2_s0k7h"]
 [ext_resource type="PackedScene" uid="uid://cf3ptmh3a1lsi" path="res://scenes/player_summary.tscn" id="2_yqjtg"]
 [ext_resource type="PackedScene" uid="uid://hsaj4hgpu7a6" path="res://scenes/pawn.tscn" id="3_lbhrr"]
 [ext_resource type="Script" uid="uid://csigfifodnx75" path="res://scripts/board_layout.gd" id="3_tfrx2"]
-[ext_resource type="Script" uid="uid://mgkcqra2dc4p" path="res://scripts/camera_controller.gd" id="4_0tnpc"]
+[ext_resource type="Script" uid="uid://dd5liisaf625" path="res://scripts/camera_tile_rig.gd" id="4_0tnpc"]
 [ext_resource type="Script" uid="uid://b4b2jj7a5a3fy" path="res://scripts/pawns_start.gd" id="4_3k9qj"]
 [ext_resource type="Script" uid="uid://e1pe74jhpbxc" path="res://scripts/game_controller.gd" id="5_77h6y"]
 [ext_resource type="PackedScene" uid="uid://ckbnfxtwa4po5" path="res://scenes/turn_actions.tscn" id="6_p57ef"]
@@ -29,6 +29,9 @@ background_mode = 2
 sky = SubResource("Sky_uwrxv")
 tonemap_mode = 2
 
+[sub_resource type="BoxMesh" id="BoxMesh_0tnpc"]
+size = Vector3(0.01, 0.02, 1.23)
+
 [node name="Game" type="Node3D"]
 
 [node name="GameState" type="Node" parent="."]
@@ -39,12 +42,13 @@ script = ExtResource("7_h6e2v")
 unique_name_in_owner = true
 script = ExtResource("3_tfrx2")
 
-[node name="GameController" type="Node" parent="." node_paths=PackedStringArray("turn_actions", "left_sidebar_list", "pawns_root")]
+[node name="GameController" type="Node" parent="." node_paths=PackedStringArray("turn_actions", "left_sidebar_list", "pawns_root", "camera_rig")]
 unique_name_in_owner = true
 script = ExtResource("5_77h6y")
 turn_actions = NodePath("../Control/MarginContainer/TurnActions")
 left_sidebar_list = NodePath("../Control/MarginContainer/LeftSidebar/VBoxContainer")
 pawns_root = NodePath("../Pawns")
+camera_rig = NodePath("../Environment/Camera3D")
 pawn_movement_peak = Vector2(0.1, 0.1)
 pawn_jump_height = 0.02
 pawn_wait_time_per_tile = 0.2
@@ -61,14 +65,34 @@ environment = SubResource("Environment_yqjtg")
 transform = Transform3D(-0.8660254, -0.43301278, 0.25, 0, 0.49999997, 0.86602545, -0.50000006, 0.75, -0.43301266, 0, 0, 0)
 shadow_enabled = true
 
-[node name="Camera3D" type="Camera3D" parent="Environment" node_paths=PackedStringArray("camera_positions", "pawns")]
+[node name="Camera3D" type="Camera3D" parent="Environment" node_paths=PackedStringArray("board_layout")]
 transform = Transform3D(1, 0, 0, 0, 0.84463644, 0.5353404, 0, -0.5353404, 0.84463644, 0, 0.4244808, 0.7434412)
 fov = 53.9
 script = ExtResource("4_0tnpc")
-camera_positions = [NodePath("../../CameraPositions/CamPos_1"), NodePath("../../CameraPositions/CamPos_2"), NodePath("../../CameraPositions/CamPos_3"), NodePath("../../CameraPositions/CamPos_4"), NodePath("../../CameraPositions/CamPos_5"), NodePath("../../CameraPositions/CamPos_6")]
-pawns = [NodePath("../../Pawns/Pawn1"), NodePath("../../Pawns/Pawn2"), NodePath("../../Pawns/Pawn3"), NodePath("../../Pawns/Pawn4"), NodePath("../../Pawns/Pawn5"), NodePath("../../Pawns/Pawn6")]
-move_duration = 1.0
-focus_damping = 5.0
+board_layout = NodePath("../../BoardLayout")
+
+[node name="DebugArrow" type="Node3D" parent="Environment/Camera3D"]
+visible = false
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Environment/Camera3D/DebugArrow"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.045, 0)
+mesh = SubResource("BoxMesh_0tnpc")
+
+[node name="CameraDebug1" type="Node3D" parent="Environment"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.13447464)
+visible = false
+
+[node name="ZoomOut" type="Camera3D" parent="Environment/CameraDebug1"]
+transform = Transform3D(1, 0, 0, 0, 0.84463644, 0.5353404, 0, -0.5353404, 0.84463644, 0, 0.4244808, 0.6089666)
+fov = 50.0
+
+[node name="ZoomInCorner" type="Camera3D" parent="Environment/CameraDebug1"]
+transform = Transform3D(1, 0, 0, 0, 0.751126, 0.660159, 0, -0.660159, 0.751126, 0, 0.088983506, 0.2860632)
+fov = 20.0
+
+[node name="ZoomInMiddle" type="Camera3D" parent="Environment/CameraDebug1"]
+transform = Transform3D(0.8660254, -0.3300795, 0.375563, 0, 0.751126, 0.660159, -0.5, -0.57171446, 0.65049416, 0.1430316, 0.088983506, 0.247738)
+fov = 20.0
 
 [node name="tiles" type="Node3D" parent="."]
 transform = Transform3D(0.8660254, 0, 0.5, 0, 1, 0, -0.5, 0, 0.8660254, 0, 0, 0.33)
@@ -188,23 +212,3 @@ size_flags_horizontal = 8
 size_flags_vertical = 8
 text = " Build ID:"
 horizontal_alignment = 2
-
-[node name="CameraPositions" type="Node3D" parent="."]
-
-[node name="CamPos_1" type="Marker3D" parent="CameraPositions"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.25, 0.21, 0.5)
-
-[node name="CamPos_2" type="Marker3D" parent="CameraPositions"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.4996609, 0.20962125, 0.13582872)
-
-[node name="CamPos_3" type="Marker3D" parent="CameraPositions"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.25, 0.21, -0.5)
-
-[node name="CamPos_4" type="Marker3D" parent="CameraPositions"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.25, 0.21, -0.5)
-
-[node name="CamPos_5" type="Marker3D" parent="CameraPositions"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.5, 0.21, 0.138)
-
-[node name="CamPos_6" type="Marker3D" parent="CameraPositions"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.25, 0.21, 0.5)

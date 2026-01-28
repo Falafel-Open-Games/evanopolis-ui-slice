@@ -4,6 +4,7 @@ extends Node
 @export var turn_actions: TurnActions
 @export var left_sidebar_list: VBoxContainer
 @export var pawns_root: Node3D
+@export var camera_rig: CameraTileRig
 @export var pawn_movement_peak: Vector2 = Vector2(0.15, 0.15)
 @export var pawn_jump_height: float = 0.05
 @export var pawn_wait_time_per_tile: float = 0.3
@@ -30,16 +31,18 @@ func _ready() -> void:
 	assert(game_id_label)
 	assert(build_id_label)
 	assert(pawns_root)
+	assert(camera_rig)
 	await turn_actions.ready
 	_bind_game_state()
 	game_id_label.text = "Game ID: %s" % GameConfig.game_id
 	build_id_label.text = "Build ID: %s" % GameConfig.build_id
 	_apply_player_visibility(GameConfig.player_count)
 	_bind_player_summaries()
-	_on_player_changed(game_state.current_player_index)
 	game_state.reset_positions()
+	_on_player_changed(game_state.current_player_index)
 	_place_all_pawns_at_start()
 	_update_tile_info(0)
+	call_deferred("_sync_camera_to_current_player")
 
 	call_deferred("_bind_sidebar")
 	set_process(true)
@@ -70,12 +73,20 @@ func _bind_sidebar() -> void:
 
 func _on_end_turn_pressed() -> void:
 	assert(game_state)
+	camera_rig.set_zoom(false)
 	game_state.apply_all_pending_miner_orders()
 	game_state.advance_turn()
 
 func _on_player_changed(new_index: int) -> void:
 	turn_actions.set_current_player(new_index, game_state.turn_count, game_state.current_cycle)
 	_reset_turn_timer()
+	var tile_index: int = game_state.player_positions[new_index]
+	camera_rig.snap_to_tile(tile_index)
+
+func _sync_camera_to_current_player() -> void:
+	var tile_index: int = game_state.player_positions[game_state.current_player_index]
+	camera_rig.snap_to_tile(tile_index)
+	camera_rig.set_zoom(false)
 
 func _on_dice_rolled(_die_1: int, _die_2: int, total: int) -> void:
 	assert(game_state)
@@ -83,8 +94,9 @@ func _on_dice_rolled(_die_1: int, _die_2: int, total: int) -> void:
 	assert(board_layout.has_method("get_board_tiles"))
 	var board_tiles: Array = board_layout.get_board_tiles()
 	assert(board_tiles.size() > 0)
+	var player_index: int = game_state.current_player_index
 	game_state.move_player(
-		game_state.current_player_index,
+		player_index,
 		total,
 		board_tiles.size()
 	)
@@ -222,15 +234,16 @@ func _place_pawn(player_index: int, target_tile_index: int, slot_index: int) -> 
 	var pawn: Node3D = pawns_root.get_node(pawn_name)
 	assert(pawn, "Pawn node not found: " + pawn_name)
 
-	var current_tile_index: int = int(pawn.get_meta("current_tile", target_tile_index))
+	var pawn_tile_index: int = int(pawn.get_meta("current_tile", target_tile_index))
 
 	pawn.set_meta("current_tile", target_tile_index)
 
-	if current_tile_index == target_tile_index:
+	if pawn_tile_index == target_tile_index:
 		var markers: Array[Marker3D] = board_layout.get_tile_markers(target_tile_index)
 		assert(markers.size() > 0)
 		var clamped_slot: int = clamp(slot_index, 0, markers.size() - 1)
 		pawn.global_transform = markers[clamped_slot].global_transform
+		camera_rig.set_zoom(true)
 		return
 
 	# Await for camera movement
@@ -238,10 +251,10 @@ func _place_pawn(player_index: int, target_tile_index: int, slot_index: int) -> 
 
 	var board_size: int = board_layout.board_size
 
-	var steps_needed: int = (target_tile_index - current_tile_index + board_size) % board_size
+	var steps_needed: int = (target_tile_index - pawn_tile_index + board_size) % board_size
 
 	for i in range(1, steps_needed + 1):
-		var next_index: int = (current_tile_index + i) % board_size
+		var next_index: int = (pawn_tile_index + i) % board_size
 
 		var target_slot: int = slot_index if next_index == target_tile_index else 0
 
@@ -266,6 +279,8 @@ func _place_pawn(player_index: int, target_tile_index: int, slot_index: int) -> 
 		jump_tween.tween_property(pawn, "global_position:y", base_y, pawn_movement_peak.x).set_ease(Tween.EASE_IN)
 
 		await tween.finished
+	camera_rig.set_zoom(true)
+	camera_rig.snap_to_tile(target_tile_index)
 
 func _on_buy_requested(use_bitcoin: bool) -> void:
 	assert(game_state)
