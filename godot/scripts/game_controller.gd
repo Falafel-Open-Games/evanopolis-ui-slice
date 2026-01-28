@@ -1,10 +1,14 @@
 class_name GameController
 extends Node
 
+signal dice_roll_started(start_tile_index: int, end_tile_index: int, player_index: int)
+signal pawn_move_finished(end_tile_index: int, player_index: int)
+signal turn_ended(next_player_index: int, next_tile_index: int)
+signal turn_started(player_index: int, tile_index: int)
+
 @export var turn_actions: TurnActions
 @export var left_sidebar_list: VBoxContainer
 @export var pawns_root: Node3D
-@export var camera_rig: CameraTileRig
 @export var pawn_movement_peak: Vector2 = Vector2(0.15, 0.15)
 @export var pawn_jump_height: float = 0.05
 @export var pawn_wait_time_per_tile: float = 0.3
@@ -31,7 +35,6 @@ func _ready() -> void:
 	assert(game_id_label)
 	assert(build_id_label)
 	assert(pawns_root)
-	assert(camera_rig)
 	await turn_actions.ready
 	_bind_game_state()
 	game_id_label.text = "Game ID: %s" % GameConfig.game_id
@@ -42,7 +45,6 @@ func _ready() -> void:
 	_on_player_changed(game_state.current_player_index)
 	_place_all_pawns_at_start()
 	_update_tile_info(0)
-	call_deferred("_sync_camera_to_current_player")
 
 	call_deferred("_bind_sidebar")
 	set_process(true)
@@ -73,7 +75,9 @@ func _bind_sidebar() -> void:
 
 func _on_end_turn_pressed() -> void:
 	assert(game_state)
-	camera_rig.set_zoom(false)
+	var next_index: int = (game_state.current_player_index + 1) % GameConfig.player_count
+	var next_tile_index: int = game_state.player_positions[next_index]
+	turn_ended.emit(next_index, next_tile_index)
 	game_state.apply_all_pending_miner_orders()
 	game_state.advance_turn()
 
@@ -81,12 +85,8 @@ func _on_player_changed(new_index: int) -> void:
 	turn_actions.set_current_player(new_index, game_state.turn_count, game_state.current_cycle)
 	_reset_turn_timer()
 	var tile_index: int = game_state.player_positions[new_index]
-	camera_rig.snap_to_tile(tile_index)
+	turn_started.emit(new_index, tile_index)
 
-func _sync_camera_to_current_player() -> void:
-	var tile_index: int = game_state.player_positions[game_state.current_player_index]
-	camera_rig.snap_to_tile(tile_index)
-	camera_rig.set_zoom(false)
 
 func _on_dice_rolled(_die_1: int, _die_2: int, total: int) -> void:
 	assert(game_state)
@@ -95,6 +95,9 @@ func _on_dice_rolled(_die_1: int, _die_2: int, total: int) -> void:
 	var board_tiles: Array = board_layout.get_board_tiles()
 	assert(board_tiles.size() > 0)
 	var player_index: int = game_state.current_player_index
+	var start_tile_index: int = game_state.player_positions[player_index]
+	var target_tile_index: int = (start_tile_index + total) % board_tiles.size()
+	dice_roll_started.emit(start_tile_index, target_tile_index, player_index)
 	game_state.move_player(
 		player_index,
 		total,
@@ -108,6 +111,7 @@ func _on_player_position_changed(tile_index: int, slot_index: int) -> void:
 		slot_index
 	)
 	_update_tile_info(tile_index)
+	pawn_move_finished.emit(tile_index, game_state.current_player_index)
 
 func _on_dice_requested() -> void:
 	assert(turn_actions)
@@ -243,7 +247,6 @@ func _place_pawn(player_index: int, target_tile_index: int, slot_index: int) -> 
 		assert(markers.size() > 0)
 		var clamped_slot: int = clamp(slot_index, 0, markers.size() - 1)
 		pawn.global_transform = markers[clamped_slot].global_transform
-		camera_rig.set_zoom(true)
 		return
 
 	# Await for camera movement
@@ -279,8 +282,6 @@ func _place_pawn(player_index: int, target_tile_index: int, slot_index: int) -> 
 		jump_tween.tween_property(pawn, "global_position:y", base_y, pawn_movement_peak.x).set_ease(Tween.EASE_IN)
 
 		await tween.finished
-	camera_rig.set_zoom(true)
-	camera_rig.snap_to_tile(target_tile_index)
 
 func _on_buy_requested(use_bitcoin: bool) -> void:
 	assert(game_state)
@@ -356,11 +357,9 @@ func _update_cycle_visual(cycle_number: int) -> void:
 	assert(board_layout)
 	assert(board_layout.has_method("get_board_tiles"))
 	var board_tiles: Array = board_layout.get_board_tiles()
-	if board_tiles.is_empty():
-		return
+	assert(not board_tiles.is_empty())
 	var start_tile: Node3D = board_tiles[0]
 	var board_tile: BoardTile = start_tile as BoardTile
-	if board_tile == null:
-		return
+	assert(board_tile != null)
 	var is_inflation: bool = cycle_number % 2 == 0
 	board_tile.set_owned_visual(is_inflation)
