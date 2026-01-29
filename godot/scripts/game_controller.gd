@@ -7,7 +7,7 @@ signal turn_ended(next_player_index: int, next_tile_index: int)
 signal turn_started(player_index: int, tile_index: int)
 
 @export var turn_actions: TurnActions
-@export var left_sidebar_list: VBoxContainer
+@export var left_sidebar_list: BoxContainer
 @export var pawns_root: Node3D
 @export var pawn_movement_peak: Vector2 = Vector2(0.15, 0.15)
 @export var pawn_jump_height: float = 0.05
@@ -17,7 +17,7 @@ signal turn_started(player_index: int, tile_index: int)
 # TODO: review the methods of thid board layout, it looks like they should be processed once in the beginning and then be part of the game state until the end of the match
 @onready var board_layout: Node = %BoardLayout
 @onready var game_state: GameState = %GameState
-@onready var game_id_label: Label = %GameIdLabel
+@onready var game_id_label: LineEdit = %GameIdLabel
 @onready var build_id_label: Label = %BuildIdLabel
 
 var turn_elapsed: float = 0.0
@@ -44,10 +44,7 @@ func _ready() -> void:
 	build_id_label.text = "Build ID: %s" % GameConfig.build_id
 	_apply_player_visibility(GameConfig.player_count)
 	_bind_player_summaries()
-	game_state.reset_positions()
-	_on_player_changed(game_state.current_player_index)
-	_place_all_pawns_at_start()
-	_update_tile_info(0)
+	call_deferred("_initialize_game_state")
 
 	call_deferred("_bind_sidebar")
 	set_process(true)
@@ -207,6 +204,12 @@ func _bind_player_summaries() -> void:
 		var summary: PlayerSummary = child as PlayerSummary
 		assert(summary)
 		summary.set_game_state(game_state)
+
+func _initialize_game_state() -> void:
+	game_state.reset_positions()
+	_on_player_changed(game_state.current_player_index)
+	_place_all_pawns_at_start()
+	_update_tile_info(0)
 
 func _process(delta: float) -> void:
 	if not turn_timer_active:

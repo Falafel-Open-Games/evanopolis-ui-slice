@@ -17,7 +17,7 @@ corner_detail = 5
 
 [node name="TurnActions" type="FoldableContainer"]
 custom_minimum_size = Vector2(320, 0)
-size_flags_horizontal = 8
+size_flags_horizontal = 0
 title = "Current Turn:"
 script = ExtResource("1_tu0j1")
 
@@ -28,37 +28,17 @@ theme_override_constants/margin_top = 10
 theme_override_constants/margin_right = 20
 theme_override_constants/margin_bottom = 20
 
-[node name="Content" type="VBoxContainer" parent="MarginContainer"]
+[node name="Content" type="BoxContainer" parent="MarginContainer"]
 clip_contents = true
 custom_minimum_size = Vector2(600, 0)
 layout_mode = 2
+size_flags_horizontal = 0
 theme_override_constants/separation = 20
-
-[node name="TimerContainer" type="HBoxContainer" parent="MarginContainer/Content"]
-unique_name_in_owner = true
-layout_mode = 2
-theme_override_constants/separation = 10
-
-[node name="Label" type="Label" parent="MarginContainer/Content/TimerContainer"]
-layout_mode = 2
-text = "Time"
-
-[node name="TimerBar" type="ProgressBar" parent="MarginContainer/Content/TimerContainer"]
-unique_name_in_owner = true
-layout_mode = 2
-size_flags_horizontal = 3
-max_value = 60.0
-step = 1.0
-
-[node name="TimerLabel" type="Label" parent="MarginContainer/Content/TimerContainer"]
-unique_name_in_owner = true
-layout_mode = 2
-text = "30s"
 
 [node name="HBoxContainer" type="BoxContainer" parent="MarginContainer/Content"]
 layout_mode = 2
+size_flags_horizontal = 0
 theme_override_constants/separation = 20
-vertical = true
 
 [node name="MovementContainer" type="BoxContainer" parent="MarginContainer/Content/HBoxContainer"]
 unique_name_in_owner = true
@@ -66,6 +46,27 @@ layout_mode = 2
 size_flags_vertical = 0
 theme_override_constants/separation = 15
 vertical = true
+
+[node name="TimerContainer" type="HBoxContainer" parent="MarginContainer/Content/HBoxContainer/MovementContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Label" type="Label" parent="MarginContainer/Content/HBoxContainer/MovementContainer/TimerContainer"]
+layout_mode = 2
+text = "Time"
+
+[node name="TimerBar" type="ProgressBar" parent="MarginContainer/Content/HBoxContainer/MovementContainer/TimerContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+max_value = 60.0
+step = 1.0
+
+[node name="TimerLabel" type="Label" parent="MarginContainer/Content/HBoxContainer/MovementContainer/TimerContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "30s"
 
 [node name="TileTypeLabel" type="Label" parent="MarginContainer/Content/HBoxContainer/MovementContainer"]
 unique_name_in_owner = true
@@ -140,23 +141,55 @@ text = " "
 horizontal_alignment = 1
 vertical_alignment = 1
 
+[node name="PayTollContainer" type="VBoxContainer" parent="MarginContainer/Content/HBoxContainer/MovementContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="PayTollLabel" type="Label" parent="MarginContainer/Content/HBoxContainer/MovementContainer/PayTollContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Pay Energy Toll"
+horizontal_alignment = 1
+
+[node name="PayTollButtons" type="HBoxContainer" parent="MarginContainer/Content/HBoxContainer/MovementContainer/PayTollContainer"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="PayTollFiatButton" type="Button" parent="MarginContainer/Content/HBoxContainer/MovementContainer/PayTollContainer/PayTollButtons"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 44)
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Pay 0.00"
+
 [node name="PropertyContainer" type="VBoxContainer" parent="MarginContainer/Content/HBoxContainer"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(300, 0)
 layout_mode = 2
+size_flags_horizontal = 0
 size_flags_vertical = 3
 theme_override_constants/separation = 10
 
-[node name="HBoxContainer" type="HBoxContainer" parent="MarginContainer/Content/HBoxContainer/PropertyContainer"]
+[node name="HBoxContainer" type="BoxContainer" parent="MarginContainer/Content/HBoxContainer/PropertyContainer"]
 layout_mode = 2
+vertical = true
 
 [node name="BoxContainer" type="BoxContainer" parent="MarginContainer/Content/HBoxContainer/PropertyContainer/HBoxContainer"]
 layout_mode = 2
+size_flags_horizontal = 2
+
+[node name="Image" type="TextureRect" parent="MarginContainer/Content/HBoxContainer/PropertyContainer/HBoxContainer/BoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
 size_flags_horizontal = 3
-vertical = true
+size_flags_vertical = 3
+texture = ExtResource("1_jxb3w")
+expand_mode = 3
 
 [node name="HBoxContainer" type="BoxContainer" parent="MarginContainer/Content/HBoxContainer/PropertyContainer/HBoxContainer/BoxContainer"]
 layout_mode = 2
+size_flags_horizontal = 3
 vertical = true
 
 [node name="PriceLabel" type="Label" parent="MarginContainer/Content/HBoxContainer/PropertyContainer/HBoxContainer/BoxContainer/HBoxContainer"]
@@ -183,62 +216,30 @@ layout_mode = 2
 size_flags_horizontal = 3
 text = "Payout"
 
-[node name="Image" type="TextureRect" parent="MarginContainer/Content/HBoxContainer/PropertyContainer/HBoxContainer"]
-unique_name_in_owner = true
-layout_mode = 2
-size_flags_horizontal = 3
-size_flags_vertical = 3
-texture = ExtResource("1_jxb3w")
-expand_mode = 5
-
-[node name="BuyContainer" type="VBoxContainer" parent="MarginContainer/Content/HBoxContainer/PropertyContainer"]
+[node name="BuyContainer" type="VBoxContainer" parent="MarginContainer/Content/HBoxContainer/PropertyContainer/HBoxContainer"]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_constants/separation = 10
 
-[node name="BuyLabel" type="Label" parent="MarginContainer/Content/HBoxContainer/PropertyContainer/BuyContainer"]
+[node name="BuyLabel" type="Label" parent="MarginContainer/Content/HBoxContainer/PropertyContainer/HBoxContainer/BuyContainer"]
 layout_mode = 2
 text = "Buy Property"
 horizontal_alignment = 1
 
-[node name="BuyButtons" type="HBoxContainer" parent="MarginContainer/Content/HBoxContainer/PropertyContainer/BuyContainer"]
+[node name="BuyButtons" type="HBoxContainer" parent="MarginContainer/Content/HBoxContainer/PropertyContainer/HBoxContainer/BuyContainer"]
 layout_mode = 2
 theme_override_constants/separation = 10
 
-[node name="BuyFiatButton" type="Button" parent="MarginContainer/Content/HBoxContainer/PropertyContainer/BuyContainer/BuyButtons"]
+[node name="BuyFiatButton" type="Button" parent="MarginContainer/Content/HBoxContainer/PropertyContainer/HBoxContainer/BuyContainer/BuyButtons"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 50)
 layout_mode = 2
 size_flags_horizontal = 3
 text = "Buy for 0.00"
 
-[node name="PayTollContainer" type="VBoxContainer" parent="MarginContainer/Content/HBoxContainer"]
-unique_name_in_owner = true
-layout_mode = 2
-visible = false
-theme_override_constants/separation = 8
-
-[node name="PayTollLabel" type="Label" parent="MarginContainer/Content/HBoxContainer/PayTollContainer"]
-unique_name_in_owner = true
-layout_mode = 2
-text = "Pay Energy Toll"
-horizontal_alignment = 1
-
-[node name="PayTollButtons" type="HBoxContainer" parent="MarginContainer/Content/HBoxContainer/PayTollContainer"]
-layout_mode = 2
-theme_override_constants/separation = 10
-
-[node name="PayTollFiatButton" type="Button" parent="MarginContainer/Content/HBoxContainer/PayTollContainer/PayTollButtons"]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 44)
-layout_mode = 2
-size_flags_horizontal = 3
-text = "Pay 0.00"
-
 [node name="EndTurnButton" type="Button" parent="MarginContainer/Content/HBoxContainer"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 50)
 layout_mode = 2
-size_flags_horizontal = 3
-size_flags_vertical = 10
+size_flags_horizontal = 0
 text = " End  Turn"
