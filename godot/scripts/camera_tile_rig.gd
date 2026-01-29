@@ -150,12 +150,10 @@ func _bind_game_controller() -> void:
 		game_controller.turn_started.connect(_on_turn_started)
 
 func _on_dice_roll_started(start_tile_index: int, end_tile_index: int, player_index: int) -> void:
+	_cancel_dice_camera_sequence()
 	var pawn: Node3D = _get_pawn(player_index)
 	start_follow(pawn)
-	_dice_camera_token += 1
 	var token: int = _dice_camera_token
-	if _dice_camera_timer:
-		_dice_camera_timer = null
 	var board_tiles: Array = board_layout.get_board_tiles()
 	var board_size: int = board_tiles.size()
 	var steps: int = (end_tile_index - start_tile_index + board_size) % board_size
@@ -187,11 +185,13 @@ func _finish_dice_roll_camera_transition(end_tile_index: int, token: int) -> voi
 	set_zoom(true)
 
 func _on_turn_ended(_next_player_index: int, _next_tile_index: int) -> void:
+	_cancel_dice_camera_sequence()
 	stop_follow()
 	snap_to_tile(_next_tile_index, _next_player_index)
 	set_zoom(false)
 
 func _on_turn_started(player_index: int, tile_index: int) -> void:
+	_cancel_dice_camera_sequence()
 	stop_follow()
 	snap_to_tile(tile_index, player_index)
 	set_zoom(false)
@@ -229,3 +229,11 @@ func _set_base_transform(value: Transform3D) -> void:
 func _set_zoom_blend(value: float) -> void:
 	_zoom_blend = value
 	_apply_composed_transform()
+
+func _cancel_dice_camera_sequence() -> void:
+	_dice_camera_token += 1
+	if _dice_camera_timer:
+		_dice_camera_timer = null
+	if _fov_tween:
+		_fov_tween.kill()
+		_fov_tween = null

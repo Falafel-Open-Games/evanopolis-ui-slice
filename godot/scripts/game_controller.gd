@@ -27,6 +27,10 @@ var pending_toll_owner_index: int = -1
 var pending_toll_fiat: float = 0.0
 var pending_toll_btc: float = 0.0
 var last_cycle: int = -1
+var _pawn_move_token: int = 0
+var _pawn_move_tween: Tween = null
+var _pawn_jump_tween: Tween = null
+var _pawn_move_timer: SceneTreeTimer = null
 
 func _ready() -> void:
 	assert(game_state)
@@ -75,6 +79,7 @@ func _bind_sidebar() -> void:
 
 func _on_end_turn_pressed() -> void:
 	assert(game_state)
+	_force_complete_turn_visuals()
 	var next_index: int = (game_state.current_player_index + 1) % GameConfig.player_count
 	var next_tile_index: int = game_state.player_positions[next_index]
 	turn_ended.emit(next_index, next_tile_index)
@@ -249,14 +254,22 @@ func _place_pawn(player_index: int, target_tile_index: int, slot_index: int) -> 
 		pawn.global_transform = markers[clamped_slot].global_transform
 		return
 
+	_cancel_pawn_movement()
+	var token: int = _pawn_move_token
 	# Await for camera movement
-	await get_tree().create_timer(pawn_delay_start_movement).timeout
+	_pawn_move_timer = get_tree().create_timer(pawn_delay_start_movement)
+	await _pawn_move_timer.timeout
+	if token != _pawn_move_token:
+		return
+	_pawn_move_timer = null
 
 	var board_size: int = board_layout.board_size
 
 	var steps_needed: int = (target_tile_index - pawn_tile_index + board_size) % board_size
 
 	for i in range(1, steps_needed + 1):
+		if token != _pawn_move_token:
+			return
 		var next_index: int = (pawn_tile_index + i) % board_size
 
 		var target_slot: int = slot_index if next_index == target_tile_index else 0
@@ -267,21 +280,79 @@ func _place_pawn(player_index: int, target_tile_index: int, slot_index: int) -> 
 		var clamped_slot: int = clamp(target_slot, 0, markers.size() - 1)
 		var target_marker: Marker3D = markers[clamped_slot]
 
-		var tween: Tween = create_tween()
-		tween.set_trans(Tween.TRANS_SINE)
-		tween.set_ease(Tween.EASE_IN_OUT)
+		_pawn_move_tween = create_tween()
+		_pawn_move_tween.set_trans(Tween.TRANS_SINE)
+		_pawn_move_tween.set_ease(Tween.EASE_IN_OUT)
 
-		tween.tween_property(pawn, "global_position", target_marker.global_position, pawn_wait_time_per_tile)
-		tween.parallel().tween_property(pawn, "global_rotation", target_marker.global_rotation, pawn_wait_time_per_tile)
+		_pawn_move_tween.tween_property(
+			pawn,
+			"global_position",
+			target_marker.global_position,
+			pawn_wait_time_per_tile
+		)
+		_pawn_move_tween.parallel().tween_property(
+			pawn,
+			"global_rotation",
+			target_marker.global_rotation,
+			pawn_wait_time_per_tile
+		)
 
 		var peak_y: float = target_marker.global_position.y + pawn_jump_height
 		var base_y: float = target_marker.global_position.y
 
-		var jump_tween: Tween = create_tween()
-		jump_tween.tween_property(pawn, "global_position:y", peak_y, pawn_movement_peak.y).set_ease(Tween.EASE_OUT)
-		jump_tween.tween_property(pawn, "global_position:y", base_y, pawn_movement_peak.x).set_ease(Tween.EASE_IN)
+		_pawn_jump_tween = create_tween()
+		_pawn_jump_tween.tween_property(
+			pawn,
+			"global_position:y",
+			peak_y,
+			pawn_movement_peak.y
+		).set_ease(Tween.EASE_OUT)
+		_pawn_jump_tween.tween_property(
+			pawn,
+			"global_position:y",
+			base_y,
+			pawn_movement_peak.x
+		).set_ease(Tween.EASE_IN)
 
-		await tween.finished
+		await _pawn_move_tween.finished
+		if token != _pawn_move_token:
+			return
+		_pawn_move_tween = null
+		_pawn_jump_tween = null
+
+func _force_complete_turn_visuals() -> void:
+	assert(game_state)
+	_cancel_pawn_movement()
+	_snap_pawn_to_tile(
+		game_state.current_player_index,
+		game_state.player_positions[game_state.current_player_index]
+	)
+
+func _snap_pawn_to_tile(player_index: int, tile_index: int) -> void:
+	assert(board_layout)
+	assert(pawns_root)
+	assert(game_state)
+	var pawn_name: String = "Pawn%d" % (player_index + 1)
+	var pawn: Node3D = pawns_root.get_node(pawn_name)
+	assert(pawn, "Pawn node not found: " + pawn_name)
+	var markers: Array[Marker3D] = board_layout.get_tile_markers(tile_index)
+	assert(markers.size() > 0)
+	var occupants: Array[int] = game_state.tiles[tile_index].occupants
+	var slot_index: int = occupants.find(player_index)
+	assert(slot_index >= 0 and slot_index < markers.size())
+	pawn.set_meta("current_tile", tile_index)
+	pawn.global_transform = markers[slot_index].global_transform
+
+func _cancel_pawn_movement() -> void:
+	_pawn_move_token += 1
+	if _pawn_move_tween:
+		_pawn_move_tween.kill()
+		_pawn_move_tween = null
+	if _pawn_jump_tween:
+		_pawn_jump_tween.kill()
+		_pawn_jump_tween = null
+	if _pawn_move_timer:
+		_pawn_move_timer = null
 
 func _on_buy_requested(use_bitcoin: bool) -> void:
 	assert(game_state)
