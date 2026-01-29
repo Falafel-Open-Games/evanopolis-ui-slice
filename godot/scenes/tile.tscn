@@ -26,12 +26,12 @@ bottom_material = ExtResource("3_q7utx")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.00226196, 0)
 
 [node name="TopFace" type="MeshInstance3D" parent="MeshRoot"]
-transform = Transform3D(0.4, 0, 0, 0, 0.4, 0, 0, 0, 0.4, 0, 0.0027918126, 0)
+transform = Transform3D(0.4, 0, 0, 0, 0.4, 0, 0, 0, 0.4, 0, 0.002, 0)
 mesh = SubResource("PlaneMesh_6p3j2")
 surface_material_override/0 = ExtResource("2_jy7pm")
 
 [node name="BottomFace" type="MeshInstance3D" parent="MeshRoot"]
-transform = Transform3D(-0.4, 3.4969112e-08, 0, -3.4969112e-08, -0.4, 0, 0, 0, 0.4, 0, -0.0027238163, 0)
+transform = Transform3D(-0.4, 3.4969112e-08, 0, -3.4969112e-08, -0.4, 0, 0, 0, 0.4, 0, -0.003, 0)
 mesh = SubResource("PlaneMesh_6p3j2")
 surface_material_override/0 = ExtResource("3_q7utx")
 

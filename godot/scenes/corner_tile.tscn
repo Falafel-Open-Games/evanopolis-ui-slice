@@ -1,4 +1,4 @@
-[gd_scene load_steps=11 format=4 uid="uid://75mr7nsx53p0"]
+[gd_scene load_steps=9 format=4 uid="uid://75mr7nsx53p0"]
 
 [ext_resource type="Script" uid="uid://kkctmgrcsfau" path="res://scripts/board_tile.gd" id="1_4kwbn"]
 
@@ -37,10 +37,7 @@ _surfaces = [{
 blend_shape_mode = 0
 shadow_mesh = SubResource("ArrayMesh_q2bnu")
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_7tauj"]
-albedo_color = Color(0.38459516, 0.70416814, 1, 1)
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_ldtcb"]
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_wnpk2"]
 
 [sub_resource type="ArrayMesh" id="ArrayMesh_y8lo4"]
 _surfaces = [{
@@ -71,9 +68,6 @@ _surfaces = [{
 blend_shape_mode = 0
 shadow_mesh = SubResource("ArrayMesh_q2bnu")
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_rqfrv"]
-albedo_color = Color(0.05989945, 0.6639494, 1, 1)
-
 [sub_resource type="BoxMesh" id="BoxMesh_wnpk2"]
 size = Vector3(0.1, 0.01, 0.1)
 
@@ -89,25 +83,23 @@ miner_markers = NodePath("MinerMarkers")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.0019139657, 0)
 
 [node name="TopFace" type="MeshInstance3D" parent="MeshRoot"]
-transform = Transform3D(0.4, 0, 0, 0, 0.4, 0, 0, 0, 0.4, 0, 0.0012475541, -0.004)
+transform = Transform3D(0.4, 0, 0, 0, 0.4, 0, 0, 0, 0.4, 0, 0.001, -0.004)
 mesh = SubResource("ArrayMesh_wnpk2")
 skeleton = NodePath("")
-surface_material_override/0 = SubResource("StandardMaterial3D_7tauj")
+surface_material_override/0 = SubResource("StandardMaterial3D_wnpk2")
 
 [node name="SideMesh" type="MeshInstance3D" parent="MeshRoot"]
 transform = Transform3D(0.4, 0, 0, 0, 0.4, 0, 0, 0, 0.4, 0, 8.603535e-05, -0.004)
-material_override = SubResource("StandardMaterial3D_ldtcb")
+material_override = SubResource("StandardMaterial3D_wnpk2")
 mesh = SubResource("ArrayMesh_y8lo4")
 
 [node name="BottomFace" type="MeshInstance3D" parent="MeshRoot"]
 transform = Transform3D(-0.4, -3.4969112e-08, 0, 3.4969112e-08, -0.4, 0, 0, 0, 0.4, 0, -0.001228557, -0.004)
 mesh = SubResource("ArrayMesh_c87mu")
 skeleton = NodePath("")
-surface_material_override/0 = SubResource("StandardMaterial3D_rqfrv")
+surface_material_override/0 = SubResource("StandardMaterial3D_wnpk2")
 
 [node name="PawnMarkers" type="Node3D" parent="."]
-
-[node name="MinerMarkers" type="Node3D" parent="."]
 
 [node name="Marker1" type="Marker3D" parent="PawnMarkers"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.039)
@@ -134,6 +126,8 @@ visible = false
 [node name="Marker6" type="Marker3D" parent="PawnMarkers"]
 transform = Transform3D(0.49999997, 0, 0.86602545, 0, 1, 0, -0.86602545, 0, 0.49999997, -0.021, 0, 0.044)
 visible = false
+
+[node name="MinerMarkers" type="Node3D" parent="."]
 
 [node name="CSGCombiner3D" type="CSGCombiner3D" parent="."]
 visible = false

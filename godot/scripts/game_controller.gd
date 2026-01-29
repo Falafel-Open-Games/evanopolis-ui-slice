@@ -1,6 +1,11 @@
 class_name GameController
 extends Node
 
+signal dice_roll_started(start_tile_index: int, end_tile_index: int, player_index: int)
+signal pawn_move_finished(end_tile_index: int, player_index: int)
+signal turn_ended(next_player_index: int, next_tile_index: int)
+signal turn_started(player_index: int, tile_index: int)
+
 @export var turn_actions: TurnActions
 @export var left_sidebar_list: VBoxContainer
 @export var pawns_root: Node3D
@@ -36,8 +41,8 @@ func _ready() -> void:
 	build_id_label.text = "Build ID: %s" % GameConfig.build_id
 	_apply_player_visibility(GameConfig.player_count)
 	_bind_player_summaries()
-	_on_player_changed(game_state.current_player_index)
 	game_state.reset_positions()
+	_on_player_changed(game_state.current_player_index)
 	_place_all_pawns_at_start()
 	_update_tile_info(0)
 
@@ -70,12 +75,18 @@ func _bind_sidebar() -> void:
 
 func _on_end_turn_pressed() -> void:
 	assert(game_state)
+	var next_index: int = (game_state.current_player_index + 1) % GameConfig.player_count
+	var next_tile_index: int = game_state.player_positions[next_index]
+	turn_ended.emit(next_index, next_tile_index)
 	game_state.apply_all_pending_miner_orders()
 	game_state.advance_turn()
 
 func _on_player_changed(new_index: int) -> void:
 	turn_actions.set_current_player(new_index, game_state.turn_count, game_state.current_cycle)
 	_reset_turn_timer()
+	var tile_index: int = game_state.player_positions[new_index]
+	turn_started.emit(new_index, tile_index)
+
 
 func _on_dice_rolled(_die_1: int, _die_2: int, total: int) -> void:
 	assert(game_state)
@@ -83,8 +94,12 @@ func _on_dice_rolled(_die_1: int, _die_2: int, total: int) -> void:
 	assert(board_layout.has_method("get_board_tiles"))
 	var board_tiles: Array = board_layout.get_board_tiles()
 	assert(board_tiles.size() > 0)
+	var player_index: int = game_state.current_player_index
+	var start_tile_index: int = game_state.player_positions[player_index]
+	var target_tile_index: int = (start_tile_index + total) % board_tiles.size()
+	dice_roll_started.emit(start_tile_index, target_tile_index, player_index)
 	game_state.move_player(
-		game_state.current_player_index,
+		player_index,
 		total,
 		board_tiles.size()
 	)
@@ -96,6 +111,7 @@ func _on_player_position_changed(tile_index: int, slot_index: int) -> void:
 		slot_index
 	)
 	_update_tile_info(tile_index)
+	pawn_move_finished.emit(tile_index, game_state.current_player_index)
 
 func _on_dice_requested() -> void:
 	assert(turn_actions)
@@ -222,11 +238,11 @@ func _place_pawn(player_index: int, target_tile_index: int, slot_index: int) -> 
 	var pawn: Node3D = pawns_root.get_node(pawn_name)
 	assert(pawn, "Pawn node not found: " + pawn_name)
 
-	var current_tile_index: int = int(pawn.get_meta("current_tile", target_tile_index))
+	var pawn_tile_index: int = int(pawn.get_meta("current_tile", target_tile_index))
 
 	pawn.set_meta("current_tile", target_tile_index)
 
-	if current_tile_index == target_tile_index:
+	if pawn_tile_index == target_tile_index:
 		var markers: Array[Marker3D] = board_layout.get_tile_markers(target_tile_index)
 		assert(markers.size() > 0)
 		var clamped_slot: int = clamp(slot_index, 0, markers.size() - 1)
@@ -238,10 +254,10 @@ func _place_pawn(player_index: int, target_tile_index: int, slot_index: int) -> 
 
 	var board_size: int = board_layout.board_size
 
-	var steps_needed: int = (target_tile_index - current_tile_index + board_size) % board_size
+	var steps_needed: int = (target_tile_index - pawn_tile_index + board_size) % board_size
 
 	for i in range(1, steps_needed + 1):
-		var next_index: int = (current_tile_index + i) % board_size
+		var next_index: int = (pawn_tile_index + i) % board_size
 
 		var target_slot: int = slot_index if next_index == target_tile_index else 0
 
@@ -341,11 +357,9 @@ func _update_cycle_visual(cycle_number: int) -> void:
 	assert(board_layout)
 	assert(board_layout.has_method("get_board_tiles"))
 	var board_tiles: Array = board_layout.get_board_tiles()
-	if board_tiles.is_empty():
-		return
+	assert(not board_tiles.is_empty())
 	var start_tile: Node3D = board_tiles[0]
 	var board_tile: BoardTile = start_tile as BoardTile
-	if board_tile == null:
-		return
+	assert(board_tile != null)
 	var is_inflation: bool = cycle_number % 2 == 0
 	board_tile.set_owned_visual(is_inflation)
