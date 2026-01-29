@@ -63,7 +63,7 @@
 ### Payouts
 - When landing on an owned property, the owner receives a `BTC payout` for block discovery equal to `base * miner_batches` on that property. This BTC is the network subsidy, comes from the network, is not a transfer from other player.
 - Payout rounds trigger when a player lands on a property; the property owner earns BTC.
-- Base payout is 2.0 BTC per miner per payout in cycle 1-2, halved to 1.0 BTC in cycle 3-4.
+- Base payout is 2.0 BTC per miner per payout.
 - Payout is triggered regardless of the landing player being the owner; all landings generate a payout.
 
 ## Incidents
@@ -114,10 +114,6 @@
 +-------------------+-----------+----------------------+
 | Energy toll values shown assume 0 miner batches.     |
 | Add 2.5% of price per miner batch.                   |
-| BTC Payout per Miner Batch when landed on:           |
-| Cycle 1: 2.0 BTC                                   |
-| Cycle 2: 2.0 BTC                                   |
-| Cycle 3: 1.0 BTC                                   |
-| Cycle 4: 1.0 BTC                                   |
+| BTC Payout per Miner Batch when landed on:  2.0 BTC   |
 +------------------------------------------------------+
 ```

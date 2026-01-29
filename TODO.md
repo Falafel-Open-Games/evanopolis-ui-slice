@@ -8,3 +8,7 @@
 ## UI Cleanup
 
 - Remove dual-currency payment options (fiat/bitcoin) from the game UI.
+
+## Gameplay Rules
+
+- Inspection blocks mining payouts from the player's properties until cleared.

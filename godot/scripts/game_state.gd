@@ -18,8 +18,7 @@ const SPECIAL_PROPERTIES: Array[Dictionary] = [
 	{"name": "Subestacao 2", "price": 6.0},
 	{"name": "Cooling Plant", "price": 10.0},
 ]
-const PAYOUT_PER_MINER_CYCLE_1_2: float = 2.0
-const PAYOUT_PER_MINER_CYCLE_3_4: float = 1.0
+const PAYOUT_PER_MINER: float = 2.0
 const MAX_MINER_BATCHES_PER_PROPERTY: int = 4
 const MINER_BATCH_PRICE_FIAT_BASE: float = 320000.0
 
@@ -148,10 +147,25 @@ func get_energy_toll_btc(tile: TileInfo) -> float:
 	var base_toll: float = (base_price * 0.1) + (base_price * 0.025 * float(tile.miner_batches))
 	return (base_toll * 0.9) / exchange_rate
 
-func get_payout_per_miner_for_cycle(cycle_number: int) -> float:
-	if cycle_number <= 2:
-		return PAYOUT_PER_MINER_CYCLE_1_2
-	return PAYOUT_PER_MINER_CYCLE_3_4
+func get_payout_per_miner_for_cycle(_cycle_number: int) -> float:
+	return PAYOUT_PER_MINER
+
+func apply_property_payout(tile_index: int) -> void:
+	assert(tile_index >= 0 and tile_index < tiles.size())
+	var tile: TileInfo = tiles[tile_index]
+	if tile.tile_type != "property":
+		return
+	if tile.owner_index < 0:
+		return
+	if tile.miner_batches <= 0:
+		return
+	var payout_per_miner: float = PAYOUT_PER_MINER
+	var total_payout: float = payout_per_miner * float(tile.miner_batches)
+	if total_payout <= 0.0:
+		return
+	var owner_data: PlayerData = players[tile.owner_index]
+	owner_data.bitcoin_balance += total_payout
+	player_data_changed.emit(tile.owner_index, owner_data)
 
 func get_tile_price(tile: TileInfo) -> float:
 	return _get_base_tile_price(tile) * _get_inflation_multiplier()

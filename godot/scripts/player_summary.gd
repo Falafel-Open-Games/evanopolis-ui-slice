@@ -9,9 +9,7 @@ extends FoldableContainer
 @onready var properties_panel: PanelContainer = %PropertiesPanel
 @onready var properties_list: VBoxContainer = %PropertiesList
 @onready var order_total_fiat_label: Label = %OrderTotalFiatLabel
-@onready var order_total_btc_label: Label = %OrderTotalBtcLabel
 @onready var confirm_fiat_button: Button = %ConfirmFiatButton
-@onready var confirm_btc_button: Button = %ConfirmBtcButton
 @onready var close_properties_button: Button = %ClosePropertiesButton
 @onready var order_locked_label: Label = %OrderLockedLabel
 
@@ -27,9 +25,7 @@ func _ready() -> void:
 	assert(properties_panel)
 	assert(properties_list)
 	assert(order_total_fiat_label)
-	assert(order_total_btc_label)
 	assert(confirm_fiat_button)
-	assert(confirm_btc_button)
 	assert(close_properties_button)
 	assert(order_locked_label)
 	_apply_title_panel_style(Palette.get_player_dark(player_index))
@@ -40,8 +36,6 @@ func _ready() -> void:
 		view_properties_button.pressed.connect(_on_view_properties_pressed)
 	if not confirm_fiat_button.pressed.is_connected(_on_confirm_fiat_pressed):
 		confirm_fiat_button.pressed.connect(_on_confirm_fiat_pressed)
-	if not confirm_btc_button.pressed.is_connected(_on_confirm_btc_pressed):
-		confirm_btc_button.pressed.connect(_on_confirm_btc_pressed)
 	if not close_properties_button.pressed.is_connected(_on_close_properties_pressed):
 		close_properties_button.pressed.connect(_on_close_properties_pressed)
 
@@ -82,12 +76,9 @@ func _on_close_properties_pressed() -> void:
 	properties_panel.visible = false
 
 func _on_confirm_fiat_pressed() -> void:
-	_confirm_order(false)
+	_confirm_order()
 
-func _on_confirm_btc_pressed() -> void:
-	_confirm_order(true)
-
-func _confirm_order(use_bitcoin: bool) -> void:
+func _confirm_order() -> void:
 	assert(_game_state)
 	if not _can_edit_order:
 		return
@@ -96,7 +87,7 @@ func _confirm_order(use_bitcoin: bool) -> void:
 		var count: int = int(_order_counts[tile_index])
 		if count > 0:
 			order[tile_index] = count
-	var did_set: bool = _game_state.set_pending_miner_order(player_index, order, use_bitcoin)
+	var did_set: bool = _game_state.set_pending_miner_order(player_index, order, false)
 	if did_set:
 		_refresh_properties_view()
 
@@ -181,10 +172,8 @@ func _update_order_total() -> void:
 	for count in _order_counts.values():
 		total_batches += int(count)
 	var total_fiat: float = float(total_batches) * _game_state.get_miner_batch_price_fiat()
-	var total_btc: float = float(total_batches) * _game_state.get_miner_batch_price_btc()
-	order_total_fiat_label.text = "Fiat: %s" % NumberFormat.format_fiat(total_fiat)
-	order_total_btc_label.text = "BTC: %s" % NumberFormat.format_btc(total_btc)
-	_update_order_total_color(total_fiat, total_btc)
+	order_total_fiat_label.text = "Order Total: %s" % NumberFormat.format_fiat(total_fiat)
+	_update_order_total_color(total_fiat)
 
 func _update_confirm_buttons() -> void:
 	assert(_game_state)
@@ -193,30 +182,20 @@ func _update_confirm_buttons() -> void:
 		total_batches += int(count)
 	if total_batches == 0 or not _can_edit_order:
 		confirm_fiat_button.disabled = true
-		confirm_btc_button.disabled = true
-		_update_order_total_color(0.0, 0.0)
+		_update_order_total_color(0.0)
 		return
 	var total_fiat: float = float(total_batches) * _game_state.get_miner_batch_price_fiat()
-	var total_btc: float = float(total_batches) * _game_state.get_miner_batch_price_btc()
 	var fiat_balance: float = _game_state.get_player_fiat_balance(player_index)
-	var btc_balance: float = _game_state.get_player_bitcoin_balance(player_index)
 	confirm_fiat_button.disabled = fiat_balance < total_fiat
-	confirm_btc_button.disabled = btc_balance < total_btc
 
-func _update_order_total_color(total_fiat: float, total_btc: float) -> void:
+func _update_order_total_color(total_fiat: float) -> void:
 	assert(_game_state)
 	var fiat_balance: float = _game_state.get_player_fiat_balance(player_index)
-	var btc_balance: float = _game_state.get_player_bitcoin_balance(player_index)
 	var insufficient_fiat: bool = total_fiat > 0.0 and fiat_balance < total_fiat
-	var insufficient_btc: bool = total_btc > 0.0 and btc_balance < total_btc
 	if insufficient_fiat:
 		order_total_fiat_label.add_theme_color_override("font_color", Color("#f2c94c"))
 	else:
 		order_total_fiat_label.add_theme_color_override("font_color", Color.WHITE)
-	if insufficient_btc:
-		order_total_btc_label.add_theme_color_override("font_color", Color("#f2c94c"))
-	else:
-		order_total_btc_label.add_theme_color_override("font_color", Color.WHITE)
 
 func _clear_property_list() -> void:
 	for child in properties_list.get_children():
