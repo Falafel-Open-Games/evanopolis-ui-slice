@@ -198,8 +198,7 @@ func update_tile_info(
 	special_name: String,
 	special_price: float,
 	toll_fiat: float,
-	payout_cycle_1_2: float,
-	payout_cycle_3_4: float,
+	payout_per_miner: float,
 	miner_batches: int,
 	is_owned: bool,
 	owner_index: int,
@@ -215,7 +214,7 @@ func update_tile_info(
 		_update_price_label(tile_type, property_price, special_price)
 		_update_owner_label(is_owned, owner_index, owner_name)
 		_update_toll_label(toll_fiat, miner_batches)
-		_update_payout_label(payout_cycle_1_2, payout_cycle_3_4)
+		_update_payout_label(payout_per_miner)
 		_update_buy_buttons(
 			buy_visible,
 			buy_fiat_enabled,
@@ -308,12 +307,9 @@ func _update_toll_label(toll_fiat: float, miner_batches: int) -> void:
 	]
 	toll_label.visible = true
 
-func _update_payout_label(payout_cycle_1_2: float, payout_cycle_3_4: float) -> void:
+func _update_payout_label(payout_per_miner: float) -> void:
 	assert(payout_label)
-	payout_label.text = "Payout per Miner\nCycle 1-2: %.1f BTC\nCycle 3-4: %.1f BTC" % [
-		payout_cycle_1_2,
-		payout_cycle_3_4,
-	]
+	payout_label.text = "Payout per Miner\n%.1f BTC" % [payout_per_miner]
 	payout_label.visible = true
 
 func show_toll_actions(toll_fiat: float, fiat_enabled: bool) -> void:

@@ -114,6 +114,7 @@ func _on_player_position_changed(tile_index: int, slot_index: int) -> void:
 		tile_index,
 		slot_index
 	)
+	game_state.apply_property_payout(tile_index)
 	_update_tile_info(tile_index)
 	pawn_move_finished.emit(tile_index, game_state.current_player_index)
 
@@ -158,7 +159,6 @@ func _update_tile_info(tile_index: int) -> void:
 		price,
 		game_state.get_energy_toll(info),
 		game_state.get_payout_per_miner_for_cycle(1),
-		game_state.get_payout_per_miner_for_cycle(3),
 		info.miner_batches,
 		is_owned,
 		owner_index,
