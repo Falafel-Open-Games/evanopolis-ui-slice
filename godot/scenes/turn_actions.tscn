@@ -210,15 +210,7 @@ unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 50)
 layout_mode = 2
 size_flags_horizontal = 3
-text = "0.00 (fiat)"
-
-[node name="BuyBitcoinButton" type="Button" parent="MarginContainer/Content/HBoxContainer/PropertyContainer/BuyContainer/BuyButtons"]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 50)
-layout_mode = 2
-size_flags_horizontal = 3
-text = "0.0000 (btc)"
-disabled = true
+text = "Buy for 0.00"
 
 [node name="PayTollContainer" type="VBoxContainer" parent="MarginContainer/Content/HBoxContainer"]
 unique_name_in_owner = true
@@ -241,15 +233,7 @@ unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 44)
 layout_mode = 2
 size_flags_horizontal = 3
-text = "0.00 (fiat)"
-
-[node name="PayTollBitcoinButton" type="Button" parent="MarginContainer/Content/HBoxContainer/PayTollContainer/PayTollButtons"]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 44)
-layout_mode = 2
-size_flags_horizontal = 3
-text = "0.00 (btc)"
-disabled = true
+text = "Pay 0.00"
 
 [node name="EndTurnButton" type="Button" parent="MarginContainer/Content/HBoxContainer"]
 unique_name_in_owner = true

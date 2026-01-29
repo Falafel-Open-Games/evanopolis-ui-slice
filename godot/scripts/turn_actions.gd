@@ -3,8 +3,8 @@ extends FoldableContainer
 
 signal dice_rolled(die_1: int, die_2: int, total: int)
 signal dice_requested
-signal buy_requested(use_bitcoin: bool)
-signal toll_payment_requested(use_bitcoin: bool)
+signal buy_requested
+signal toll_payment_requested
 
 @export_range(0, 5, 1) var player_index: int = 0:
 	set(value):
@@ -37,12 +37,10 @@ signal toll_payment_requested(use_bitcoin: bool)
 @onready var payout_label: Label = %PayoutLabel
 @onready var buy_container: BoxContainer = %BuyContainer
 @onready var buy_fiat_button: Button = %BuyFiatButton
-@onready var buy_bitcoin_button: Button = %BuyBitcoinButton
 @onready var owner_label: Label = %OwnerLabel
 @onready var pay_toll_container: BoxContainer = %PayTollContainer
 @onready var pay_toll_label: Label = %PayTollLabel
 @onready var pay_toll_fiat_button: Button = %PayTollFiatButton
-@onready var pay_toll_bitcoin_button: Button = %PayTollBitcoinButton
 
 
 # Called when the node enters the scene tree for the first time.
@@ -66,22 +64,16 @@ func _ready() -> void:
 	assert(payout_label)
 	assert(buy_container)
 	assert(buy_fiat_button)
-	assert(buy_bitcoin_button)
 	assert(pay_toll_container)
 	assert(pay_toll_label)
 	assert(pay_toll_fiat_button)
-	assert(pay_toll_bitcoin_button)
 	_apply_player_state(1, 1)
 	_reset_roll_ui()
 	_bind_timer_bar()
 	if not buy_fiat_button.pressed.is_connected(_on_buy_fiat_pressed):
 		buy_fiat_button.pressed.connect(_on_buy_fiat_pressed)
-	if not buy_bitcoin_button.pressed.is_connected(_on_buy_bitcoin_pressed):
-		buy_bitcoin_button.pressed.connect(_on_buy_bitcoin_pressed)
 	if not pay_toll_fiat_button.pressed.is_connected(_on_pay_toll_fiat_pressed):
 		pay_toll_fiat_button.pressed.connect(_on_pay_toll_fiat_pressed)
-	if not pay_toll_bitcoin_button.pressed.is_connected(_on_pay_toll_bitcoin_pressed):
-		pay_toll_bitcoin_button.pressed.connect(_on_pay_toll_bitcoin_pressed)
 
 func _bind_timer_bar() -> void:
 	assert(timer_bar)
@@ -145,7 +137,6 @@ func _set_turn_start_visibility() -> void:
 	assert(payout_label)
 	assert(buy_container)
 	assert(buy_fiat_button)
-	assert(buy_bitcoin_button)
 	timer_container.visible = true
 	movement_container.visible = true
 	end_turn_button.visible = false
@@ -206,9 +197,7 @@ func update_tile_info(
 	property_price: float,
 	special_name: String,
 	special_price: float,
-	bitcoin_price: float,
 	toll_fiat: float,
-	toll_btc: float,
 	payout_cycle_1_2: float,
 	payout_cycle_3_4: float,
 	miner_batches: int,
@@ -216,24 +205,21 @@ func update_tile_info(
 	owner_index: int,
 	owner_name: String,
 	buy_visible: bool,
-	buy_fiat_enabled: bool,
-	buy_btc_enabled: bool
+	buy_fiat_enabled: bool
 ) -> void:
 	_update_tile_type_label(tile_type, city, incident_kind, special_name)
 	assert(property_container)
 	if tile_type == "property" or tile_type == "special_property":
 		property_container.visible = true
 		_update_property_image(city, is_owned)
-		_update_price_label(tile_type, property_price, special_price, bitcoin_price)
+		_update_price_label(tile_type, property_price, special_price)
 		_update_owner_label(is_owned, owner_index, owner_name)
-		_update_toll_label(toll_fiat, toll_btc, miner_batches)
+		_update_toll_label(toll_fiat, miner_batches)
 		_update_payout_label(payout_cycle_1_2, payout_cycle_3_4)
 		_update_buy_buttons(
 			buy_visible,
 			buy_fiat_enabled,
-			buy_btc_enabled,
-			property_price if tile_type == "property" else special_price,
-			bitcoin_price
+			property_price if tile_type == "property" else special_price
 		)
 	else:
 		property_container.visible = false
@@ -244,7 +230,6 @@ func update_tile_info(
 		assert(payout_label)
 		assert(buy_container)
 		assert(buy_fiat_button)
-		assert(buy_bitcoin_button)
 		assert(owner_label)
 		price_label.visible = false
 		owner_label.visible = false
@@ -284,21 +269,14 @@ func _update_tile_type_label(
 func _update_price_label(
 	tile_type: String,
 	property_price: float,
-	special_price: float,
-	bitcoin_price: float
+	special_price: float
 ) -> void:
 	assert(price_label)
 	if tile_type == "property":
-		price_label.text = "Fiat: %s\nBTC: %s" % [
-			NumberFormat.format_fiat(property_price),
-			NumberFormat.format_btc(bitcoin_price),
-		]
+		price_label.text = "Price: %s" % NumberFormat.format_fiat(property_price)
 		price_label.visible = true
 	elif tile_type == "special_property":
-		price_label.text = "Fiat: %s\nBTC: %s" % [
-			NumberFormat.format_fiat(special_price),
-			NumberFormat.format_btc(bitcoin_price),
-		]
+		price_label.text = "Price: %s" % NumberFormat.format_fiat(special_price)
 		price_label.visible = true
 	else:
 		price_label.visible = false
@@ -313,24 +291,20 @@ func _update_owner_label(is_owned: bool, owner_index: int, owner_name: String) -
 	owner_label.add_theme_color_override("font_color", Palette.get_player_light(owner_index))
 	owner_label.visible = true
 
-func _update_buy_buttons(buy_visible: bool, buy_fiat_enabled: bool, buy_btc_enabled: bool, price_fiat: float, price_btc: float) -> void:
+func _update_buy_buttons(buy_visible: bool, buy_fiat_enabled: bool, price_fiat: float) -> void:
 	assert(buy_container)
 	assert(buy_fiat_button)
-	assert(buy_bitcoin_button)
 	buy_container.visible = buy_visible
-	buy_fiat_button.text = "%s (fiat)" % NumberFormat.format_fiat(price_fiat)
-	buy_bitcoin_button.text = "%s (btc)" % NumberFormat.format_btc(price_btc)
+	buy_fiat_button.text = "Buy for %s" % NumberFormat.format_fiat(price_fiat)
 	buy_fiat_button.disabled = not buy_fiat_enabled
-	buy_bitcoin_button.disabled = not buy_btc_enabled
 
-func _update_toll_label(toll_fiat: float, toll_btc: float, miner_batches: int) -> void:
+func _update_toll_label(toll_fiat: float, miner_batches: int) -> void:
 	assert(toll_label)
 	var batch_label: String = "batch" if miner_batches == 1 else "batches"
-	toll_label.text = "Energy Toll (%d miner %s)\nFiat: %s\nBTC: %s" % [
+	toll_label.text = "Energy Toll (%d miner %s)\n%s" % [
 		miner_batches,
 		batch_label,
 		NumberFormat.format_fiat(toll_fiat),
-		NumberFormat.format_btc(toll_btc),
 	]
 	toll_label.visible = true
 
@@ -342,18 +316,15 @@ func _update_payout_label(payout_cycle_1_2: float, payout_cycle_3_4: float) -> v
 	]
 	payout_label.visible = true
 
-func show_toll_actions(toll_fiat: float, toll_btc: float, fiat_enabled: bool, bitcoin_enabled: bool) -> void:
+func show_toll_actions(toll_fiat: float, fiat_enabled: bool) -> void:
 	assert(pay_toll_container)
 	assert(pay_toll_label)
 	assert(pay_toll_fiat_button)
-	assert(pay_toll_bitcoin_button)
 	assert(end_turn_button)
 	pay_toll_container.visible = true
 	pay_toll_label.text = "Pay Energy Toll"
-	pay_toll_fiat_button.text = "%s (fiat)" % NumberFormat.format_fiat(toll_fiat)
+	pay_toll_fiat_button.text = "Pay %s" % NumberFormat.format_fiat(toll_fiat)
 	pay_toll_fiat_button.disabled = not fiat_enabled
-	pay_toll_bitcoin_button.text = "%s (btc)" % NumberFormat.format_btc(toll_btc)
-	pay_toll_bitcoin_button.disabled = not bitcoin_enabled
 	end_turn_button.visible = false
 
 func hide_toll_actions(show_end_turn: bool) -> void:
@@ -364,16 +335,10 @@ func hide_toll_actions(show_end_turn: bool) -> void:
 		end_turn_button.visible = true
 
 func _on_buy_fiat_pressed() -> void:
-	buy_requested.emit(false)
-
-func _on_buy_bitcoin_pressed() -> void:
-	buy_requested.emit(true)
+	buy_requested.emit()
 
 func _on_pay_toll_fiat_pressed() -> void:
-	toll_payment_requested.emit(false)
-
-func _on_pay_toll_bitcoin_pressed() -> void:
-	toll_payment_requested.emit(true)
+	toll_payment_requested.emit()
 
 func _update_property_image(city: String, owned: bool) -> void:
 	assert(property_image)

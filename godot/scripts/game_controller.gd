@@ -25,7 +25,6 @@ var turn_timer_active: bool = false
 var current_tile_index: int = 0
 var pending_toll_owner_index: int = -1
 var pending_toll_fiat: float = 0.0
-var pending_toll_btc: float = 0.0
 var last_cycle: int = -1
 var _pawn_move_token: int = 0
 var _pawn_move_tween: Tween = null
@@ -146,14 +145,10 @@ func _update_tile_info(tile_index: int) -> void:
 		owner_index = info.owner_index
 		owner_name = "Player %d" % (owner_index + 1)
 	var buy_enabled: bool = false
-	var buy_btc_enabled: bool = false
 	if buy_visible:
 		var payer_index: int = game_state.current_player_index
 		var fiat_balance: float = game_state.get_player_fiat_balance(payer_index)
-		var btc_balance: float = game_state.get_player_bitcoin_balance(payer_index)
-		var price_btc: float = game_state.get_tile_price_btc(info)
 		buy_enabled = price > 0.0 and fiat_balance >= price
-		buy_btc_enabled = price_btc > 0.0 and btc_balance >= price_btc
 	turn_actions.update_tile_info(
 		tile_type,
 		city,
@@ -161,9 +156,7 @@ func _update_tile_info(tile_index: int) -> void:
 		price,
 		info.special_property_name,
 		price,
-		game_state.get_tile_price_btc(info),
 		game_state.get_energy_toll(info),
-		game_state.get_energy_toll_btc(info),
 		game_state.get_payout_per_miner_for_cycle(1),
 		game_state.get_payout_per_miner_for_cycle(3),
 		info.miner_batches,
@@ -171,8 +164,7 @@ func _update_tile_info(tile_index: int) -> void:
 		owner_index,
 		owner_name,
 		buy_visible,
-		buy_enabled,
-		buy_btc_enabled
+		buy_enabled
 	)
 	_update_toll_actions(info)
 
@@ -181,20 +173,15 @@ func _update_toll_actions(info: TileInfo) -> void:
 	assert(game_state)
 	pending_toll_owner_index = -1
 	pending_toll_fiat = 0.0
-	pending_toll_btc = 0.0
 	if info.tile_type == "property" and info.owner_index != -1:
 		if info.owner_index != game_state.current_player_index:
 			var toll_amount: float = game_state.get_energy_toll(info)
-			var toll_btc: float = game_state.get_energy_toll_btc(info)
 			var payer_index: int = game_state.current_player_index
 			var fiat_balance: float = game_state.get_player_fiat_balance(payer_index)
-			var btc_balance: float = game_state.get_player_bitcoin_balance(payer_index)
 			var fiat_enabled: bool = fiat_balance >= toll_amount
-			var btc_enabled: bool = btc_balance >= toll_btc
 			pending_toll_owner_index = info.owner_index
 			pending_toll_fiat = toll_amount
-			pending_toll_btc = toll_btc
-			turn_actions.show_toll_actions(toll_amount, toll_btc, fiat_enabled, btc_enabled)
+			turn_actions.show_toll_actions(toll_amount, fiat_enabled)
 			return
 	turn_actions.hide_toll_actions(false)
 
@@ -354,18 +341,18 @@ func _cancel_pawn_movement() -> void:
 	if _pawn_move_timer:
 		_pawn_move_timer = null
 
-func _on_buy_requested(use_bitcoin: bool) -> void:
+func _on_buy_requested() -> void:
 	assert(game_state)
 	var did_purchase: bool = game_state.purchase_tile(
 		game_state.current_player_index,
 		current_tile_index,
-		use_bitcoin
+		false
 	)
 	assert(did_purchase)
 	_flip_tile(current_tile_index)
 	_update_tile_info(current_tile_index)
 
-func _on_toll_payment_requested(use_bitcoin: bool) -> void:
+func _on_toll_payment_requested() -> void:
 	assert(game_state)
 	assert(turn_actions)
 	if pending_toll_owner_index == -1:
@@ -373,8 +360,8 @@ func _on_toll_payment_requested(use_bitcoin: bool) -> void:
 	var did_pay: bool = game_state.pay_energy_toll(
 		game_state.current_player_index,
 		pending_toll_owner_index,
-		pending_toll_btc if use_bitcoin else pending_toll_fiat,
-		use_bitcoin
+		pending_toll_fiat,
+		false
 	)
 	if not did_pay:
 		var info: TileInfo = game_state.get_tile_info(current_tile_index)
@@ -382,7 +369,6 @@ func _on_toll_payment_requested(use_bitcoin: bool) -> void:
 		return
 	pending_toll_owner_index = -1
 	pending_toll_fiat = 0.0
-	pending_toll_btc = 0.0
 	turn_actions.hide_toll_actions(true)
 
 func _flip_tile(tile_index: int) -> void:
