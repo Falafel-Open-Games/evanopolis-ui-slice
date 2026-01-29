@@ -26,6 +26,10 @@ the source of truth for project constraints while working in this repo.
 - Balance and rules data live in GDScript constants (for now).
 - English-only content for this milestone.
 
+## Rules Source of Truth
+
+- Treat `docs/bitcoin-mining-game-design.md` as the canonical game rules/manual.
+
 ## Current Milestone: Offline Game Loop v0
 
 Done means:

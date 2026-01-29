@@ -32,6 +32,7 @@ Offline UI slice for the Evanopolis tabletop game. This repo focuses on a playab
 ## Notes
 
 - See `docs/spec.md` for the current ruleset.
+- See `docs/bitcoin-mining-game-design.md` for the canonical game rules/manual.
 - See `docs/ai-context.md` for offline demo scope + rules clarifications.
 - See `docs/color-spec.md` for pawn color pairs and usage.
 - See `docs/runbook.md` for playtest steps.
