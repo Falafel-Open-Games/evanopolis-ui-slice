@@ -109,11 +109,11 @@ func _on_player_position_changed(tile_index: int, slot_index: int) -> void:
 	_place_pawn(
 		game_state.current_player_index,
 		tile_index,
-		slot_index
+		slot_index,
+		true
 	)
 	game_state.apply_property_payout(tile_index)
 	_update_tile_info(tile_index)
-	pawn_move_finished.emit(tile_index, game_state.current_player_index)
 
 func _on_dice_requested() -> void:
 	assert(turn_actions)
@@ -185,7 +185,7 @@ func _update_toll_actions(info: TileInfo) -> void:
 func _place_all_pawns_at_start() -> void:
 	assert(game_state)
 	for index in range(GameConfig.player_count):
-		_place_pawn(index, 0, index)
+		_place_pawn(index, 0, index, false)
 
 func _apply_player_visibility(count: int) -> void:
 	var summary_index: int = 0
@@ -200,10 +200,13 @@ func _apply_player_visibility(count: int) -> void:
 		pawn.visible = index <= count
 
 func _bind_player_summaries() -> void:
+	var summary_index: int = 0
 	for child in left_sidebar_list.get_children():
 		var summary: PlayerSummary = child as PlayerSummary
 		assert(summary)
-		summary.set_game_state(game_state)
+		if summary_index < GameConfig.player_count:
+			summary.set_game_state(game_state)
+		summary_index += 1
 
 func _initialize_game_state() -> void:
 	game_state.reset_positions()
@@ -225,7 +228,12 @@ func _reset_turn_timer() -> void:
 	turn_timer_active = true
 	turn_actions.set_turn_timer(GameConfig.turn_duration, turn_elapsed)
 
-func _place_pawn(player_index: int, target_tile_index: int, slot_index: int) -> void:
+func _place_pawn(
+	player_index: int,
+	target_tile_index: int,
+	slot_index: int,
+	emit_finish: bool
+) -> void:
 	assert(board_layout)
 	assert(pawns_root)
 
@@ -242,6 +250,8 @@ func _place_pawn(player_index: int, target_tile_index: int, slot_index: int) -> 
 		assert(markers.size() > 0)
 		var clamped_slot: int = clamp(slot_index, 0, markers.size() - 1)
 		pawn.global_transform = markers[clamped_slot].global_transform
+		if emit_finish:
+			pawn_move_finished.emit(target_tile_index, player_index)
 		return
 
 	_cancel_pawn_movement()
@@ -309,6 +319,8 @@ func _place_pawn(player_index: int, target_tile_index: int, slot_index: int) -> 
 			return
 		_pawn_move_tween = null
 		_pawn_jump_tween = null
+	if emit_finish:
+		pawn_move_finished.emit(target_tile_index, player_index)
 
 func _force_complete_turn_visuals() -> void:
 	assert(game_state)
@@ -412,6 +424,7 @@ func _on_miner_batches_changed(tile_index: int, miner_batches: int, owner_index:
 		return
 	var owner_color: Color = Palette.get_player_light(owner_index)
 	board_tile.set_miner_batches(miner_batches, owner_color)
+
 
 func _update_cycle_visual(cycle_number: int) -> void:
 	assert(board_layout)
