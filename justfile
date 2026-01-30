@@ -7,6 +7,14 @@ _default:
 dev:
   godot --path godot
 
+# Run the headless text-only prototype (expects a Godot project under godot2/).
+text-only:
+  godot --headless --path godot2
+
+# Format GDScript files (godot2).
+format-gd:
+  gdscript-formatter --use-spaces $(rg --files -g '*.gd' godot2)
+
 # Export the HTML build locally.
 build-html:
   mkdir -p build/html-client
