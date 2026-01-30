@@ -56,7 +56,7 @@ text = "Board Size:"
 [node name="BoardSizeSelector" type="OptionButton" parent="Center/VBox/HBoxContainer2/HBoxContainer"]
 unique_name_in_owner = true
 layout_mode = 2
-selected = 2
+selected = 0
 item_count = 3
 popup/item_0/text = "24"
 popup/item_0/id = 0
@@ -75,7 +75,7 @@ text = "Players:"
 [node name="PlayerCountSelector" type="OptionButton" parent="Center/VBox/HBoxContainer2/HBoxContainerPlayers"]
 unique_name_in_owner = true
 layout_mode = 2
-selected = 4
+selected = 1
 item_count = 5
 popup/item_0/text = "2"
 popup/item_0/id = 0
@@ -98,7 +98,7 @@ text = "Turn Time:"
 [node name="TurnTimeSelector" type="OptionButton" parent="Center/VBox/HBoxContainer2/HBoxContainerTurnTime"]
 unique_name_in_owner = true
 layout_mode = 2
-selected = 1
+selected = 2
 item_count = 3
 popup/item_0/text = "10s"
 popup/item_0/id = 0
