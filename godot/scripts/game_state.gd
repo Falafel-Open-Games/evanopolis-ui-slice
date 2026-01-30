@@ -40,6 +40,8 @@ signal turn_state_changed(player_index: int, turn_number: int, cycle_number: int
 signal miner_order_locked(player_index: int, locked: bool)
 signal miner_order_committed(player_index: int)
 signal miner_batches_changed(tile_index: int, miner_batches: int, owner_index: int)
+signal property_owner_changed(tile_index: int, owner_index: int)
+signal state_reset()
 
 func _ready() -> void:
 	seed(GameConfig.game_id.hash())
@@ -90,6 +92,7 @@ func reset_positions() -> void:
 	current_cycle = 1
 	turn_count = 1
 	_emit_turn_state()
+	state_reset.emit()
 
 func advance_turn() -> void:
 	current_player_index = (current_player_index + 1) % GameConfig.player_count
@@ -303,6 +306,7 @@ func purchase_tile(player_index: int, tile_index: int, use_bitcoin: bool) -> boo
 		player_data.fiat_balance -= price
 	player_data_changed.emit(player_index, player_data)
 	tile.owner_index = player_index
+	property_owner_changed.emit(tile_index, player_index)
 	return true
 
 func _build_tile_info() -> void:

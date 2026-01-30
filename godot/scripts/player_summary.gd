@@ -5,12 +5,10 @@ extends FoldableContainer
 @onready var fiat_balance_label: Label = %FiatBalanceLabel
 @onready var bitcoin_balance_label: Label = %BitcoinBalanceLabel
 @onready var mining_power_label: Label = %MiningPowerLabel
-@onready var view_properties_button: Button = %ViewPropertiesButton
 @onready var properties_panel: PanelContainer = %PropertiesPanel
 @onready var properties_list: VBoxContainer = %PropertiesList
 @onready var order_total_fiat_label: Label = %OrderTotalFiatLabel
 @onready var confirm_fiat_button: Button = %ConfirmFiatButton
-@onready var close_properties_button: Button = %ClosePropertiesButton
 @onready var order_locked_label: Label = %OrderLockedLabel
 
 var _game_state: GameState
@@ -21,23 +19,17 @@ func _ready() -> void:
 	assert(fiat_balance_label)
 	assert(bitcoin_balance_label)
 	assert(mining_power_label)
-	assert(view_properties_button)
 	assert(properties_panel)
 	assert(properties_list)
 	assert(order_total_fiat_label)
 	assert(confirm_fiat_button)
-	assert(close_properties_button)
 	assert(order_locked_label)
 	_apply_title_panel_style(Palette.get_player_dark(player_index))
 	
 	# set panel title based on player index
 	self.title = "Player %d" % [player_index + 1]
-	if not view_properties_button.pressed.is_connected(_on_view_properties_pressed):
-		view_properties_button.pressed.connect(_on_view_properties_pressed)
 	if not confirm_fiat_button.pressed.is_connected(_on_confirm_fiat_pressed):
 		confirm_fiat_button.pressed.connect(_on_confirm_fiat_pressed)
-	if not close_properties_button.pressed.is_connected(_on_close_properties_pressed):
-		close_properties_button.pressed.connect(_on_close_properties_pressed)
 
 func set_player_data(player_data: PlayerData) -> void:
 	assert(player_data)
@@ -54,6 +46,10 @@ func set_game_state(game_state: GameState) -> void:
 		_game_state.miner_order_committed.connect(_on_miner_order_committed)
 	if not _game_state.miner_order_locked.is_connected(_on_miner_order_locked):
 		_game_state.miner_order_locked.connect(_on_miner_order_locked)
+	if not _game_state.property_owner_changed.is_connected(_on_property_owner_changed):
+		_game_state.property_owner_changed.connect(_on_property_owner_changed)
+	if not _game_state.state_reset.is_connected(_on_state_reset):
+		_game_state.state_reset.connect(_on_state_reset)
 
 func set_fiat_balance(balance: float) -> void:
 	assert(fiat_balance_label)
@@ -66,14 +62,6 @@ func set_bitcoin_balance(balance: float) -> void:
 func set_mining_power(power: int) -> void:
 	assert(mining_power_label)
 	mining_power_label.text = str(power)
-
-func _on_view_properties_pressed() -> void:
-	properties_panel.visible = not properties_panel.visible
-	if properties_panel.visible:
-		_refresh_properties_view()
-
-func _on_close_properties_pressed() -> void:
-	properties_panel.visible = false
 
 func _on_confirm_fiat_pressed() -> void:
 	_confirm_order()
@@ -228,6 +216,16 @@ func _on_miner_order_committed(committed_player_index: int) -> void:
 func _on_miner_order_locked(locked_player_index: int, _locked: bool) -> void:
 	if locked_player_index != player_index:
 		return
+	if properties_panel.visible:
+		_refresh_properties_view()
+
+func _on_property_owner_changed(tile_index: int, owner_index: int) -> void:
+	if owner_index != player_index:
+		return
+	if properties_panel.visible:
+		_refresh_properties_view()
+
+func _on_state_reset() -> void:
 	if properties_panel.visible:
 		_refresh_properties_view()
 
