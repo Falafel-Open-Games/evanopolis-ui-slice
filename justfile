@@ -9,7 +9,15 @@ dev:
 
 # Run the headless text-only prototype (expects a Godot project under godot2/).
 text-only:
-  godot --headless --path godot2
+  godot --headless --log-file /tmp/godot-text-only.log --path godot2
+
+# Run the headless server for multi-match testing.
+text-only-server *ARGS:
+  godot --headless --log-file /tmp/godot-text-only-server.log --path godot2 res://scenes/server_main.tscn {{ARGS}}
+
+# Run a headless client that connects to the server.
+text-only-client *ARGS:
+  godot --headless --log-file /tmp/godot-text-only-client.log --path godot2 res://scenes/client_main.tscn {{ARGS}}
 
 # Format GDScript files (godot2).
 format-gd:

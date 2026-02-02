@@ -13,6 +13,18 @@ Define a clear, minimal game-state model and server event flow for a headless si
 - No UI concerns in the state.
 - Deterministic and testable.
 - Single source of truth (server-style mindset).
+- Client-triggered invalid actions return `rpc_action_rejected` with a reason; do not assert/crash for client-originated mistakes.
+
+## Headless Topology (Current Decision)
+- One headless server process hosts multiple matches.
+- Server loads all `.toml` configs from a directory (default: `res://configs`) or a list of explicit config paths.
+- Clients run as separate headless processes, one per human player, and connect to a match via `game_id`.
+
+## Transport (Web Export Fit)
+- Use Godot's high-level multiplayer API with a WebSocket transport (`WebSocketMultiplayerPeer`) for web exports.
+- The transport can be swapped without changing RPCs or game-state logic, since RPCs are on the high-level API.
+- Server and client must share identical RPC method lists on the same node path to pass checksum validation.
+  - We currently use a shared base script (`headless_rpc.gd`) for this.
 
 ## Randomness Authority
 - Server is the only authority for randomness.
@@ -25,12 +37,22 @@ Define a clear, minimal game-state model and server event flow for a headless si
 1. Server creates a new `GameState` from config (`game_id`, `board_size`, `player_count`).
 2. RNG is derived from `game_id` (seed = hash(game_id)).
 3. Server emits:
-   - `GameStarted { game_id: String, snapshot: GameState }`
+   - `GameStarted { game_id: String }`
    - `TurnStarted { player_index: int, turn_number: int, cycle: int }`
+
+### Join Handshake (Current + Discussion)
+Client sends:
+- `Join { game_id: String, player_id: String }`
+
+Server responds with either:
+- `ActionRejected { reason: String }` on invalid join (unknown game, slot taken, etc.)
+- or `JoinAccepted { player_id: String, player_index: int }`, followed by the normal game start flow when all seats are filled (server assigns `player_index`).
+
+Open question (to discuss): allow reducing `player_count` if not all invites are accepted, and define how/when a match can start with fewer players.
 
 ### First Action: Roll Dice
 Client sends:
-- `RollDice { match_id: String, player_index: int }`
+- `RollDice { match_id: String, player_id: String }`
 
 Server responds with:
 - `DiceRolled { die1: int, die2: int, total: int }`
@@ -41,27 +63,37 @@ Server responds with:
 ## Minimal RPC API (Godot Multiplayer RPC)
 All calls are Godot Multiplayer RPCs (not REST). Define which side owns each RPC.
 
+## Event Delivery Rule
+- Broadcast shared game-state events to all clients in the match (keeps local state in sync).
+- Send player-specific responses (e.g., `rpc_join_accepted`, `rpc_action_rejected`) only to the requesting client.
+- Broadcast events include a monotonic `seq` (per match). Clients buffer out-of-order broadcast events until missing sequence numbers arrive.
+- Player-specific events use `seq = 0` and are applied immediately (not buffered).
+
 ### Client -> Server RPCs
-- `rpc_roll_dice(match_id: String, player_index: int)`
-- `rpc_end_turn(match_id: String, player_index: int)`
-- `rpc_buy_property(match_id: String, player_index: int, tile_index: int)`
-- `rpc_pay_toll(match_id: String, player_index: int)`
-- `rpc_place_miner_order(match_id: String, player_index: int, orders_by_tile: Dictionary)`
+- `rpc_join(game_id: String, player_id: String)`
+- `rpc_roll_dice(match_id: String, player_id: String)`
+
+### Client -> Server RPCs (Planned)
+- `rpc_end_turn(match_id: String, player_id: String)`
+- `rpc_buy_property(match_id: String, player_id: String, tile_index: int)`
+- `rpc_pay_toll(match_id: String, player_id: String)`
+- `rpc_place_miner_order(match_id: String, player_id: String, orders_by_tile: Dictionary)`
 
 ### Server -> Client RPCs (Events)
-- `rpc_game_started(game_id: String, snapshot: GameState)`
-- `rpc_turn_started(player_index: int, turn_number: int, cycle: int)`
-- `rpc_dice_rolled(die1: int, die2: int, total: int)`
-- `rpc_pawn_moved(from: int, to: int, passed_tiles: Array[int])`
-- `rpc_tile_landed(tile_index: int, tile_type: TileType)`
-- `rpc_cycle_started(cycle: int, inflation_active: bool)`
-- `rpc_incident_type_changed(tile_index: int, incident_kind: IncidentKind)`
-- `rpc_property_acquired(player_index: int, tile_index: int, price: float)`
-- `rpc_miner_batches_added(player_index: int, tile_index: int, count: int)`
-- `rpc_toll_paid(payer_index: int, owner_index: int, amount: float)`
-- `rpc_player_sent_to_inspection(player_index: int, reason: String)`
-- `rpc_state_snapshot(snapshot: GameState)`
-- `rpc_action_rejected(reason: String)`
+- `rpc_game_started(seq: int, game_id: String)`
+- `rpc_join_accepted(seq: int, player_id: String, player_index: int)`
+- `rpc_turn_started(seq: int, player_index: int, turn_number: int, cycle: int)`
+- `rpc_dice_rolled(seq: int, die1: int, die2: int, total: int)`
+- `rpc_pawn_moved(seq: int, from: int, to: int, passed_tiles: Array[int])`
+- `rpc_tile_landed(seq: int, tile_index: int, tile_type: TileType)`
+- `rpc_cycle_started(seq: int, cycle: int, inflation_active: bool)`
+- `rpc_incident_type_changed(seq: int, tile_index: int, incident_kind: IncidentKind)`
+- `rpc_property_acquired(seq: int, player_index: int, tile_index: int, price: float)`
+- `rpc_miner_batches_added(seq: int, player_index: int, tile_index: int, count: int)`
+- `rpc_toll_paid(seq: int, payer_index: int, owner_index: int, amount: float)`
+- `rpc_player_sent_to_inspection(seq: int, player_index: int, reason: String)`
+- `rpc_state_snapshot(seq: int, snapshot: GameState)`
+- `rpc_action_rejected(seq: int, reason: String)`
 
 ## Core State Structure (Draft)
 
