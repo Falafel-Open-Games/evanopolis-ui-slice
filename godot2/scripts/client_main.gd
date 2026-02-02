@@ -1,0 +1,200 @@
+extends "res://scripts/headless_rpc.gd"
+
+const DEFAULT_HOST: String = "127.0.0.1"
+const DEFAULT_PORT: int = 9010
+
+var host: String = DEFAULT_HOST
+var port: int = DEFAULT_PORT
+var game_id: String = ""
+var player_id: String = ""
+var player_index: int = -1
+var current_player_index: int = 0
+var pending_game_started: bool = false
+var next_expected_seq: int = 1
+var pending_events: Dictionary = { }
+
+
+func _ready() -> void:
+    var args: PackedStringArray = OS.get_cmdline_args()
+    _parse_args(args)
+    assert(not game_id.is_empty())
+    assert(not player_id.is_empty())
+    _connect_to_server()
+
+
+func _parse_args(args: PackedStringArray) -> void:
+    var index: int = 0
+    while index < args.size():
+        var arg: String = args[index]
+        if arg == "--host" and index + 1 < args.size():
+            host = args[index + 1]
+            index += 2
+            continue
+        if arg == "--port" and index + 1 < args.size():
+            port = int(args[index + 1])
+            index += 2
+            continue
+        if arg == "--game-id" and index + 1 < args.size():
+            game_id = args[index + 1]
+            index += 2
+            continue
+        if arg == "--player-id" and index + 1 < args.size():
+            player_id = args[index + 1]
+            index += 2
+            continue
+        index += 1
+
+
+func _connect_to_server() -> void:
+    var peer: WebSocketMultiplayerPeer = WebSocketMultiplayerPeer.new()
+    var result: int = peer.create_client("ws://%s:%d" % [host, port])
+    assert(result == OK)
+    multiplayer.multiplayer_peer = peer
+    multiplayer.connected_to_server.connect(_on_connected_to_server)
+    multiplayer.connection_failed.connect(_on_connection_failed)
+    multiplayer.server_disconnected.connect(_on_server_disconnected)
+    print("client: connecting to %s:%d" % [host, port])
+
+
+func _on_connected_to_server() -> void:
+    print("client: connected")
+    rpc_id(1, "rpc_join", game_id, player_id)
+
+
+func _on_connection_failed() -> void:
+    print("client: connection failed")
+
+
+func _on_server_disconnected() -> void:
+    print("client: server disconnected")
+
+
+func _handle_game_started(seq: int, new_game_id: String) -> void:
+    _queue_event(seq, "_apply_game_started", [new_game_id])
+
+
+func _handle_join_accepted(seq: int, accepted_player_id: String, assigned_player_index: int) -> void:
+    _queue_event(seq, "_apply_join_accepted", [accepted_player_id, assigned_player_index])
+
+
+func _handle_turn_started(seq: int, player_index_value: int, turn_number: int, cycle: int) -> void:
+    _queue_event(seq, "_apply_turn_started", [player_index_value, turn_number, cycle])
+
+
+func _handle_dice_rolled(seq: int, die_1: int, die_2: int, total: int) -> void:
+    _queue_event(seq, "_apply_dice_rolled", [die_1, die_2, total])
+
+
+func _handle_pawn_moved(seq: int, from_tile: int, to_tile: int, passed_tiles: Array[int]) -> void:
+    _queue_event(seq, "_apply_pawn_moved", [from_tile, to_tile, passed_tiles])
+
+
+func _handle_tile_landed(seq: int, tile_index: int) -> void:
+    _queue_event(seq, "_apply_tile_landed", [tile_index])
+
+
+func _handle_cycle_started(seq: int, cycle: int, inflation_active: bool) -> void:
+    _queue_event(seq, "_apply_cycle_started", [cycle, inflation_active])
+
+
+func _handle_action_rejected(seq: int, reason: String) -> void:
+    _queue_event(seq, "_apply_action_rejected", [reason])
+
+
+func _queue_event(seq: int, method: String, args: Array) -> void:
+    if seq <= 0:
+        callv(method, args)
+        return
+    pending_events[seq] = { "method": method, "args": args }
+    if player_index < 0:
+        return
+    _flush_events()
+
+
+func _flush_events() -> void:
+    while pending_events.has(next_expected_seq):
+        var entry: Dictionary = pending_events[next_expected_seq]
+        pending_events.erase(next_expected_seq)
+        callv(str(entry.get("method", "")), entry.get("args", []))
+        next_expected_seq += 1
+
+
+func _apply_game_started(new_game_id: String) -> void:
+    game_id = new_game_id
+    if player_index < 0:
+        pending_game_started = true
+        return
+    _log_server("game started: game_id=%s" % game_id)
+
+
+func _apply_join_accepted(accepted_player_id: String, assigned_player_index: int) -> void:
+    if accepted_player_id != player_id:
+        return
+    player_index = assigned_player_index
+    _log_server("join accepted: player_id=%s player_index=%d" % [player_id, player_index])
+    _flush_events()
+    if pending_game_started:
+        pending_game_started = false
+        _log_server("game started: game_id=%s" % game_id)
+
+
+func _apply_turn_started(player_index_value: int, turn_number: int, cycle: int) -> void:
+    current_player_index = player_index_value
+    _log_server("turn started: player=%d, turn=%d, cycle=%d" % [player_index_value, turn_number, cycle])
+    if player_index_value != player_index:
+        return
+    await _start_turn_prompt()
+
+
+func _apply_dice_rolled(die_1: int, die_2: int, total: int) -> void:
+    _log_server("dice rolled: die1=%d, die2=%d, total=%d" % [die_1, die_2, total])
+
+
+func _apply_pawn_moved(from_tile: int, to_tile: int, passed_tiles: Array[int]) -> void:
+    _log_server("pawn moved: from=%d, to=%d, passed_tiles=%s" % [from_tile, to_tile, passed_tiles])
+
+
+func _apply_tile_landed(tile_index: int) -> void:
+    _log_server("tile landed: index=%d" % tile_index)
+
+
+func _apply_cycle_started(cycle: int, inflation_active: bool) -> void:
+    _log_server("cycle started: cycle=%d, inflation_active=%s" % [cycle, inflation_active])
+
+
+func _apply_action_rejected(reason: String) -> void:
+    _log_server("action rejected: reason=%s" % reason)
+
+
+func _start_turn_prompt() -> void:
+    _log_prompt("press enter to roll dice")
+    await _wait_for_enter()
+    _request_roll()
+
+
+func _request_roll() -> void:
+    _log_client("roll dice: game_id=%s, player_id=%s" % [game_id, player_id])
+    rpc_id(1, "rpc_roll_dice", game_id, player_id)
+
+
+func _wait_for_enter() -> void:
+    if OS.has_method("read_string_from_stdin"):
+        OS.read_string_from_stdin()
+        return
+    _log_note("stdin not available; continuing")
+
+
+func _log_server(message: String) -> void:
+    print("server[p=%d id=%s g=%s]: %s" % [player_index, player_id, game_id, message])
+
+
+func _log_client(message: String) -> void:
+    print("client[p=%d id=%s g=%s]: %s" % [player_index, player_id, game_id, message])
+
+
+func _log_prompt(message: String) -> void:
+    print("prompt[p=%d id=%s g=%s]: %s" % [player_index, player_id, game_id, message])
+
+
+func _log_note(message: String) -> void:
+    print("note[p=%d id=%s g=%s]: %s" % [player_index, player_id, game_id, message])
