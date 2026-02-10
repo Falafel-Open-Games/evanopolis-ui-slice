@@ -22,9 +22,8 @@ func _init(config_node: Config, client_nodes: Array[Client]) -> void:
     clients.resize(config.player_count)
     player_ids = []
     player_ids.resize(config.player_count)
+    assert(client_nodes.size() <= clients.size())
     for index in range(client_nodes.size()):
-        if index >= clients.size():
-            break
         clients[index] = client_nodes[index]
     rng = RandomNumberGenerator.new()
     state = GameState.new(config)

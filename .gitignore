@@ -6,6 +6,7 @@
 *.log
 *~
 .DS_Store
+godot2/addons/gut/
 build/**
 !build/
 !build/.gitkeep

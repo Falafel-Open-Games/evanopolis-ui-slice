@@ -12,7 +12,12 @@ the source of truth for project constraints while working in this repo.
 - When cutting a PR, pick a branch name yourself and track the bookmark with origin without asking.
 - Commit messages must use a one-line conventional commit summary, then a blank line, then a fuller descriptive summary.
 - Use `jj describe` to finalize PR changes instead of `jj commit` to avoid creating a new empty revision.
-- When writing multi-line messages with `jj describe -m`, use a literal blank line (not `\\n`) so the body renders correctly.
+- When writing multi-line messages with `jj describe -m`, use a literal blank line (press Enter twice) inside the quoted string. Do not type `\n` or `\\n`.
+  Example:
+  `jj describe -m "feat: summary
+
+  Body line one.
+  Body line two."`
 - If you need broader AI instructions, see `/home/fcz/falafel/AGENTS.md`.
 
 ## Scope

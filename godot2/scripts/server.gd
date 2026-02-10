@@ -2,7 +2,6 @@ class_name HeadlessServer
 extends RefCounted
 
 const GameMatch = preload("res://scripts/match.gd")
-const Client = preload("res://scripts/client.gd")
 const NetworkClient = preload("res://scripts/network_client.gd")
 const Config = preload("res://scripts/config.gd")
 
@@ -19,13 +18,6 @@ func create_match(config: Config) -> GameMatch:
     var game_match: GameMatch = GameMatch.new(config, [])
     matches[config.game_id] = game_match
     return game_match
-
-
-func register_local_client(game_id: String, player_id: String, player_index: int, client: Client) -> String:
-    var game_match: GameMatch = matches.get(game_id, null)
-    if game_match == null:
-        return "invalid_game_id"
-    return game_match.register_client_at_index(player_id, player_index, client)
 
 
 func register_remote_client(game_id: String, player_id: String, peer_id: int, server_node: Node) -> Dictionary:
