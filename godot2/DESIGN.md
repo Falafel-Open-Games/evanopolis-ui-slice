@@ -46,7 +46,10 @@ Client sends:
 
 Server responds with either:
 - `ActionRejected { reason: String }` on invalid join (unknown game, slot taken, etc.)
-- or `JoinAccepted { player_id: String, player_index: int }`, followed by the normal game start flow when all seats are filled (server assigns `player_index`).
+- or `JoinAccepted { player_id: String, player_index: int, last_seq: int }` (sent to the joining client), plus a
+  broadcast `PlayerJoined { player_id: String, player_index: int }` to all connected clients. The `last_seq`
+  value is the most recently emitted broadcast sequence so late-joining clients can align their buffers.
+  The normal game start flow happens when all seats are filled (server assigns `player_index`).
 
 Open question (to discuss): allow reducing `player_count` if not all invites are accepted, and define how/when a match can start with fewer players.
 
@@ -81,8 +84,9 @@ All calls are Godot Multiplayer RPCs (not REST). Define which side owns each RPC
 
 ### Server -> Client RPCs (Events)
 - `rpc_game_started(seq: int, game_id: String)`
-- `rpc_join_accepted(seq: int, player_id: String, player_index: int)`
+- `rpc_join_accepted(seq: int, player_id: String, player_index: int, last_seq: int)`
 - `rpc_turn_started(seq: int, player_index: int, turn_number: int, cycle: int)`
+- `rpc_player_joined(seq: int, player_id: String, player_index: int)`
 - `rpc_dice_rolled(seq: int, die1: int, die2: int, total: int)`
 - `rpc_pawn_moved(seq: int, from: int, to: int, passed_tiles: Array[int])`
 - `rpc_tile_landed(seq: int, tile_index: int, tile_type: TileType)`

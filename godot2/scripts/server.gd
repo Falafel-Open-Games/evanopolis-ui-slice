@@ -32,6 +32,7 @@ func register_remote_client(game_id: String, player_id: String, peer_id: int, se
     if not reason.is_empty():
         result["seq"] = 0
         return result
+    result["last_seq"] = game_match.last_sequence()
     peer_slots[peer_id] = {
         "game_id": game_id,
         "player_id": player_id,

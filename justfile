@@ -22,7 +22,8 @@ text-only-client *ARGS:
 # Run GUT unit tests (godot2).
 test-godot2:
   just import-godot2
-  godot --headless --path godot2 -s res://addons/gut/gut_cmdln.gd -gdir=res://tests -ginclude_subdirs -gexit
+  GODOT_USER_DIR=/tmp/godot-user XDG_CONFIG_HOME=/tmp/godot-config XDG_DATA_HOME=/tmp/godot-data \
+    godot --headless --path godot2 -s res://addons/gut/gut_cmdln.gd -gdir=res://tests -ginclude_subdirs -gexit
 
 # Download and install GUT into godot2/addons (godot2).
 install-gut:
@@ -35,7 +36,8 @@ install-gut:
 
 # Import assets and class_names for godot2 (needed for GUT class_name registration).
 import-godot2:
-  godot --headless --path godot2 --import
+  GODOT_USER_DIR=/tmp/godot-user XDG_CONFIG_HOME=/tmp/godot-config XDG_DATA_HOME=/tmp/godot-data \
+    godot --headless --path godot2 --import
 
 # Format GDScript files (godot2).
 format-gd:

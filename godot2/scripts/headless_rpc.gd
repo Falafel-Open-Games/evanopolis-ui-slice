@@ -17,13 +17,18 @@ func rpc_game_started(seq: int, new_game_id: String) -> void:
 
 
 @rpc("authority")
-func rpc_join_accepted(seq: int, player_id: String, player_index: int) -> void:
-    _handle_join_accepted(seq, player_id, player_index)
+func rpc_join_accepted(seq: int, player_id: String, player_index: int, last_seq: int) -> void:
+    _handle_join_accepted(seq, player_id, player_index, last_seq)
 
 
 @rpc("authority")
 func rpc_turn_started(seq: int, player_index: int, turn_number: int, cycle: int) -> void:
     _handle_turn_started(seq, player_index, turn_number, cycle)
+
+
+@rpc("authority")
+func rpc_player_joined(seq: int, player_id: String, player_index: int) -> void:
+    _handle_player_joined(seq, player_id, player_index)
 
 
 @rpc("authority")
@@ -63,11 +68,15 @@ func _handle_game_started(seq: int, new_game_id: String) -> void:
     pass
 
 
-func _handle_join_accepted(seq: int, player_id: String, player_index: int) -> void:
+func _handle_join_accepted(seq: int, player_id: String, player_index: int, last_seq: int) -> void:
     pass
 
 
 func _handle_turn_started(seq: int, player_index: int, turn_number: int, cycle: int) -> void:
+    pass
+
+
+func _handle_player_joined(seq: int, player_id: String, player_index: int) -> void:
     pass
 
 

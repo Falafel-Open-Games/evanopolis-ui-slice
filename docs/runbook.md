@@ -23,11 +23,11 @@ Quickly validate movement flow, tile feedback, and buy/skip choice UX.
 
 ### Terminal 2: Client 1
 
-1. Run `just text-only-client -- --game-id demo_002 --player-id p1`.
+1. Run `just text-only-client --game-id demo_002 --player-id p1`.
 
 ### Terminal 3: Client 2
 
-1. Run `just text-only-client -- --game-id demo_002 --player-id p2`.
+1. Run `just text-only-client --game-id demo_002 --player-id p2`.
 
 ### Notes
 

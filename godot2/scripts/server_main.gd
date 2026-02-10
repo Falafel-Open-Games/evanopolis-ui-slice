@@ -93,7 +93,8 @@ func _handle_join(game_id: String, player_id: String) -> void:
         rpc_id(sender_id, "rpc_action_rejected", seq, reason)
         return
     var assigned_index: int = int(result.get("player_index", -1))
-    rpc_id(sender_id, "rpc_join_accepted", seq, player_id, assigned_index)
+    var last_seq: int = int(result.get("last_seq", 0))
+    rpc_id(sender_id, "rpc_join_accepted", seq, player_id, assigned_index, last_seq)
     print("server: join game_id=%s player_id=%s player=%d peer=%d" % [game_id, player_id, assigned_index, sender_id])
 
 
