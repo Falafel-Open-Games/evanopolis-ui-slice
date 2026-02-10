@@ -26,6 +26,25 @@ jobs:
           mv /root/.local/share/godot/export_templates/${GODOT_VERSION}.${GODOT_RELEASE_NAME} \
              ~/.local/share/godot/export_templates/${GODOT_VERSION}.${GODOT_RELEASE_NAME}
 
+      - name: Install test dependencies
+        run: |
+          apt-get update
+          apt-get install -y curl unzip
+
+      - name: Install GUT
+        run: |
+          mkdir -p /tmp/gut
+          curl -L -o /tmp/gut/gut.zip https://github.com/bitwes/Gut/archive/refs/tags/v9.5.0.zip
+          unzip -q /tmp/gut/gut.zip -d /tmp/gut
+          mkdir -p godot2/addons
+          cp -a /tmp/gut/Gut-9.5.0/addons/gut godot2/addons/
+
+      - name: Run godot2 tests
+        run: |
+          godot --headless --path godot2 --import
+          godot --headless --path godot2 -s res://addons/gut/gut_cmdln.gd \
+            -gdir=res://tests -ginclude_subdirs -gexit
+
       - name: Export Web (HTML)
         run: |
           mkdir -p godot/build/html-client

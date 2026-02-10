@@ -3,7 +3,7 @@
 ## What to Document First (Recommended Focus)
 Start with a **textual happy-path sequence** for the first 1-2 turns, then add a **minimal RPC API** that supports that flow. This gives a concrete spine for the state machine and event log, without over-engineering upfront.
 
-If you want a visual later, add a Mermaid state diagram once the happy-path is stable.
+For a visual state overview, see `docs/state-machine.md` (Mermaid).
 
 ## Goal
 Define a clear, minimal game-state model and server event flow for a headless simulation that can later map cleanly to a server-authoritative multiplayer architecture.

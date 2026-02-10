@@ -19,6 +19,24 @@ text-only-server *ARGS:
 text-only-client *ARGS:
   godot --headless --log-file /tmp/godot-text-only-client.log --path godot2 res://scenes/client_main.tscn {{ARGS}}
 
+# Run GUT unit tests (godot2).
+test-godot2:
+  just import-godot2
+  godot --headless --path godot2 -s res://addons/gut/gut_cmdln.gd -gdir=res://tests -ginclude_subdirs -gexit
+
+# Download and install GUT into godot2/addons (godot2).
+install-gut:
+  mkdir -p /tmp/gut
+  curl -L -o /tmp/gut/gut.zip https://github.com/bitwes/Gut/archive/refs/tags/v9.5.0.zip
+  rm -rf godot2/addons/gut
+  unzip -q /tmp/gut/gut.zip -d /tmp/gut
+  mkdir -p godot2/addons
+  cp -a /tmp/gut/Gut-9.5.0/addons/gut godot2/addons/
+
+# Import assets and class_names for godot2 (needed for GUT class_name registration).
+import-godot2:
+  godot --headless --path godot2 --import
+
 # Format GDScript files (godot2).
 format-gd:
   gdscript-formatter --use-spaces $(rg --files -g '*.gd' godot2)

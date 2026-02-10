@@ -147,7 +147,7 @@ func _apply_turn_started(player_index_value: int, turn_number: int, cycle: int) 
 
 
 func _apply_dice_rolled(die_1: int, die_2: int, total: int) -> void:
-    _log_server("dice rolled: die1=%d, die2=%d, total=%d" % [die_1, die_2, total])
+    _log_server("dice rolled: player=%d, die1=%d, die2=%d, total=%d" % [current_player_index, die_1, die_2, total])
 
 
 func _apply_pawn_moved(from_tile: int, to_tile: int, passed_tiles: Array[int]) -> void:

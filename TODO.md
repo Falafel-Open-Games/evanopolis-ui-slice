@@ -10,6 +10,23 @@
 
 - Inspection blocks mining payouts from the player's properties until cleared.
 
+## Reconnection
+
+- Allow a player to reconnect to an existing game using the same player_id (currently rejected as player_id_taken).
+
+## Match Creation (Server + Text-Only Client)
+
+- Add server support for creating new games at runtime (not just loading configs once at startup).
+- If text-only client starts without `--game-id`, prompt to create a new match (game_id, board_size, player_count) similar to the TOML config fields.
+
+## Testing Direction
+
+- Keep automated headless tests multi-process (avoid same-process local clients).
+
+## Turn Timers + Penalties
+
+- Define server-side turn timers and penalties for incomplete required actions (dice roll, tile resolution) in `godot2/DESIGN.md`.
+
 ## UI announcements log
 - keep a log of all game event messages, like:
     - turn {turn, cycle, player} start, 
