@@ -49,6 +49,7 @@ func register_client_at_index(player_id: String, player_index: int, client: Clie
         return "player_id_taken"
     clients[player_index] = client
     player_ids[player_index] = player_id
+    _broadcast("rpc_player_joined", [player_id, player_index])
     if _has_all_clients():
         start_game()
     return ""
@@ -142,6 +143,10 @@ func next_sequence() -> int:
     var seq: int = next_event_seq
     next_event_seq += 1
     return seq
+
+
+func last_sequence() -> int:
+    return next_event_seq - 1
 
 
 func _broadcast(method: String, args: Array) -> void:

@@ -73,12 +73,16 @@ func _handle_game_started(seq: int, new_game_id: String) -> void:
     _queue_event(seq, "_apply_game_started", [new_game_id])
 
 
-func _handle_join_accepted(seq: int, accepted_player_id: String, assigned_player_index: int) -> void:
-    _queue_event(seq, "_apply_join_accepted", [accepted_player_id, assigned_player_index])
+func _handle_join_accepted(seq: int, accepted_player_id: String, assigned_player_index: int, last_seq: int) -> void:
+    _queue_event(seq, "_apply_join_accepted", [accepted_player_id, assigned_player_index, last_seq])
 
 
 func _handle_turn_started(seq: int, player_index_value: int, turn_number: int, cycle: int) -> void:
     _queue_event(seq, "_apply_turn_started", [player_index_value, turn_number, cycle])
+
+
+func _handle_player_joined(seq: int, player_id_value: String, player_index_value: int) -> void:
+    _queue_event(seq, "_apply_player_joined", [player_id_value, player_index_value])
 
 
 func _handle_dice_rolled(seq: int, die_1: int, die_2: int, total: int) -> void:
@@ -127,11 +131,13 @@ func _apply_game_started(new_game_id: String) -> void:
     _log_server("game started: game_id=%s" % game_id)
 
 
-func _apply_join_accepted(accepted_player_id: String, assigned_player_index: int) -> void:
+func _apply_join_accepted(accepted_player_id: String, assigned_player_index: int, last_seq: int) -> void:
     if accepted_player_id != player_id:
         return
     player_index = assigned_player_index
     _log_server("join accepted: player_id=%s player_index=%d" % [player_id, player_index])
+    if last_seq > 0:
+        next_expected_seq = last_seq + 1
     _flush_events()
     if pending_game_started:
         pending_game_started = false
@@ -144,6 +150,10 @@ func _apply_turn_started(player_index_value: int, turn_number: int, cycle: int) 
     if player_index_value != player_index:
         return
     await _start_turn_prompt()
+
+
+func _apply_player_joined(player_id_value: String, player_index_value: int) -> void:
+    _log_server("player joined: player_id=%s player_index=%d" % [player_id_value, player_index_value])
 
 
 func _apply_dice_rolled(die_1: int, die_2: int, total: int) -> void:

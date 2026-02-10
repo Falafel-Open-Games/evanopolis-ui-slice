@@ -22,10 +22,15 @@
 ## Testing Direction
 
 - Keep automated headless tests multi-process (avoid same-process local clients).
+- Add a headless integration test that runs a real server + multiple clients over WebSocket RPCs.
 
 ## Turn Timers + Penalties
 
 - Define server-side turn timers and penalties for incomplete required actions (dice roll, tile resolution) in `godot2/DESIGN.md`.
+
+## Config Validation
+
+- Enforce player_count bounds (2-6) and reject invalid configs (e.g., 7 players), then add tests.
 
 ## UI announcements log
 - keep a log of all game event messages, like:

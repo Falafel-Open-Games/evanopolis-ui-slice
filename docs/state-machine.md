@@ -8,6 +8,7 @@ stateDiagram-v2
     Boot --> ConfigLoaded: load configs
     ConfigLoaded --> WaitingForPlayers: match created
     WaitingForPlayers --> WaitingForPlayers: rpc_join (reject invalid)
+    WaitingForPlayers --> WaitingForPlayers: rpc_join_accepted + rpc_player_joined
     WaitingForPlayers --> GameStarted: seats filled
     GameStarted --> TurnStarted: rpc_game_started + rpc_turn_started
 

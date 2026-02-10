@@ -20,6 +20,10 @@ func rpc_turn_started(seq: int, player_index: int, turn_number: int, cycle: int)
     server_node.rpc_id(peer_id, "rpc_turn_started", seq, player_index, turn_number, cycle)
 
 
+func rpc_player_joined(seq: int, player_id: String, player_index: int) -> void:
+    server_node.rpc_id(peer_id, "rpc_player_joined", seq, player_id, player_index)
+
+
 func rpc_dice_rolled(seq: int, die_1: int, die_2: int, total: int) -> void:
     server_node.rpc_id(peer_id, "rpc_dice_rolled", seq, die_1, die_2, total)
 
