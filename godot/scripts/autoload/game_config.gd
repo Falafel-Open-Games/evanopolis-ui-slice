@@ -9,4 +9,4 @@ extends Node
 @export var disable_special_properties: bool = true
 @export var btc_exchange_rate_fiat: float = 100000.0
 @export var game_id: String = ""
-@export var build_id: String = "muomltkzmtsm"
+@export var build_id: String = "wnqpxzkzukkk"
