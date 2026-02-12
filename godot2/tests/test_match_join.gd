@@ -20,8 +20,20 @@ func test_match_start_emits_game_started() -> void:
     assert_eq(str(result_b.get("reason", "")), "", "second client should register")
 
     _assert_player_joined_events(client_a, ["alice", "bob"])
-    _assert_game_start_events(_filter_events(client_a, "rpc_game_started"), _filter_events(client_a, "rpc_turn_started"), config.game_id)
-    _assert_game_start_events(_filter_events(client_b, "rpc_game_started"), _filter_events(client_b, "rpc_turn_started"), config.game_id)
+    _assert_game_start_events(
+        _filter_events(client_a, "rpc_game_started"),
+        _filter_events(client_a, "rpc_board_state"),
+        _filter_events(client_a, "rpc_turn_started"),
+        config.game_id,
+        config.board_size,
+    )
+    _assert_game_start_events(
+        _filter_events(client_b, "rpc_game_started"),
+        _filter_events(client_b, "rpc_board_state"),
+        _filter_events(client_b, "rpc_turn_started"),
+        config.game_id,
+        config.board_size,
+    )
 
 
 func test_join_broadcasts_player_joined() -> void:
@@ -107,7 +119,7 @@ func test_last_seq_progresses_on_join() -> void:
 
     var result_b: Dictionary = game_match.assign_client("bob", client_b)
     assert_eq(str(result_b.get("reason", "")), "", "second client should register")
-    assert_eq(game_match.last_sequence(), 4, "second join emits start events")
+    assert_eq(game_match.last_sequence(), 5, "second join emits start events")
 
 
 func test_three_player_match_starts_on_third_join() -> void:
@@ -175,14 +187,25 @@ func test_game_start_emitted_once_after_full() -> void:
     assert_eq(started_before, started_after, "game start not emitted again")
 
 
-func _assert_game_start_events(game_started: Array[Dictionary], turn_started: Array[Dictionary], game_id: String) -> void:
+func _assert_game_start_events(
+    game_started: Array[Dictionary],
+    board_state: Array[Dictionary],
+    turn_started: Array[Dictionary],
+    game_id: String,
+    board_size: int,
+) -> void:
     assert_eq(game_started.size(), 1, "expected one game started event")
+    assert_eq(board_state.size(), 1, "expected one board state event")
     assert_eq(turn_started.size(), 1, "expected one turn started event")
     var first: Dictionary = game_started[0]
     assert_eq(int(first.get("seq", -1)), 3, "game started seq")
     assert_eq(str(first.get("game_id", "")), game_id, "game id propagated")
+    var board_event: Dictionary = board_state[0]
+    assert_eq(int(board_event.get("seq", -1)), 4, "board state seq")
+    var board_payload: Dictionary = board_event.get("board", { })
+    assert_eq(int(board_payload.get("size", -1)), board_size, "board size propagated")
     var second: Dictionary = turn_started[0]
-    assert_eq(int(second.get("seq", -1)), 4, "turn started seq")
+    assert_eq(int(second.get("seq", -1)), 5, "turn started seq")
     assert_eq(int(second.get("player_index", -1)), 0, "first turn player index")
     assert_eq(int(second.get("turn_number", -1)), 1, "turn number")
     assert_eq(int(second.get("cycle", -1)), 1, "cycle number")

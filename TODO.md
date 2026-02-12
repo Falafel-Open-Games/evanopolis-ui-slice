@@ -30,6 +30,13 @@
 
 - Define server-side turn timers and penalties for incomplete required actions (dice roll, tile resolution) in `godot2/DESIGN.md`.
 
+## Incident Resolution
+
+- Implement server-authoritative incident draw flow after incident landing:
+  - `rpc_tile_landed` with `action_required=resolve_incident`
+  - immediate server broadcast `rpc_incident_drawn(seq, tile_index, incident_kind, card_id)`
+  - text client prompt/log for drawn card effect and required follow-up action (if any)
+
 ## Config Validation
 
 - Enforce player_count bounds (2-6) and reject invalid configs (e.g., 7 players), then add tests.

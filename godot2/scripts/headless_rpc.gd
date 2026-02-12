@@ -22,6 +22,11 @@ func rpc_game_started(seq: int, new_game_id: String) -> void:
 
 
 @rpc("authority")
+func rpc_board_state(seq: int, board: Dictionary) -> void:
+    _handle_board_state(seq, board)
+
+
+@rpc("authority")
 func rpc_auth_ok(player_id: String, exp: int) -> void:
     _handle_auth_ok(player_id, exp)
 
@@ -57,8 +62,16 @@ func rpc_pawn_moved(seq: int, from_tile: int, to_tile: int, passed_tiles: Array[
 
 
 @rpc("authority")
-func rpc_tile_landed(seq: int, tile_index: int) -> void:
-    _handle_tile_landed(seq, tile_index)
+func rpc_tile_landed(
+    seq: int,
+    tile_index: int,
+    tile_type: String,
+    city: String,
+    owner_index: int,
+    toll_due: float,
+    action_required: String,
+) -> void:
+    _handle_tile_landed(seq, tile_index, tile_type, city, owner_index, toll_due, action_required)
 
 
 @rpc("authority")
@@ -84,6 +97,10 @@ func _handle_roll_dice(game_id: String, player_id: String) -> void:
 
 
 func _handle_game_started(seq: int, new_game_id: String) -> void:
+    pass
+
+
+func _handle_board_state(seq: int, board: Dictionary) -> void:
     pass
 
 
@@ -115,7 +132,15 @@ func _handle_pawn_moved(seq: int, from_tile: int, to_tile: int, passed_tiles: Ar
     pass
 
 
-func _handle_tile_landed(seq: int, tile_index: int) -> void:
+func _handle_tile_landed(
+    seq: int,
+    tile_index: int,
+    tile_type: String,
+    city: String,
+    owner_index: int,
+    toll_due: float,
+    action_required: String,
+) -> void:
     pass
 
 

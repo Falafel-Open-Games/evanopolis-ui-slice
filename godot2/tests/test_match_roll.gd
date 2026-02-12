@@ -84,6 +84,109 @@ func test_roll_rejects_peer_player_mismatch() -> void:
     assert_eq(str(roll_result.get("reason", "")), "peer_player_mismatch", "peer player mismatch is rejected")
 
 
+func test_roll_emits_landing_context_for_property_tile() -> void:
+    var config: Config = Config.new("res://configs/demo_002.toml")
+    var game_match: GameMatch = GameMatch.new(config, [])
+    var client_a: MatchTestClient = MatchTestClient.new()
+    var client_b: MatchTestClient = MatchTestClient.new()
+
+    var result_a: Dictionary = game_match.assign_client("alice", client_a)
+    assert_eq(str(result_a.get("reason", "")), "", "first client should register")
+    var result_b: Dictionary = game_match.assign_client("bob", client_b)
+    assert_eq(str(result_b.get("reason", "")), "", "second client should register")
+
+    game_match.rpc_roll_dice("demo_002", "alice")
+    var landed: Array[Dictionary] = _filter_events(client_a, "rpc_tile_landed")
+    assert_eq(landed.size(), 1, "tile landed should be emitted after roll")
+    var event: Dictionary = landed[0]
+    assert_eq(int(event.get("tile_index", -1)), 6, "first roll for demo_002 lands on tile 6")
+    assert_eq(str(event.get("tile_type", "")), "property", "landing tile type")
+    assert_eq(str(event.get("city", "")), "assuncion", "landing city name")
+    assert_eq(int(event.get("owner_index", -99)), -1, "unowned property")
+    assert_eq(float(event.get("toll_due", -1.0)), 0.0, "no toll on unowned property")
+    assert_eq(str(event.get("action_required", "")), "buy_or_end_turn", "expected action for unowned property")
+
+
+func test_landing_context_for_non_property_tile() -> void:
+    var config: Config = Config.new("res://configs/demo_002.toml")
+    var game_match: GameMatch = GameMatch.new(config, [])
+    var client_a: MatchTestClient = MatchTestClient.new()
+    var client_b: MatchTestClient = MatchTestClient.new()
+
+    var result_a: Dictionary = game_match.assign_client("alice", client_a)
+    assert_eq(str(result_a.get("reason", "")), "", "first client should register")
+    var result_b: Dictionary = game_match.assign_client("bob", client_b)
+    assert_eq(str(result_b.get("reason", "")), "", "second client should register")
+
+    game_match._server_move_pawn(4)
+    var landed: Array[Dictionary] = _filter_events(client_a, "rpc_tile_landed")
+    assert_eq(landed.size(), 1, "tile landed should be emitted")
+    var event: Dictionary = landed[0]
+    assert_eq(int(event.get("tile_index", -1)), 4, "expected incident tile index")
+    assert_eq(str(event.get("tile_type", "")), "incident", "incident tile type")
+    assert_eq(str(event.get("city", "")), "", "non-property has no city")
+    assert_eq(int(event.get("owner_index", -99)), -1, "non-property has no owner")
+    assert_eq(float(event.get("toll_due", -1.0)), 0.0, "non-property has no toll")
+    assert_eq(str(event.get("action_required", "")), "resolve_incident", "incident requires incident resolution")
+
+
+func test_landing_context_for_owned_property_by_other_player() -> void:
+    var config: Config = Config.new("res://configs/demo_002.toml")
+    var game_match: GameMatch = GameMatch.new(config, [])
+    var client_a: MatchTestClient = MatchTestClient.new()
+    var client_b: MatchTestClient = MatchTestClient.new()
+
+    var result_a: Dictionary = game_match.assign_client("alice", client_a)
+    assert_eq(str(result_a.get("reason", "")), "", "first client should register")
+    var result_b: Dictionary = game_match.assign_client("bob", client_b)
+    assert_eq(str(result_b.get("reason", "")), "", "second client should register")
+
+    var tiles: Array = game_match.board_state.get("tiles", [])
+    var tile: Dictionary = tiles[6]
+    tile["owner_index"] = 1
+    tile["miner_batches"] = 2
+    tiles[6] = tile
+    game_match.board_state["tiles"] = tiles
+
+    game_match._server_move_pawn(6)
+    var landed: Array[Dictionary] = _filter_events(client_a, "rpc_tile_landed")
+    assert_eq(landed.size(), 1, "tile landed should be emitted")
+    var event: Dictionary = landed[0]
+    assert_eq(int(event.get("tile_index", -1)), 6, "expected property tile index")
+    assert_eq(str(event.get("tile_type", "")), "property", "property tile type")
+    assert_eq(str(event.get("city", "")), "assuncion", "property city")
+    assert_eq(int(event.get("owner_index", -99)), 1, "owner is other player")
+    assert_true(is_equal_approx(float(event.get("toll_due", -1.0)), 7500.0), "assuncion toll with 2 miner batches at cycle 1")
+    assert_eq(str(event.get("action_required", "")), "pay_toll", "owned by other requires pay_toll")
+
+
+func test_landing_context_for_owned_property_by_self() -> void:
+    var config: Config = Config.new("res://configs/demo_002.toml")
+    var game_match: GameMatch = GameMatch.new(config, [])
+    var client_a: MatchTestClient = MatchTestClient.new()
+    var client_b: MatchTestClient = MatchTestClient.new()
+
+    var result_a: Dictionary = game_match.assign_client("alice", client_a)
+    assert_eq(str(result_a.get("reason", "")), "", "first client should register")
+    var result_b: Dictionary = game_match.assign_client("bob", client_b)
+    assert_eq(str(result_b.get("reason", "")), "", "second client should register")
+
+    var tiles: Array = game_match.board_state.get("tiles", [])
+    var tile: Dictionary = tiles[6]
+    tile["owner_index"] = 0
+    tile["miner_batches"] = 4
+    tiles[6] = tile
+    game_match.board_state["tiles"] = tiles
+
+    game_match._server_move_pawn(6)
+    var landed: Array[Dictionary] = _filter_events(client_a, "rpc_tile_landed")
+    assert_eq(landed.size(), 1, "tile landed should be emitted")
+    var event: Dictionary = landed[0]
+    assert_eq(int(event.get("owner_index", -99)), 0, "owner is landing player")
+    assert_eq(float(event.get("toll_due", -1.0)), 0.0, "self-owned property has no toll")
+    assert_eq(str(event.get("action_required", "")), "end_turn", "self-owned property ends turn")
+
+
 func _filter_events(client: MatchTestClient, method: String) -> Array[Dictionary]:
     var results: Array[Dictionary] = []
     for event in client.events:
