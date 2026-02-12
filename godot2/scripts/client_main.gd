@@ -136,12 +136,24 @@ func _apply_join_accepted(accepted_player_id: String, assigned_player_index: int
         return
     player_index = assigned_player_index
     _log_server("join accepted: player_id=%s player_index=%d" % [player_id, player_index])
-    if last_seq > 0:
+    var pending_start: int = _smallest_pending_sequence()
+    if pending_start > 0:
+        next_expected_seq = pending_start
+    elif last_seq > 0:
         next_expected_seq = last_seq + 1
     _flush_events()
     if pending_game_started:
         pending_game_started = false
         _log_server("game started: game_id=%s" % game_id)
+
+
+func _smallest_pending_sequence() -> int:
+    var smallest: int = -1
+    for seq_key in pending_events.keys():
+        var seq_value: int = int(seq_key)
+        if smallest < 0 or seq_value < smallest:
+            smallest = seq_value
+    return smallest
 
 
 func _apply_turn_started(player_index_value: int, turn_number: int, cycle: int) -> void:
