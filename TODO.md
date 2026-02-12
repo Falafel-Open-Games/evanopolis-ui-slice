@@ -10,9 +10,11 @@
 
 - Inspection blocks mining payouts from the player's properties until cleared.
 
-## Reconnection
+## Reconnection Test Roadmap
 
-- Allow a player to reconnect to an existing game using the same player_id (currently rejected as player_id_taken).
+3. Integration test: run server + 2 clients, drop client, reconnect with same player_id, ensure new peer receives events.
+4. Integration test: two concurrent connections with same player_id; newest replaces older and older is disconnected.
+5. Integration test: expired JWT is rejected on reconnect (auth server + game server).
 
 ## Match Creation (Server + Text-Only Client)
 
@@ -54,3 +56,12 @@ DONE
 ## UI Cleanup
 
 - Remove dual-currency payment options (fiat/bitcoin) from the game UI.
+
+## Reconnection
+
+- Allow a player to reconnect to an existing game using the same player_id.
+
+## Reconnection Test Roadmap
+
+1. Unit test: reconnect with same player_id replaces old peer slot (server-side match).
+2. Unit test: reconnect broadcasts continue sequence without duplicate game start (late join).

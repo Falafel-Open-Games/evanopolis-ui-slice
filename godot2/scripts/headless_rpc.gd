@@ -7,6 +7,11 @@ func rpc_join(game_id: String, player_id: String) -> void:
 
 
 @rpc("any_peer")
+func rpc_auth(token: String) -> void:
+    _handle_auth(token)
+
+
+@rpc("any_peer")
 func rpc_roll_dice(game_id: String, player_id: String) -> void:
     _handle_roll_dice(game_id, player_id)
 
@@ -14,6 +19,16 @@ func rpc_roll_dice(game_id: String, player_id: String) -> void:
 @rpc("authority")
 func rpc_game_started(seq: int, new_game_id: String) -> void:
     _handle_game_started(seq, new_game_id)
+
+
+@rpc("authority")
+func rpc_auth_ok(player_id: String, exp: int) -> void:
+    _handle_auth_ok(player_id, exp)
+
+
+@rpc("authority")
+func rpc_auth_error(reason: String) -> void:
+    _handle_auth_error(reason)
 
 
 @rpc("authority")
@@ -60,11 +75,23 @@ func _handle_join(game_id: String, player_id: String) -> void:
     pass
 
 
+func _handle_auth(token: String) -> void:
+    pass
+
+
 func _handle_roll_dice(game_id: String, player_id: String) -> void:
     pass
 
 
 func _handle_game_started(seq: int, new_game_id: String) -> void:
+    pass
+
+
+func _handle_auth_ok(player_id: String, exp: int) -> void:
+    pass
+
+
+func _handle_auth_error(reason: String) -> void:
     pass
 
 

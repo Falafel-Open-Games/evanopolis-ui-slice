@@ -6,6 +6,7 @@
 *.log
 *~
 .DS_Store
+.env
 godot2/addons/gut/
 build/**
 !build/

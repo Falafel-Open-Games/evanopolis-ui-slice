@@ -7,6 +7,7 @@ var host: String = DEFAULT_HOST
 var port: int = DEFAULT_PORT
 var game_id: String = ""
 var player_id: String = ""
+var auth_token: String = ""
 var player_index: int = -1
 var current_player_index: int = 0
 var pending_game_started: bool = false
@@ -18,7 +19,7 @@ func _ready() -> void:
     var args: PackedStringArray = OS.get_cmdline_args()
     _parse_args(args)
     assert(not game_id.is_empty())
-    assert(not player_id.is_empty())
+    assert(not auth_token.is_empty())
     _connect_to_server()
 
 
@@ -38,10 +39,14 @@ func _parse_args(args: PackedStringArray) -> void:
             game_id = args[index + 1]
             index += 2
             continue
-        if arg == "--player-id" and index + 1 < args.size():
-            player_id = args[index + 1]
+        if arg == "--auth-token" and index + 1 < args.size():
+            auth_token = args[index + 1]
             index += 2
             continue
+        if arg == "--player-id":
+            _log_note("--player-id is no longer supported; player_id is derived from JWT sub")
+            get_tree().quit(1)
+            return
         index += 1
 
 
@@ -58,7 +63,7 @@ func _connect_to_server() -> void:
 
 func _on_connected_to_server() -> void:
     print("client: connected")
-    rpc_id(1, "rpc_join", game_id, player_id)
+    rpc_id(1, "rpc_auth", auth_token)
 
 
 func _on_connection_failed() -> void:
@@ -67,10 +72,19 @@ func _on_connection_failed() -> void:
 
 func _on_server_disconnected() -> void:
     print("client: server disconnected")
+    get_tree().quit(1)
 
 
 func _handle_game_started(seq: int, new_game_id: String) -> void:
     _queue_event(seq, "_apply_game_started", [new_game_id])
+
+
+func _handle_auth_ok(authorized_player_id: String, exp: int) -> void:
+    _apply_auth_ok(authorized_player_id, exp)
+
+
+func _handle_auth_error(reason: String) -> void:
+    _apply_auth_error(reason)
 
 
 func _handle_join_accepted(seq: int, accepted_player_id: String, assigned_player_index: int, last_seq: int) -> void:
@@ -129,6 +143,22 @@ func _apply_game_started(new_game_id: String) -> void:
         pending_game_started = true
         return
     _log_server("game started: game_id=%s" % game_id)
+
+
+func _apply_auth_ok(authorized_player_id: String, exp: int) -> void:
+    if player_id.is_empty():
+        player_id = authorized_player_id
+    if player_id != authorized_player_id:
+        _log_note("auth mismatch: expected %s got %s" % [player_id, authorized_player_id])
+        multiplayer.multiplayer_peer.close()
+        return
+    _log_server("auth ok: player_id=%s exp=%d" % [player_id, exp])
+    rpc_id(1, "rpc_join", game_id, player_id)
+
+
+func _apply_auth_error(reason: String) -> void:
+    _log_note("auth error: reason=%s" % reason)
+    multiplayer.multiplayer_peer.close()
 
 
 func _apply_join_accepted(accepted_player_id: String, assigned_player_index: int, last_seq: int) -> void:
