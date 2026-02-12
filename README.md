@@ -42,3 +42,4 @@ Offline UI slice for the Evanopolis tabletop game. This repo focuses on a playab
 - See `docs/color-spec.md` for pawn color pairs and usage.
 - See `docs/runbook.md` for playtest steps and headless server/text-only client workflow.
 - Track decisions in `docs/design-decisions.md`.
+ - Headless server expects JWT auth for text-only clients; configure `AUTH_BASE_URL` or pass `--auth-base-url` when running the server. `player_id` is derived from JWT `sub`.

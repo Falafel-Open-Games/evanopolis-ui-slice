@@ -53,6 +53,43 @@ Server responds with either:
 
 Open question (to discuss): allow reducing `player_count` if not all invites are accepted, and define how/when a match can start with fewer players.
 
+### Reconnect Policy (Planned)
+Context: Clients authenticate with JWTs and have stable unique player ids (shared with sibling auth projects). A reconnect will arrive with a new peer id.
+Planned behavior:
+- A reconnect with the same `player_id` should be treated as a resume, not a new join, when the prior session is considered disconnected or when a valid reconnect token is presented.
+- Server binds the new peer id to the existing player slot and continues the match from current state.
+- If the prior session is still considered connected and no valid reconnect token is provided, the reconnect is rejected.
+- The server should track activity (`last_seen`) or heartbeat to detect stale connections and allow reclaiming slots.
+Open questions:
+- Which token to use for reconnection (JWT alone vs. server-issued session token).
+- How long to allow a silent connection before treating it as disconnected (timeout policy).
+
+## Reconnect Policy (JWT-Only, Replace-On-Reconnect)
+This builds on the sibling auth design: JWTs are validated via `auth(token)` and `/whoami`, with `sub` as the stable player identity.
+
+### Identity
+- `player_id` is derived from JWT `sub`.
+- A reconnect will always use a new peer id; the newest connection wins.
+
+### Server State (per match)
+- `player_slots[player_index] = { player_id, peer_id, last_seen, connected }`
+- `peer_slots[peer_id] = { player_id, player_index }`
+
+### Join/Resume Flow
+1. Client connects and sends `auth(token)`.
+2. Client sends `rpc_join(game_id, player_id)`.
+3. Server behavior:
+4. If no existing slot for `player_id` and seats are open, assign a slot and bind the peer.
+5. If a slot exists for `player_id`, rebind the slot to the new peer id and disconnect the old peer.
+
+### Disconnect Detection (Optional)
+- Heartbeats are optional because the newest connection replaces the old one.
+- If you still want stale detection for UX/metrics, track `last_seen` on any RPC.
+
+### Security/UX Defaults
+- JWT expiry rejects join/resume; clients must re-auth to get a fresh token.
+- Concurrent connections for the same `player_id` are not supported; newest replaces older.
+
 ### First Action: Roll Dice
 Client sends:
 - `RollDice { match_id: String, player_id: String }`

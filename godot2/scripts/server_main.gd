@@ -5,15 +5,19 @@ const HeadlessServer = preload("res://scripts/server.gd")
 
 const DEFAULT_PORT: int = 9010
 const DEFAULT_CONFIG_DIR: String = "res://configs"
+const DEFAULT_AUTH_VERIFY_PATH: String = "/whoami"
 
 var server: HeadlessServer
 var config_paths: Array[String] = []
 var port: int = DEFAULT_PORT
+var auth_base_url: String = ""
+var auth_verify_path: String = DEFAULT_AUTH_VERIFY_PATH
 
 
 func _ready() -> void:
     var args: PackedStringArray = OS.get_cmdline_args()
     _parse_args(args)
+    _log_auth_config()
     _start_server()
     _load_matches()
 
@@ -21,6 +25,15 @@ func _ready() -> void:
 func _parse_args(args: PackedStringArray) -> void:
     var index: int = 0
     var config_dir: String = DEFAULT_CONFIG_DIR
+    var env_vars: Dictionary = _load_dotenv()
+    auth_base_url = str(OS.get_environment("AUTH_BASE_URL"))
+    if auth_base_url.is_empty() and env_vars.has("AUTH_BASE_URL"):
+        auth_base_url = str(env_vars.get("AUTH_BASE_URL", ""))
+    var env_verify_path: String = str(OS.get_environment("AUTH_VERIFY_PATH"))
+    if env_verify_path.is_empty() and env_vars.has("AUTH_VERIFY_PATH"):
+        env_verify_path = str(env_vars.get("AUTH_VERIFY_PATH", ""))
+    if not env_verify_path.is_empty():
+        auth_verify_path = env_verify_path
     while index < args.size():
         var arg: String = args[index]
         if arg == "--config-dir" and index + 1 < args.size():
@@ -35,9 +48,49 @@ func _parse_args(args: PackedStringArray) -> void:
             port = int(args[index + 1])
             index += 2
             continue
+        if arg == "--auth-base-url" and index + 1 < args.size():
+            auth_base_url = args[index + 1]
+            index += 2
+            continue
+        if arg == "--auth-verify-path" and index + 1 < args.size():
+            auth_verify_path = args[index + 1]
+            index += 2
+            continue
         index += 1
     if config_paths.is_empty():
         config_paths = _configs_from_dir(config_dir)
+
+
+func _load_dotenv() -> Dictionary:
+    var results: Dictionary = { }
+    var paths: Array[String] = ["res://../.env", "res://.env"]
+    for path in paths:
+        if not FileAccess.file_exists(path):
+            continue
+        var file: FileAccess = FileAccess.open(path, FileAccess.READ)
+        if file == null:
+            continue
+        while not file.eof_reached():
+            var line: String = file.get_line().strip_edges()
+            if line.is_empty() or line.begins_with("#"):
+                continue
+            var parts: PackedStringArray = line.split("=", false, 2)
+            if parts.size() < 2:
+                continue
+            var key: String = parts[0].strip_edges()
+            var value: String = parts[1].strip_edges()
+            if value.begins_with("\"") and value.ends_with("\"") and value.length() >= 2:
+                value = value.substr(1, value.length() - 2)
+            results[key] = value
+        file.close()
+    return results
+
+
+func _log_auth_config() -> void:
+    if auth_base_url.is_empty():
+        print("server: auth verify url not configured")
+        return
+    print("server: auth verify url=%s%s" % [auth_base_url, auth_verify_path])
 
 
 func _start_server() -> void:
@@ -82,6 +135,7 @@ func _on_peer_connected(peer_id: int) -> void:
 
 func _on_peer_disconnected(peer_id: int) -> void:
     print("server: peer disconnected %d" % peer_id)
+    server.handle_peer_disconnected(peer_id)
 
 
 func _handle_join(game_id: String, player_id: String) -> void:
@@ -90,12 +144,81 @@ func _handle_join(game_id: String, player_id: String) -> void:
     var reason: String = str(result.get("reason", ""))
     var seq: int = int(result.get("seq", 0))
     if not reason.is_empty():
+        print("server: join rejected game_id=%s player_id=%s peer=%d reason=%s" % [game_id, player_id, sender_id, reason])
         rpc_id(sender_id, "rpc_action_rejected", seq, reason)
         return
+    var replaced_peer_id: int = int(result.get("replaced_peer_id", -1))
+    if replaced_peer_id > 0:
+        print("server: reconnect replacing old_peer=%d new_peer=%d player_id=%s game_id=%s" % [replaced_peer_id, sender_id, player_id, game_id])
+        _disconnect_peer(replaced_peer_id)
     var assigned_index: int = int(result.get("player_index", -1))
     var last_seq: int = int(result.get("last_seq", 0))
     rpc_id(sender_id, "rpc_join_accepted", seq, player_id, assigned_index, last_seq)
     print("server: join game_id=%s player_id=%s player=%d peer=%d" % [game_id, player_id, assigned_index, sender_id])
+
+
+func _handle_auth(token: String) -> void:
+    var sender_id: int = _get_sender_id()
+    if token.is_empty():
+        _auth_fail(sender_id, "missing_token")
+        return
+    if auth_base_url.is_empty():
+        _auth_fail(sender_id, "missing_auth_service")
+        return
+    _verify_token(sender_id, token)
+
+
+func _verify_token(peer_id: int, token: String) -> void:
+    var request: HTTPRequest = HTTPRequest.new()
+    add_child(request)
+    request.request_completed.connect(_on_auth_request_completed.bind(request, peer_id))
+    var url: String = auth_base_url + auth_verify_path
+    var headers: PackedStringArray = ["Authorization: Bearer %s" % token]
+    var result: int = request.request(url, headers)
+    if result != OK:
+        request.queue_free()
+        _auth_fail(peer_id, "auth_request_failed")
+
+
+func _on_auth_request_completed(result: int, response_code: int, _headers: PackedStringArray, body: PackedByteArray, request: HTTPRequest, peer_id: int) -> void:
+    request.queue_free()
+    if result != OK or response_code != 200:
+        _auth_fail(peer_id, "unauthorized", "status=%d result=%d" % [response_code, result])
+        return
+    var body_text: String = body.get_string_from_utf8()
+    var parsed: Variant = JSON.parse_string(body_text)
+    if typeof(parsed) != TYPE_DICTIONARY:
+        _auth_fail(peer_id, "invalid_auth_response")
+        return
+    var payload: Dictionary = parsed
+    var player_id: String = str(payload.get("sub", ""))
+    if player_id.is_empty():
+        _auth_fail(peer_id, "missing_sub")
+        return
+    var exp_value: int = int(payload.get("exp", 0))
+    server.authorize_peer(peer_id, player_id)
+    rpc_id(peer_id, "rpc_auth_ok", player_id, exp_value)
+    print("server: auth ok peer=%d player_id=%s exp=%d" % [peer_id, player_id, exp_value])
+
+
+func _get_sender_id() -> int:
+    return multiplayer.get_remote_sender_id()
+
+
+func _disconnect_peer(peer_id: int) -> void:
+    var connected_peers: PackedInt32Array = multiplayer.get_peers()
+    if not connected_peers.has(peer_id):
+        return
+    multiplayer.disconnect_peer(peer_id)
+
+
+func _auth_fail(peer_id: int, reason: String, detail: String = "") -> void:
+    if detail.is_empty():
+        print("server: auth error peer=%d reason=%s" % [peer_id, reason])
+    else:
+        print("server: auth error peer=%d reason=%s %s" % [peer_id, reason, detail])
+    rpc_id(peer_id, "rpc_auth_error", reason)
+    _disconnect_peer(peer_id)
 
 
 func _handle_roll_dice(game_id: String, player_id: String) -> void:

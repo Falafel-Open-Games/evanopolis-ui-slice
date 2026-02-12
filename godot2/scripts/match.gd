@@ -58,13 +58,15 @@ func register_client_at_index(player_id: String, player_index: int, client: Clie
 func assign_client(player_id: String, client: Client) -> Dictionary:
     if player_id.is_empty():
         return { "reason": "invalid_player_id", "player_index": -1 }
-    if _player_index_from_id(player_id) >= 0:
-        return { "reason": "player_id_taken", "player_index": -1 }
+    var existing_index: int = _player_index_from_id(player_id)
+    if existing_index >= 0:
+        clients[existing_index] = client
+        return { "reason": "", "player_index": existing_index, "reconnected": true }
     var empty_index: int = _first_empty_slot()
     if empty_index < 0:
         return { "reason": "match_full", "player_index": -1 }
     var reason: String = register_client_at_index(player_id, empty_index, client)
-    return { "reason": reason, "player_index": empty_index }
+    return { "reason": reason, "player_index": empty_index, "reconnected": false }
 
 
 func _has_all_clients() -> bool:

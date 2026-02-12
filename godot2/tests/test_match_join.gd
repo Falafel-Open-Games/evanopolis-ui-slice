@@ -45,7 +45,7 @@ func test_join_broadcasts_player_joined() -> void:
     assert_eq(str(joined_b[0].get("player_id", "")), "bob", "second client receives bob join")
 
 
-func test_join_rejects_duplicate_player_id() -> void:
+func test_join_replaces_duplicate_player_id() -> void:
     var config: Config = Config.new("res://configs/demo_002.toml")
     var game_match: GameMatch = GameMatch.new(config, [])
     var client_a: MatchTestClient = MatchTestClient.new()
@@ -55,7 +55,9 @@ func test_join_rejects_duplicate_player_id() -> void:
     assert_eq(str(result_a.get("reason", "")), "", "first client should register")
 
     var result_b: Dictionary = game_match.assign_client("alice", client_b)
-    assert_eq(str(result_b.get("reason", "")), "player_id_taken", "duplicate player_id is rejected")
+    assert_eq(str(result_b.get("reason", "")), "", "duplicate player_id replaces connection")
+    assert_eq(int(result_b.get("player_index", -1)), 0, "duplicate player_id keeps existing slot")
+    assert_eq(game_match.clients[0], client_b, "duplicate player_id replaces client")
 
 
 func test_join_rejects_when_match_full() -> void:
