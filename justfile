@@ -23,7 +23,16 @@ text-only-client *ARGS:
 test-godot2:
   just import-godot2
   GODOT_USER_DIR=/tmp/godot-user XDG_CONFIG_HOME=/tmp/godot-config XDG_DATA_HOME=/tmp/godot-data \
-    godot --headless --path godot2 -s res://addons/gut/gut_cmdln.gd -gdir=res://tests -ginclude_subdirs -gexit
+    godot --headless --path godot2 -s res://addons/gut/gut_cmdln.gd -gdir=res://tests -ginclude_subdirs -gexit \
+      2> >(sed \
+        -e '/^ERROR: Condition "_sock == -1"/d' \
+        -e '/^ERROR: Condition "err != OK"/d' \
+        -e '/^   at: open (drivers\/unix\/net_socket_unix\.cpp:267)$/d' \
+        -e '/^   at: listen (core\/io\/tcp_server\.cpp:57)$/d' \
+        >&2) \
+    | sed \
+        -e '/^   at: open (drivers\/unix\/net_socket_unix\.cpp:267)$/d' \
+        -e '/^   at: listen (core\/io\/tcp_server\.cpp:57)$/d'
 
 # Download and install GUT into godot2/addons (godot2).
 install-gut:
@@ -37,7 +46,16 @@ install-gut:
 # Import assets and class_names for godot2 (needed for GUT class_name registration).
 import-godot2:
   GODOT_USER_DIR=/tmp/godot-user XDG_CONFIG_HOME=/tmp/godot-config XDG_DATA_HOME=/tmp/godot-data \
-    godot --headless --path godot2 --import
+    godot --headless --path godot2 --import \
+      2> >(sed \
+        -e '/^ERROR: Condition "_sock == -1"/d' \
+        -e '/^ERROR: Condition "err != OK"/d' \
+        -e '/^   at: open (drivers\/unix\/net_socket_unix\.cpp:267)$/d' \
+        -e '/^   at: listen (core\/io\/tcp_server\.cpp:57)$/d' \
+        >&2) \
+    | sed \
+        -e '/^   at: open (drivers\/unix\/net_socket_unix\.cpp:267)$/d' \
+        -e '/^   at: listen (core\/io\/tcp_server\.cpp:57)$/d'
 
 # Format GDScript files (godot2).
 format-gd:

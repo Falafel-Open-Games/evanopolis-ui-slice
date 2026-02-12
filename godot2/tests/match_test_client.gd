@@ -1,0 +1,92 @@
+extends "res://scripts/client.gd"
+class_name MatchTestClient
+
+var events: Array[Dictionary] = []
+
+
+func rpc_game_started(seq: int, new_game_id: String) -> void:
+    events.append(
+        {
+            "method": "rpc_game_started",
+            "seq": seq,
+            "game_id": new_game_id,
+        },
+    )
+
+
+func rpc_turn_started(seq: int, player_index: int, turn_number: int, cycle: int) -> void:
+    events.append(
+        {
+            "method": "rpc_turn_started",
+            "seq": seq,
+            "player_index": player_index,
+            "turn_number": turn_number,
+            "cycle": cycle,
+        },
+    )
+
+
+func rpc_player_joined(seq: int, player_id: String, player_index: int) -> void:
+    events.append(
+        {
+            "method": "rpc_player_joined",
+            "seq": seq,
+            "player_id": player_id,
+            "player_index": player_index,
+        },
+    )
+
+
+func rpc_dice_rolled(seq: int, die_1: int, die_2: int, total: int) -> void:
+    events.append(
+        {
+            "method": "rpc_dice_rolled",
+            "seq": seq,
+            "die_1": die_1,
+            "die_2": die_2,
+            "total": total,
+        },
+    )
+
+
+func rpc_pawn_moved(seq: int, from_tile: int, to_tile: int, passed_tiles: Array[int]) -> void:
+    events.append(
+        {
+            "method": "rpc_pawn_moved",
+            "seq": seq,
+            "from_tile": from_tile,
+            "to_tile": to_tile,
+            "passed_tiles": passed_tiles,
+        },
+    )
+
+
+func rpc_tile_landed(seq: int, tile_index: int) -> void:
+    events.append(
+        {
+            "method": "rpc_tile_landed",
+            "seq": seq,
+            "tile_index": tile_index,
+        },
+    )
+
+
+func rpc_cycle_started(seq: int, cycle: int, inflation_active: bool) -> void:
+    events.append(
+        {
+            "method": "rpc_cycle_started",
+            "seq": seq,
+            "cycle": cycle,
+            "inflation_active": inflation_active,
+        },
+    )
+
+
+func rpc_action_rejected(seq: int, reason: String) -> void:
+    events.append(
+        {
+            "method": "rpc_action_rejected",
+            "seq": seq,
+            "reason": reason,
+        },
+    )
