@@ -11,6 +11,9 @@ class NullClient:
     func rpc_game_started(_seq: int, _new_game_id: String) -> void:
         pass
 
+    func rpc_board_state(_seq: int, _board: Dictionary) -> void:
+        pass
+
     func rpc_turn_started(_seq: int, _player_index: int, _turn_number: int, _cycle: int) -> void:
         pass
 
@@ -23,7 +26,15 @@ class NullClient:
     func rpc_pawn_moved(_seq: int, _from_tile: int, _to_tile: int, _passed_tiles: Array[int]) -> void:
         pass
 
-    func rpc_tile_landed(_seq: int, _tile_index: int) -> void:
+    func rpc_tile_landed(
+        _seq: int,
+        _tile_index: int,
+        _tile_type: String,
+        _city: String,
+        _owner_index: int,
+        _toll_due: float,
+        _action_required: String,
+    ) -> void:
         pass
 
     func rpc_cycle_started(_seq: int, _cycle: int, _inflation_active: bool) -> void:

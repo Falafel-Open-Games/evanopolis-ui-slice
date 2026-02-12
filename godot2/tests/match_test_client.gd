@@ -14,6 +14,16 @@ func rpc_game_started(seq: int, new_game_id: String) -> void:
     )
 
 
+func rpc_board_state(seq: int, board: Dictionary) -> void:
+    events.append(
+        {
+            "method": "rpc_board_state",
+            "seq": seq,
+            "board": board,
+        },
+    )
+
+
 func rpc_turn_started(seq: int, player_index: int, turn_number: int, cycle: int) -> void:
     events.append(
         {
@@ -61,12 +71,25 @@ func rpc_pawn_moved(seq: int, from_tile: int, to_tile: int, passed_tiles: Array[
     )
 
 
-func rpc_tile_landed(seq: int, tile_index: int) -> void:
+func rpc_tile_landed(
+    seq: int,
+    tile_index: int,
+    tile_type: String,
+    city: String,
+    owner_index: int,
+    toll_due: float,
+    action_required: String,
+) -> void:
     events.append(
         {
             "method": "rpc_tile_landed",
             "seq": seq,
             "tile_index": tile_index,
+            "tile_type": tile_type,
+            "city": city,
+            "owner_index": owner_index,
+            "toll_due": toll_due,
+            "action_required": action_required,
         },
     )
 

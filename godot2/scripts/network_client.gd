@@ -16,6 +16,10 @@ func rpc_game_started(seq: int, new_game_id: String) -> void:
     server_node.rpc_id(peer_id, "rpc_game_started", seq, new_game_id)
 
 
+func rpc_board_state(seq: int, board: Dictionary) -> void:
+    server_node.rpc_id(peer_id, "rpc_board_state", seq, board)
+
+
 func rpc_turn_started(seq: int, player_index: int, turn_number: int, cycle: int) -> void:
     server_node.rpc_id(peer_id, "rpc_turn_started", seq, player_index, turn_number, cycle)
 
@@ -32,8 +36,16 @@ func rpc_pawn_moved(seq: int, from_tile: int, to_tile: int, passed_tiles: Array[
     server_node.rpc_id(peer_id, "rpc_pawn_moved", seq, from_tile, to_tile, passed_tiles)
 
 
-func rpc_tile_landed(seq: int, tile_index: int) -> void:
-    server_node.rpc_id(peer_id, "rpc_tile_landed", seq, tile_index)
+func rpc_tile_landed(
+    seq: int,
+    tile_index: int,
+    tile_type: String,
+    city: String,
+    owner_index: int,
+    toll_due: float,
+    action_required: String,
+) -> void:
+    server_node.rpc_id(peer_id, "rpc_tile_landed", seq, tile_index, tile_type, city, owner_index, toll_due, action_required)
 
 
 func rpc_cycle_started(seq: int, cycle: int, inflation_active: bool) -> void:

@@ -109,6 +109,30 @@ All calls are Godot Multiplayer RPCs (not REST). Define which side owns each RPC
 - Broadcast events include a monotonic `seq` (per match). Clients buffer out-of-order broadcast events until missing sequence numbers arrive.
 - Player-specific events use `seq = 0` and are applied immediately (not buffered).
 
+## Board Data Sync Strategy (Decision)
+- Use both:
+- Send a full board snapshot once at game start (and for late join/reconnect) so every client can resolve tile metadata locally.
+- Send landing context on every `rpc_tile_landed` broadcast so clients do not need to infer state-sensitive details.
+- Do not resend the full board map each turn; treat it as baseline state.
+- If board metadata changes after start (ownership, miners, incident face), send delta events (`rpc_property_acquired`, `rpc_miner_batches_added`, `rpc_incident_type_changed`) so clients stay aligned.
+
+### Landing Action Semantics
+- `action_required` in `rpc_tile_landed` is server-authored and should be interpreted as:
+- `buy_or_end_turn` for unowned property/special_property.
+- `pay_toll` for property/special_property owned by another player.
+- `resolve_incident` for `incident` tiles.
+- `end_turn` for tiles with no immediate decision/action in this milestone.
+
+### Incident Draw Authority (Decision)
+- Incident card draw is server-triggered as part of landing resolution, not a client-request action.
+- Clients must not call an RPC to request/roll/draw an incident card.
+- After `rpc_tile_landed(... action_required=\"resolve_incident\")`, server emits an incident result event to all clients.
+
+### Why this split
+- Startup snapshot gives deterministic local lookups (`tile_type`, `city`) with no per-turn duplication.
+- Per-landing context prevents drift and keeps text clients simple for prompts/logging.
+- This matches server-authoritative flow while minimizing bandwidth and parser complexity.
+
 ### Client -> Server RPCs
 - `rpc_join(game_id: String, player_id: String)`
 - `rpc_roll_dice(match_id: String, player_id: String)`
@@ -121,12 +145,14 @@ All calls are Godot Multiplayer RPCs (not REST). Define which side owns each RPC
 
 ### Server -> Client RPCs (Events)
 - `rpc_game_started(seq: int, game_id: String)`
+- `rpc_board_state(seq: int, board: BoardState)`
 - `rpc_join_accepted(seq: int, player_id: String, player_index: int, last_seq: int)`
 - `rpc_turn_started(seq: int, player_index: int, turn_number: int, cycle: int)`
 - `rpc_player_joined(seq: int, player_id: String, player_index: int)`
 - `rpc_dice_rolled(seq: int, die1: int, die2: int, total: int)`
 - `rpc_pawn_moved(seq: int, from: int, to: int, passed_tiles: Array[int])`
-- `rpc_tile_landed(seq: int, tile_index: int, tile_type: TileType)`
+- `rpc_tile_landed(seq: int, tile_index: int, tile_type: TileType, city: String, owner_index: int, toll_due: float, action_required: String)`
+- `rpc_incident_drawn(seq: int, tile_index: int, incident_kind: IncidentKind, card_id: String)`
 - `rpc_cycle_started(seq: int, cycle: int, inflation_active: bool)`
 - `rpc_incident_type_changed(seq: int, tile_index: int, incident_kind: IncidentKind)`
 - `rpc_property_acquired(seq: int, player_index: int, tile_index: int, price: float)`

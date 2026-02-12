@@ -10,6 +10,7 @@ var player_id: String = ""
 var auth_token: String = ""
 var player_index: int = -1
 var current_player_index: int = 0
+var board_state: Dictionary = { }
 var pending_game_started: bool = false
 var next_expected_seq: int = 1
 var pending_events: Dictionary = { }
@@ -79,6 +80,10 @@ func _handle_game_started(seq: int, new_game_id: String) -> void:
     _queue_event(seq, "_apply_game_started", [new_game_id])
 
 
+func _handle_board_state(seq: int, board: Dictionary) -> void:
+    _queue_event(seq, "_apply_board_state", [board])
+
+
 func _handle_auth_ok(authorized_player_id: String, exp: int) -> void:
     _apply_auth_ok(authorized_player_id, exp)
 
@@ -107,8 +112,16 @@ func _handle_pawn_moved(seq: int, from_tile: int, to_tile: int, passed_tiles: Ar
     _queue_event(seq, "_apply_pawn_moved", [from_tile, to_tile, passed_tiles])
 
 
-func _handle_tile_landed(seq: int, tile_index: int) -> void:
-    _queue_event(seq, "_apply_tile_landed", [tile_index])
+func _handle_tile_landed(
+    seq: int,
+    tile_index: int,
+    tile_type: String,
+    city: String,
+    owner_index: int,
+    toll_due: float,
+    action_required: String,
+) -> void:
+    _queue_event(seq, "_apply_tile_landed", [tile_index, tile_type, city, owner_index, toll_due, action_required])
 
 
 func _handle_cycle_started(seq: int, cycle: int, inflation_active: bool) -> void:
@@ -143,6 +156,12 @@ func _apply_game_started(new_game_id: String) -> void:
         pending_game_started = true
         return
     _log_server("game started: game_id=%s" % game_id)
+
+
+func _apply_board_state(board: Dictionary) -> void:
+    board_state = board
+    var size: int = int(board_state.get("size", 0))
+    _log_server("board state: size=%d" % size)
 
 
 func _apply_auth_ok(authorized_player_id: String, exp: int) -> void:
@@ -206,8 +225,44 @@ func _apply_pawn_moved(from_tile: int, to_tile: int, passed_tiles: Array[int]) -
     _log_server("pawn moved: from=%d, to=%d, passed_tiles=%s" % [from_tile, to_tile, passed_tiles])
 
 
-func _apply_tile_landed(tile_index: int) -> void:
-    _log_server("tile landed: index=%d" % tile_index)
+func _apply_tile_landed(
+    tile_index: int,
+    tile_type: String,
+    city: String,
+    owner_index: int,
+    toll_due: float,
+    action_required: String,
+) -> void:
+    if city.is_empty():
+        _log_server(
+            "tile landed: index=%d, tile_type=%s, owner_index=%d, toll_due=%.2f, action_required=%s" % [
+                tile_index,
+                tile_type,
+                owner_index,
+                toll_due,
+                action_required,
+            ],
+        )
+        return
+    _log_server(
+        "tile landed: index=%d, tile_type=%s, city=%s, owner_index=%d, toll_due=%.2f, action_required=%s" % [
+            tile_index,
+            tile_type,
+            city,
+            owner_index,
+            toll_due,
+            action_required,
+        ],
+    )
+
+
+func _tile_info_from_index(tile_index: int) -> Dictionary:
+    var tiles: Array = board_state.get("tiles", [])
+    for tile_variant in tiles:
+        var tile: Dictionary = tile_variant
+        if int(tile.get("index", -1)) == tile_index:
+            return tile
+    return { }
 
 
 func _apply_cycle_started(cycle: int, inflation_active: bool) -> void:
