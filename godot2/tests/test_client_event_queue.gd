@@ -7,6 +7,9 @@ class ClientMainDouble:
     extends "res://scripts/client_main.gd"
 
     var server_calls: Array[Dictionary] = []
+    var next_buy_choice: bool = false
+    var turn_prompt_count: int = 0
+    var buy_prompt_count: int = 0
 
 
     func _rpc_to_server(method: String, args: Array = []) -> void:
@@ -19,7 +22,19 @@ class ClientMainDouble:
 
 
     func _start_turn_prompt() -> void:
-        pass
+        turn_prompt_count += 1
+
+
+    func _start_buy_or_end_turn_prompt(tile_index: int, city: String) -> void:
+        buy_prompt_count += 1
+        if next_buy_choice:
+            _request_buy_property(tile_index)
+            return
+        _request_end_turn()
+
+
+    func _wait_for_buy_choice() -> bool:
+        return next_buy_choice
 
 
 func test_join_requests_snapshot_sync_and_drops_pre_sync_events() -> void:
@@ -154,8 +169,9 @@ func test_state_snapshot_logs_with_players_present() -> void:
 
 
 func test_tile_landed_uses_board_state_details() -> void:
-    var client: ClientMain = ClientMain.new()
+    var client: ClientMainDouble = ClientMainDouble.new()
     client.player_index = 0
+    client.current_player_index = 1
     var board: Dictionary = {
         "size": 24,
         "tiles": [
@@ -187,4 +203,96 @@ func test_tile_landed_uses_board_state_details() -> void:
     assert_eq(str(tile_info.get("tile_type", "")), "property", "tile type should resolve from board state")
     assert_eq(str(tile_info.get("city", "")), "caracas", "city should resolve from board state")
 
+    client.free()
+
+
+func test_tile_landed_buy_prompt_submits_buy_property() -> void:
+    var client: ClientMainDouble = ClientMainDouble.new()
+    client.player_index = 0
+    client.current_player_index = 0
+    client.next_buy_choice = true
+
+    client._apply_tile_landed(6, "property", "assuncion", -1, 0.0, "buy_or_end_turn")
+
+    assert_eq(client.server_calls.size(), 1, "buy prompt sends one rpc")
+    assert_eq(str(client.server_calls[0].get("method", "")), "rpc_buy_property", "buy path sends buy_property rpc")
+    var args: Array = client.server_calls[0].get("args", [])
+    assert_eq(int(args[2]), 6, "tile index is forwarded for buy")
+    client.free()
+
+
+func test_tile_landed_buy_prompt_submits_end_turn() -> void:
+    var client: ClientMainDouble = ClientMainDouble.new()
+    client.player_index = 0
+    client.current_player_index = 0
+    client.next_buy_choice = false
+
+    client._apply_tile_landed(6, "property", "assuncion", -1, 0.0, "buy_or_end_turn")
+
+    assert_eq(client.server_calls.size(), 1, "decline buy sends one rpc")
+    assert_eq(str(client.server_calls[0].get("method", "")), "rpc_end_turn", "decline path sends end_turn rpc")
+    client.free()
+
+
+func test_sync_complete_prompts_roll_when_snapshot_has_current_player_turn() -> void:
+    var client: ClientMainDouble = ClientMainDouble.new()
+    client.player_id = "p2"
+    client.game_id = "demo_002"
+
+    client._handle_join_accepted(0, "p2", 1, 4)
+    client._handle_state_snapshot(
+        0,
+        {
+            "game_id": "demo_002",
+            "turn_number": 3,
+            "current_player_index": 1,
+            "current_cycle": 1,
+            "pending_action": { },
+            "board_state": {
+                "size": 24,
+                "tiles": [],
+            },
+            "players": [],
+        },
+    )
+    client._handle_sync_complete(0, 4)
+
+    assert_eq(client.turn_prompt_count, 1, "sync resume prompts roll for current player")
+    assert_eq(client.buy_prompt_count, 0, "no buy prompt when there is no pending action")
+    client.free()
+
+
+func test_sync_complete_resumes_buy_prompt_from_snapshot_pending_action() -> void:
+    var client: ClientMainDouble = ClientMainDouble.new()
+    client.player_id = "p2"
+    client.game_id = "demo_002"
+
+    client._handle_join_accepted(0, "p2", 1, 4)
+    client._handle_state_snapshot(
+        0,
+        {
+            "game_id": "demo_002",
+            "turn_number": 3,
+            "current_player_index": 1,
+            "current_cycle": 1,
+            "pending_action": {
+                "type": "buy_or_end_turn",
+                "tile_index": 6,
+            },
+            "board_state": {
+                "size": 24,
+                "tiles": [
+                    {
+                        "index": 6,
+                        "city": "assuncion",
+                    },
+                ],
+            },
+            "players": [],
+        },
+    )
+    client._handle_sync_complete(0, 4)
+
+    assert_eq(client.turn_prompt_count, 0, "buy pending action does not prompt roll")
+    assert_eq(client.buy_prompt_count, 1, "buy pending action prompts buy or end turn")
     client.free()

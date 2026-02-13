@@ -106,6 +106,18 @@ func rpc_cycle_started(seq: int, cycle: int, inflation_active: bool) -> void:
     )
 
 
+func rpc_property_acquired(seq: int, player_index: int, tile_index: int, price: float) -> void:
+    events.append(
+        {
+            "method": "rpc_property_acquired",
+            "seq": seq,
+            "player_index": player_index,
+            "tile_index": tile_index,
+            "price": price,
+        },
+    )
+
+
 func rpc_state_snapshot(seq: int, snapshot: Dictionary) -> void:
     events.append(
         {

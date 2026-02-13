@@ -141,6 +141,64 @@ All calls are Godot Multiplayer RPCs (not REST). Define which side owns each RPC
 - `resolve_incident` for `incident` tiles.
 - `end_turn` for tiles with no immediate decision/action in this milestone.
 
+### Turn Resolution Contract (v0 Decision)
+This section defines the server-authoritative flow needed to complete a full first-player turn after landing, while keeping deterministic ordering for actions submitted outside the active turn.
+
+#### Pending Action Lifecycle
+- After `rpc_tile_landed`, server computes and stores a single pending action for the active player:
+- `{ type, player_index, tile_index, game_id, metadata }`
+- `type` for v0:
+- `buy_or_end_turn` (unowned property/special_property)
+- `end_turn` (all other immediate no-choice landings in this milestone)
+- Only one pending action is active per match at a time.
+- Pending action is cleared only when resolved (buy success or end turn success).
+
+#### Deferred Intents (No Extra Resolution Phase in v0)
+- Actions submitted outside the active turn that could affect board economics (example: miner placement intent) are accepted as intents, not immediate state mutations.
+- Each intent records an explicit deterministic activation boundary:
+- `effective_from_turn` (default: `current_turn + 1`) or a stricter boundary defined per action family.
+- Intents must never mutate the in-progress turn state retroactively.
+- v0 keeps turn flow simple (`resolve action -> next turn`) and applies deferred intents only at deterministic boundaries.
+
+#### Action RPC Validation (v0)
+- All client action RPCs must validate, in order:
+- `game_id` exists and matches peer slot
+- peer is registered and authorized for `player_id`
+- `player_id` maps to `current_player_index`
+- a compatible pending action exists
+- target tile/action arguments match pending action
+- On validation failure: `rpc_action_rejected(seq=0, reason)` to requesting peer.
+
+#### Resolution Rules
+- `rpc_end_turn(game_id, player_id)`:
+- allowed when pending action type is `buy_or_end_turn` or `end_turn`
+- clears pending action and advances to next player
+- `rpc_buy_property(game_id, player_id, tile_index)`:
+- allowed only when pending action type is `buy_or_end_turn` and tile matches
+- tile must still be unowned and buyable
+- player must have sufficient fiat balance
+- on success: deduct fiat, set owner, clear pending action, advance turn
+- Deferred intents do not run in the middle of the current player's landing resolution.
+- Auto-advance is server-driven for v0: after the player's buy/skip decision resolves, server immediately emits next `rpc_turn_started` without waiting for an additional confirmation RPC.
+
+#### Broadcast Order (v0)
+- Buy path:
+- `rpc_property_acquired`
+- `rpc_turn_started` (next player)
+- End-turn path:
+- `rpc_turn_started` (next player)
+- `turn_number` increments after control passes from the last seat to seat 0; otherwise only `current_player_index` advances.
+
+#### Valuation Snapshot Rule
+- Any valuation used during landing resolution (for example toll or buy price shown/charged for that resolution) is computed from authoritative state at landing-resolution time and is not affected by deferred intents that activate later.
+- This prevents "submit after seeing dice result" timing from altering the already-resolving turn.
+
+#### Reconnect Interaction
+- Snapshot must include pending action state for deterministic resume.
+- Reconnected client must not infer pending action from older local events; snapshot is authoritative.
+- After snapshot + `rpc_sync_complete`, client prompts from snapshot state only.
+- Snapshot should include deferred intents (or sufficient canonical data to deterministically rebuild them) when they can affect later turns.
+
 ### Incident Draw Authority (Decision)
 - Incident card draw is server-triggered as part of landing resolution, not a client-request action.
 - Clients must not call an RPC to request/roll/draw an incident card.
@@ -154,11 +212,11 @@ All calls are Godot Multiplayer RPCs (not REST). Define which side owns each RPC
 ### Client -> Server RPCs
 - `rpc_join(game_id: String, player_id: String)`
 - `rpc_roll_dice(match_id: String, player_id: String)`
+- `rpc_end_turn(match_id: String, player_id: String)`
+- `rpc_buy_property(match_id: String, player_id: String, tile_index: int)`
 - `rpc_sync_request(game_id: String, player_id: String, last_applied_seq: int)`
 
 ### Client -> Server RPCs (Planned)
-- `rpc_end_turn(match_id: String, player_id: String)`
-- `rpc_buy_property(match_id: String, player_id: String, tile_index: int)`
 - `rpc_pay_toll(match_id: String, player_id: String)`
 - `rpc_place_miner_order(match_id: String, player_id: String, orders_by_tile: Dictionary)`
 
@@ -217,6 +275,7 @@ All calls are Godot Multiplayer RPCs (not REST). Define which side owns each RPC
 - `type: PendingActionType`
 - `player_index: int`
 - `tile_index: int`
+- `game_id: String`
 - `amount: float`
 - `metadata: Dictionary`
 
@@ -237,6 +296,7 @@ All calls are Godot Multiplayer RPCs (not REST). Define which side owns each RPC
 - A tile with `tile_type == incident` must have `incident_kind` set, and non-incident tiles must not.
 - A player in inspection (`in_inspection == true`) is still allowed to collect energy tolls from their properties.
 - Only the current player may perform turn actions (except queued resolution and server timeouts).
+- At most one pending action can exist per match, and it must belong to `current_player_index`.
 
 ## Config Inputs (Initial)
 - `game_id: String`

@@ -12,20 +12,39 @@ stateDiagram-v2
     WaitingForPlayers --> GameStarted: seats filled
     GameStarted --> TurnStarted: rpc_game_started + rpc_turn_started
 
-    TurnStarted --> AwaitingRoll: current player prompt
+    TurnStarted --> AwaitingRoll: no pending action
+    TurnStarted --> AwaitingPendingAction: pending action from snapshot/reconnect
     AwaitingRoll --> ResolvingRoll: rpc_roll_dice
     ResolvingRoll --> ResolvingMove: rpc_dice_rolled
     ResolvingMove --> TileLanded: rpc_pawn_moved + rpc_tile_landed
-    TileLanded --> AwaitingTileAction: if required action
-    TileLanded --> TurnEnd: if no required action
-    AwaitingTileAction --> TurnEnd: rpc_* action resolved
-    TurnEnd --> TurnStarted: next player
+    TileLanded --> PendingActionSet: server stores pending action
+    PendingActionSet --> AwaitingPendingAction: prompt current player
+    AwaitingPendingAction --> ResolvingBuy: rpc_buy_property
+    AwaitingPendingAction --> ResolvingEndTurn: rpc_end_turn
+    ResolvingBuy --> TurnAdvanced: rpc_property_acquired + rpc_turn_started
+    ResolvingEndTurn --> TurnAdvanced: rpc_turn_started
+    TurnAdvanced --> TurnStarted: next player
+
+    AwaitingRoll --> IntentQueued: rpc_* outside-turn intent accepted
+    AwaitingPendingAction --> IntentQueued: rpc_* outside-turn intent accepted
+    IntentQueued --> AwaitingRoll: effect deferred to deterministic boundary
 
     AwaitingRoll --> Timeout: turn timer expired
-    AwaitingTileAction --> Timeout: action timer expired
-    Timeout --> TurnEnd: apply penalty + advance turn
+    AwaitingPendingAction --> Timeout: action timer expired
+    Timeout --> ResolvingEndTurn: apply penalty/default + advance turn
+
+    state ReconnectSync {
+      [*] --> JoinAccepted
+      JoinAccepted --> SyncRequested: rpc_sync_request(last_applied_seq)
+      SyncRequested --> SnapshotApplied: rpc_state_snapshot
+      SnapshotApplied --> SyncComplete: rpc_sync_complete
+      SyncComplete --> [*]
+    }
 ```
 
 Notes:
-- "Required action" includes buy/skip, incident resolution, inspection decisions, etc.
+- "Pending action" is authoritative server state and gates which action RPCs are valid.
+- v0 action set is `buy_or_end_turn` and `end_turn`; incident/toll/inspection branches are added later.
+- Outside-turn actions are recorded as deferred intents and never mutate the currently resolving turn.
+- Deferred intents activate only at a deterministic boundary (`effective_from_turn` / equivalent rule).
 - Timeout behavior and penalties should be defined in `godot2/DESIGN.md`.
