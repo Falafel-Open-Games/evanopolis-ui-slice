@@ -139,13 +139,13 @@ func _on_peer_disconnected(peer_id: int) -> void:
 
 
 func _handle_join(game_id: String, player_id: String) -> void:
-    var sender_id: int = multiplayer.get_remote_sender_id()
+    var sender_id: int = _get_sender_id()
     var result: Dictionary = server.register_remote_client(game_id, player_id, sender_id, self)
     var reason: String = str(result.get("reason", ""))
     var seq: int = int(result.get("seq", 0))
     if not reason.is_empty():
         print("server: join rejected game_id=%s player_id=%s peer=%d reason=%s" % [game_id, player_id, sender_id, reason])
-        rpc_id(sender_id, "rpc_action_rejected", seq, reason)
+        _rpc_to_peer(sender_id, "rpc_action_rejected", seq, reason)
         return
     var replaced_peer_id: int = int(result.get("replaced_peer_id", -1))
     if replaced_peer_id > 0:
@@ -153,7 +153,7 @@ func _handle_join(game_id: String, player_id: String) -> void:
         _disconnect_peer(replaced_peer_id)
     var assigned_index: int = int(result.get("player_index", -1))
     var last_seq: int = int(result.get("last_seq", 0))
-    rpc_id(sender_id, "rpc_join_accepted", seq, player_id, assigned_index, last_seq)
+    _rpc_to_peer(sender_id, "rpc_join_accepted", seq, player_id, assigned_index, last_seq)
     print("server: join game_id=%s player_id=%s player=%d peer=%d" % [game_id, player_id, assigned_index, sender_id])
 
 
@@ -203,6 +203,10 @@ func _on_auth_request_completed(result: int, response_code: int, _headers: Packe
 
 func _get_sender_id() -> int:
     return multiplayer.get_remote_sender_id()
+
+
+func _rpc_to_peer(peer_id: int, method: String, arg1: Variant = null, arg2: Variant = null, arg3: Variant = null, arg4: Variant = null) -> void:
+    rpc_id(peer_id, method, arg1, arg2, arg3, arg4)
 
 
 func _disconnect_peer(peer_id: int) -> void:
