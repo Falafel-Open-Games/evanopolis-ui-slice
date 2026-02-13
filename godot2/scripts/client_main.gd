@@ -13,6 +13,9 @@ var current_player_index: int = 0
 var current_turn_number: int = 0
 var pending_action_type: String = ""
 var pending_action_tile_index: int = -1
+var pending_action_owner_index: int = -1
+var pending_action_amount: float = 0.0
+var match_has_started: bool = false
 var board_state: Dictionary = { }
 var pending_game_started: bool = false
 var next_expected_seq: int = 1
@@ -136,6 +139,10 @@ func _handle_property_acquired(seq: int, owner_player_index: int, tile_index: in
     _queue_event(seq, "_apply_property_acquired", [owner_player_index, tile_index, price])
 
 
+func _handle_toll_paid(seq: int, payer_index: int, owner_index: int, amount: float) -> void:
+    _queue_event(seq, "_apply_toll_paid", [payer_index, owner_index, amount])
+
+
 func _handle_state_snapshot(seq: int, snapshot: Dictionary) -> void:
     _queue_event(seq, "_apply_state_snapshot", [snapshot])
 
@@ -175,6 +182,7 @@ func _flush_events() -> int:
 
 func _apply_game_started(new_game_id: String) -> void:
     game_id = new_game_id
+    match_has_started = true
     if player_index < 0:
         pending_game_started = true
         return
@@ -218,6 +226,8 @@ func _apply_turn_started(player_index_value: int, turn_number: int, cycle: int) 
     current_turn_number = turn_number
     pending_action_type = ""
     pending_action_tile_index = -1
+    pending_action_owner_index = -1
+    pending_action_amount = 0.0
     _log_server("turn started: player=%d, turn=%d, cycle=%d" % [player_index_value, turn_number, cycle])
     if player_index_value != player_index:
         return
@@ -246,6 +256,8 @@ func _apply_tile_landed(
 ) -> void:
     pending_action_type = action_required
     pending_action_tile_index = tile_index
+    pending_action_owner_index = owner_index
+    pending_action_amount = toll_due
     if city.is_empty():
         _log_server(
             "tile landed: index=%d, tile_type=%s, owner_index=%d, toll_due=%.2f, action_required=%s" % [
@@ -269,6 +281,9 @@ func _apply_tile_landed(
     )
     if player_index == current_player_index and action_required == "buy_or_end_turn":
         await _start_buy_or_end_turn_prompt(tile_index, city)
+        return
+    if player_index == current_player_index and action_required == "pay_toll":
+        await _start_pay_toll_prompt(tile_index, city, owner_index, toll_due)
 
 
 func _tile_info_from_index(tile_index: int) -> Dictionary:
@@ -290,7 +305,17 @@ func _apply_property_acquired(owner_player_index: int, tile_index: int, price: f
         tile["owner_index"] = owner_player_index
     pending_action_type = ""
     pending_action_tile_index = -1
+    pending_action_owner_index = -1
+    pending_action_amount = 0.0
     _log_server("property acquired: player=%d tile=%d price=%.2f" % [owner_player_index, tile_index, price])
+
+
+func _apply_toll_paid(payer_index: int, owner_index: int, amount: float) -> void:
+    pending_action_type = ""
+    pending_action_tile_index = -1
+    pending_action_owner_index = -1
+    pending_action_amount = 0.0
+    _log_server("toll paid: payer=%d owner=%d amount=%.2f" % [payer_index, owner_index, amount])
 
 
 func _apply_state_snapshot(snapshot: Dictionary) -> void:
@@ -300,14 +325,16 @@ func _apply_state_snapshot(snapshot: Dictionary) -> void:
     var pending_action: Dictionary = snapshot.get("pending_action", { })
     pending_action_type = str(pending_action.get("type", ""))
     pending_action_tile_index = int(pending_action.get("tile_index", -1))
+    pending_action_owner_index = int(pending_action.get("owner_index", -1))
+    pending_action_amount = float(pending_action.get("amount", 0.0))
     board_state = snapshot.get("board_state", { })
     pending_game_started = false
     var cycle: int = int(snapshot.get("current_cycle", 0))
-    var has_started: bool = bool(snapshot.get("has_started", false))
+    match_has_started = bool(snapshot.get("has_started", match_has_started))
     var board_size: int = int(board_state.get("size", 0))
     var players: Array = snapshot.get("players", [])
     _log_server(
-        "state snapshot: game_id=%s turn=%d cycle=%d current_player=%d players=%d board_size=%d started=%s pending_action=%s pending_tile=%d"
+        "state snapshot: game_id=%s turn=%d cycle=%d current_player=%d players=%d board_size=%d started=%s pending_action=%s pending_tile=%d pending_owner=%d pending_amount=%.2f"
         % [
             game_id,
             current_turn_number,
@@ -315,9 +342,11 @@ func _apply_state_snapshot(snapshot: Dictionary) -> void:
             current_player_index,
             players.size(),
             board_size,
-            has_started,
+            match_has_started,
             pending_action_type,
             pending_action_tile_index,
+            pending_action_owner_index,
+            pending_action_amount,
         ],
     )
     var player_summaries: Array[String] = []
@@ -377,6 +406,14 @@ func _request_end_turn() -> void:
     _rpc_to_server("rpc_end_turn", [game_id, player_id])
 
 
+func _request_pay_toll() -> void:
+    _log_client(
+        "pay toll: game_id=%s, player_id=%s, tile_index=%d, owner_index=%d, amount=%.2f"
+        % [game_id, player_id, pending_action_tile_index, pending_action_owner_index, pending_action_amount],
+    )
+    _rpc_to_server("rpc_pay_toll", [game_id, player_id])
+
+
 func _rpc_to_server(method: String, args: Array = []) -> void:
     var payload: Array = [1, method]
     payload.append_array(args)
@@ -395,6 +432,9 @@ func _drop_stale_pending_events(final_seq: int) -> int:
 
 
 func _resume_after_sync_from_snapshot() -> void:
+    if not match_has_started:
+        _log_server("sync resume: waiting for game start")
+        return
     if player_index != current_player_index:
         return
     if pending_action_type == "buy_or_end_turn":
@@ -404,6 +444,22 @@ func _resume_after_sync_from_snapshot() -> void:
             city = str(tile.get("city", ""))
         _log_server("sync resume: pending buy_or_end_turn tile=%d city=%s" % [pending_action_tile_index, city])
         await _start_buy_or_end_turn_prompt(pending_action_tile_index, city)
+        return
+    if pending_action_type == "pay_toll":
+        var pay_toll_city: String = ""
+        if pending_action_tile_index >= 0:
+            var pay_toll_tile: Dictionary = _tile_info_from_index(pending_action_tile_index)
+            pay_toll_city = str(pay_toll_tile.get("city", ""))
+        _log_server(
+            "sync resume: pending pay_toll tile=%d city=%s owner=%d amount=%.2f"
+            % [pending_action_tile_index, pay_toll_city, pending_action_owner_index, pending_action_amount],
+        )
+        await _start_pay_toll_prompt(
+            pending_action_tile_index,
+            pay_toll_city,
+            pending_action_owner_index,
+            pending_action_amount,
+        )
         return
     if pending_action_type == "end_turn":
         _log_server("sync resume: pending end_turn")
@@ -423,6 +479,18 @@ func _start_buy_or_end_turn_prompt(tile_index: int, city: String) -> void:
         _request_buy_property(tile_index)
         return
     _request_end_turn()
+
+
+func _start_pay_toll_prompt(tile_index: int, city: String, owner_index: int, amount: float) -> void:
+    var label_city: String = city
+    if label_city.is_empty():
+        label_city = "unknown"
+    _log_prompt(
+        "pay toll amount=%.2f owner=%d tile=%d city=%s [enter]"
+        % [amount, owner_index, tile_index, label_city],
+    )
+    await _wait_for_enter()
+    _request_pay_toll()
 
 
 func _wait_for_buy_choice() -> bool:

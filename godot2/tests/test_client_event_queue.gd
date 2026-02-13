@@ -10,6 +10,7 @@ class ClientMainDouble:
     var next_buy_choice: bool = false
     var turn_prompt_count: int = 0
     var buy_prompt_count: int = 0
+    var pay_toll_prompt_count: int = 0
 
 
     func _rpc_to_server(method: String, args: Array = []) -> void:
@@ -31,6 +32,11 @@ class ClientMainDouble:
             _request_buy_property(tile_index)
             return
         _request_end_turn()
+
+
+    func _start_pay_toll_prompt(tile_index: int, city: String, owner_index: int, amount: float) -> void:
+        pay_toll_prompt_count += 1
+        _request_pay_toll()
 
 
     func _wait_for_buy_choice() -> bool:
@@ -63,6 +69,7 @@ func test_join_requests_snapshot_sync_and_drops_pre_sync_events() -> void:
                 "size": 24,
                 "tiles": [],
             },
+            "has_started": true,
             "players": [],
         },
     )
@@ -100,6 +107,7 @@ func test_sync_complete_flushes_live_events_queued_during_sync() -> void:
                 "size": 24,
                 "tiles": [],
             },
+            "has_started": true,
             "players": [],
         },
     )
@@ -234,6 +242,30 @@ func test_tile_landed_buy_prompt_submits_end_turn() -> void:
     client.free()
 
 
+func test_tile_landed_pay_toll_prompt_submits_pay_toll() -> void:
+    var client: ClientMainDouble = ClientMainDouble.new()
+    client.player_index = 0
+    client.current_player_index = 0
+
+    client._apply_tile_landed(13, "property", "minsk", 1, 11000.0, "pay_toll")
+
+    assert_eq(client.server_calls.size(), 1, "pay toll prompt sends one rpc")
+    assert_eq(str(client.server_calls[0].get("method", "")), "rpc_pay_toll", "pay toll path sends pay_toll rpc")
+    client.free()
+
+
+func test_tile_landed_pay_toll_for_other_player_does_not_prompt() -> void:
+    var client: ClientMainDouble = ClientMainDouble.new()
+    client.player_index = 1
+    client.current_player_index = 0
+
+    client._apply_tile_landed(13, "property", "minsk", 1, 11000.0, "pay_toll")
+
+    assert_eq(client.server_calls.size(), 0, "no rpc sent when pay_toll is for another player")
+    assert_eq(client.pay_toll_prompt_count, 0, "no pay toll prompt for another player")
+    client.free()
+
+
 func test_sync_complete_prompts_roll_when_snapshot_has_current_player_turn() -> void:
     var client: ClientMainDouble = ClientMainDouble.new()
     client.player_id = "p2"
@@ -252,6 +284,7 @@ func test_sync_complete_prompts_roll_when_snapshot_has_current_player_turn() -> 
                 "size": 24,
                 "tiles": [],
             },
+            "has_started": true,
             "players": [],
         },
     )
@@ -259,6 +292,7 @@ func test_sync_complete_prompts_roll_when_snapshot_has_current_player_turn() -> 
 
     assert_eq(client.turn_prompt_count, 1, "sync resume prompts roll for current player")
     assert_eq(client.buy_prompt_count, 0, "no buy prompt when there is no pending action")
+    assert_eq(client.pay_toll_prompt_count, 0, "no pay toll prompt when there is no pending action")
     client.free()
 
 
@@ -288,6 +322,7 @@ func test_sync_complete_resumes_buy_prompt_from_snapshot_pending_action() -> voi
                     },
                 ],
             },
+            "has_started": true,
             "players": [],
         },
     )
@@ -295,4 +330,118 @@ func test_sync_complete_resumes_buy_prompt_from_snapshot_pending_action() -> voi
 
     assert_eq(client.turn_prompt_count, 0, "buy pending action does not prompt roll")
     assert_eq(client.buy_prompt_count, 1, "buy pending action prompts buy or end turn")
+    assert_eq(client.pay_toll_prompt_count, 0, "buy pending action does not prompt pay toll")
+    client.free()
+
+
+func test_sync_complete_resumes_pay_toll_prompt_from_snapshot_pending_action() -> void:
+    var client: ClientMainDouble = ClientMainDouble.new()
+    client.player_id = "p2"
+    client.game_id = "demo_002"
+
+    client._handle_join_accepted(0, "p2", 1, 4)
+    client._handle_state_snapshot(
+        0,
+        {
+            "game_id": "demo_002",
+            "turn_number": 3,
+            "current_player_index": 1,
+            "current_cycle": 1,
+            "pending_action": {
+                "type": "pay_toll",
+                "tile_index": 13,
+                "owner_index": 0,
+                "amount": 11000.0,
+            },
+            "board_state": {
+                "size": 24,
+                "tiles": [
+                    {
+                        "index": 13,
+                        "city": "minsk",
+                    },
+                ],
+            },
+            "has_started": true,
+            "players": [],
+        },
+    )
+    client._handle_sync_complete(0, 4)
+
+    assert_eq(client.turn_prompt_count, 0, "pay toll pending action does not prompt roll")
+    assert_eq(client.buy_prompt_count, 0, "pay toll pending action does not prompt buy")
+    assert_eq(client.pay_toll_prompt_count, 1, "pay toll pending action prompts pay toll")
+    assert_eq(client.server_calls.size(), 2, "sync request and pay toll RPC emitted")
+    assert_eq(str(client.server_calls[1].get("method", "")), "rpc_pay_toll", "pay toll path sends pay_toll rpc")
+    client.free()
+
+
+func test_sync_complete_does_not_resume_pay_toll_for_other_player() -> void:
+    var client: ClientMainDouble = ClientMainDouble.new()
+    client.player_id = "p2"
+    client.game_id = "demo_002"
+
+    client._handle_join_accepted(0, "p2", 1, 4)
+    client._handle_state_snapshot(
+        0,
+        {
+            "game_id": "demo_002",
+            "turn_number": 3,
+            "current_player_index": 0,
+            "current_cycle": 1,
+            "pending_action": {
+                "type": "pay_toll",
+                "tile_index": 13,
+                "owner_index": 1,
+                "amount": 11000.0,
+            },
+            "board_state": {
+                "size": 24,
+                "tiles": [
+                    {
+                        "index": 13,
+                        "city": "minsk",
+                    },
+                ],
+            },
+            "has_started": true,
+            "players": [],
+        },
+    )
+    client._handle_sync_complete(0, 4)
+
+    assert_eq(client.turn_prompt_count, 0, "no roll prompt for other player's pending action")
+    assert_eq(client.buy_prompt_count, 0, "no buy prompt for other player's pending action")
+    assert_eq(client.pay_toll_prompt_count, 0, "no pay toll prompt for other player's pending action")
+    assert_eq(client.server_calls.size(), 1, "only sync request rpc emitted")
+    client.free()
+
+
+func test_sync_complete_does_not_prompt_roll_when_match_not_started() -> void:
+    var client: ClientMainDouble = ClientMainDouble.new()
+    client.player_id = "p2"
+    client.game_id = "demo_002"
+
+    client._handle_join_accepted(0, "p2", 1, 4)
+    client._handle_state_snapshot(
+        0,
+        {
+            "game_id": "demo_002",
+            "turn_number": 1,
+            "current_player_index": 1,
+            "current_cycle": 1,
+            "pending_action": { },
+            "board_state": {
+                "size": 24,
+                "tiles": [],
+            },
+            "has_started": false,
+            "players": [],
+        },
+    )
+    client._handle_sync_complete(0, 4)
+
+    assert_eq(client.turn_prompt_count, 0, "match not started should not prompt roll")
+    assert_eq(client.buy_prompt_count, 0, "match not started should not prompt buy")
+    assert_eq(client.pay_toll_prompt_count, 0, "match not started should not prompt pay toll")
     client.free()

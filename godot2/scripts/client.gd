@@ -37,6 +37,9 @@ extends RefCounted
 @abstract func rpc_property_acquired(seq: int, player_index: int, tile_index: int, price: float) -> void
 
 
+@abstract func rpc_toll_paid(seq: int, payer_index: int, owner_index: int, amount: float) -> void
+
+
 @abstract func rpc_state_snapshot(seq: int, snapshot: Dictionary) -> void
 
 

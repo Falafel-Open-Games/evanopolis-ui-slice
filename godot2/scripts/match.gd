@@ -147,6 +147,16 @@ func _server_move_pawn(steps: int) -> void:
     if action_required == "buy_or_end_turn":
         _set_pending_action("buy_or_end_turn", to_tile)
         return
+    if action_required == "pay_toll":
+        _set_pending_action(
+            "pay_toll",
+            to_tile,
+            {
+                "owner_index": int(landing_context.get("owner_index", -1)),
+                "amount": float(landing_context.get("toll_due", 0.0)),
+            },
+        )
+        return
     if action_required == "end_turn":
         _set_pending_action("end_turn", to_tile)
         _advance_turn()
@@ -207,6 +217,39 @@ func rpc_buy_property(game_id: String, player_id: String, tile_index: int) -> St
     tiles[tile_index] = tile
     board_state["tiles"] = tiles
     _broadcast("rpc_property_acquired", [resolved_index, tile_index, price])
+    _advance_turn()
+    return ""
+
+
+func rpc_pay_toll(game_id: String, player_id: String) -> String:
+    if not has_started:
+        return "match_not_started"
+    if game_id != state.game_id:
+        return "invalid_game_id"
+    var resolved_index: int = _player_index_from_id(player_id)
+    if resolved_index < 0:
+        return "invalid_player_id"
+    if resolved_index != state.current_player_index:
+        return "not_current_player"
+    if pending_action.is_empty():
+        return "no_pending_action"
+    if str(pending_action.get("type", "")) != "pay_toll":
+        return "action_not_allowed"
+    var owner_index: int = int(pending_action.get("owner_index", -1))
+    if owner_index < 0 or owner_index >= state.players.size():
+        return "invalid_owner"
+    if owner_index == resolved_index:
+        return "invalid_owner"
+    var amount: float = float(pending_action.get("amount", 0.0))
+    if amount <= 0.0:
+        return "invalid_toll_amount"
+    var payer: PlayerState = state.players[resolved_index]
+    if payer.fiat_balance < amount:
+        return "insufficient_fiat"
+    var owner: PlayerState = state.players[owner_index]
+    payer.fiat_balance -= amount
+    owner.fiat_balance += amount
+    _broadcast("rpc_toll_paid", [resolved_index, owner_index, amount])
     _advance_turn()
     return ""
 
@@ -413,13 +456,15 @@ func build_state_snapshot() -> Dictionary:
     }
 
 
-func _set_pending_action(action_type: String, tile_index: int) -> void:
+func _set_pending_action(action_type: String, tile_index: int, metadata: Dictionary = { }) -> void:
     pending_action = {
         "type": action_type,
         "player_index": state.current_player_index,
         "tile_index": tile_index,
         "game_id": state.game_id,
     }
+    for key in metadata.keys():
+        pending_action[key] = metadata[key]
 
 
 func _clear_pending_action() -> void:

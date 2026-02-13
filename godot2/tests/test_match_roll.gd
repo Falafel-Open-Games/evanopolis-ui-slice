@@ -238,6 +238,36 @@ func test_end_turn_resolves_pending_action_without_purchase() -> void:
     assert_eq(int(turns[1].get("player_index", -1)), 1, "turn advanced to next player")
 
 
+func test_pay_toll_resolves_pending_action_and_advances_turn() -> void:
+    var config: Config = Config.new("res://configs/demo_002.toml")
+    var game_match: GameMatch = GameMatch.new(config, [])
+    var client_a: MatchTestClient = MatchTestClient.new()
+    var client_b: MatchTestClient = MatchTestClient.new()
+    assert_eq(str(game_match.assign_client("alice", client_a).get("reason", "")), "", "first client should register")
+    assert_eq(str(game_match.assign_client("bob", client_b).get("reason", "")), "", "second client should register")
+
+    var tiles: Array = game_match.board_state.get("tiles", [])
+    var tile: Dictionary = tiles[6]
+    tile["owner_index"] = 1
+    tile["miner_batches"] = 2
+    tiles[6] = tile
+    game_match.board_state["tiles"] = tiles
+
+    game_match.rpc_roll_dice("demo_002", "alice")
+    var pay_reason: String = game_match.rpc_pay_toll("demo_002", "alice")
+    assert_eq(pay_reason, "", "pay toll should succeed")
+    assert_true(game_match.pending_action.is_empty(), "pending action cleared after pay toll")
+    assert_true(is_equal_approx(game_match.state.players[0].fiat_balance, 992500.0), "payer fiat reduced by toll")
+    assert_true(is_equal_approx(game_match.state.players[1].fiat_balance, 1007500.0), "owner fiat increased by toll")
+
+    var toll_paid: Array[Dictionary] = _filter_events(client_a, "rpc_toll_paid")
+    assert_eq(toll_paid.size(), 1, "toll paid event emitted once")
+    var turns: Array[Dictionary] = _filter_events(client_a, "rpc_turn_started")
+    assert_eq(turns.size(), 2, "next turn starts after pay toll resolution")
+    assert_eq(int(turns[1].get("player_index", -1)), 1, "turn advanced to next player")
+    assert_true(int(toll_paid[0].get("seq", -1)) < int(turns[1].get("seq", -1)), "toll paid emitted before next turn started")
+
+
 func test_buy_property_rejected_without_pending_action() -> void:
     var config: Config = Config.new("res://configs/demo_002.toml")
     var game_match: GameMatch = GameMatch.new(config, [])
@@ -251,6 +281,135 @@ func test_buy_property_rejected_without_pending_action() -> void:
 
     var reason: String = game_match.rpc_buy_property("demo_002", "alice", 6)
     assert_eq(reason, "no_pending_action", "buy requires pending action")
+
+
+func test_pay_toll_rejected_without_pending_action() -> void:
+    var config: Config = Config.new("res://configs/demo_002.toml")
+    var game_match: GameMatch = GameMatch.new(config, [])
+    var client_a: MatchTestClient = MatchTestClient.new()
+    var client_b: MatchTestClient = MatchTestClient.new()
+    assert_eq(str(game_match.assign_client("alice", client_a).get("reason", "")), "", "first client should register")
+    assert_eq(str(game_match.assign_client("bob", client_b).get("reason", "")), "", "second client should register")
+
+    var reason: String = game_match.rpc_pay_toll("demo_002", "alice")
+    assert_eq(reason, "no_pending_action", "pay toll requires pending action")
+
+
+func test_pay_toll_rejected_for_insufficient_fiat() -> void:
+    var config: Config = Config.new("res://configs/demo_002.toml")
+    var game_match: GameMatch = GameMatch.new(config, [])
+    var client_a: MatchTestClient = MatchTestClient.new()
+    var client_b: MatchTestClient = MatchTestClient.new()
+    assert_eq(str(game_match.assign_client("alice", client_a).get("reason", "")), "", "first client should register")
+    assert_eq(str(game_match.assign_client("bob", client_b).get("reason", "")), "", "second client should register")
+
+    var tiles: Array = game_match.board_state.get("tiles", [])
+    var tile: Dictionary = tiles[6]
+    tile["owner_index"] = 1
+    tile["miner_batches"] = 2
+    tiles[6] = tile
+    game_match.board_state["tiles"] = tiles
+
+    game_match.rpc_roll_dice("demo_002", "alice")
+    game_match.state.players[0].fiat_balance = 10.0
+    var reason: String = game_match.rpc_pay_toll("demo_002", "alice")
+    assert_eq(reason, "insufficient_fiat", "pay toll rejects when payer cannot afford toll")
+
+
+func test_pay_toll_rejected_for_non_current_player() -> void:
+    var config: Config = Config.new("res://configs/demo_002.toml")
+    var game_match: GameMatch = GameMatch.new(config, [])
+    var client_a: MatchTestClient = MatchTestClient.new()
+    var client_b: MatchTestClient = MatchTestClient.new()
+    assert_eq(str(game_match.assign_client("alice", client_a).get("reason", "")), "", "first client should register")
+    assert_eq(str(game_match.assign_client("bob", client_b).get("reason", "")), "", "second client should register")
+
+    var tiles: Array = game_match.board_state.get("tiles", [])
+    var tile: Dictionary = tiles[6]
+    tile["owner_index"] = 1
+    tile["miner_batches"] = 2
+    tiles[6] = tile
+    game_match.board_state["tiles"] = tiles
+
+    game_match.rpc_roll_dice("demo_002", "alice")
+    var reason: String = game_match.rpc_pay_toll("demo_002", "bob")
+    assert_eq(reason, "not_current_player", "only current player can pay toll")
+
+
+func test_pay_toll_rejected_when_pending_action_type_mismatch() -> void:
+    var config: Config = Config.new("res://configs/demo_002.toml")
+    var game_match: GameMatch = GameMatch.new(config, [])
+    var client_a: MatchTestClient = MatchTestClient.new()
+    var client_b: MatchTestClient = MatchTestClient.new()
+    assert_eq(str(game_match.assign_client("alice", client_a).get("reason", "")), "", "first client should register")
+    assert_eq(str(game_match.assign_client("bob", client_b).get("reason", "")), "", "second client should register")
+
+    game_match.rpc_roll_dice("demo_002", "alice")
+    var reason: String = game_match.rpc_pay_toll("demo_002", "alice")
+    assert_eq(reason, "action_not_allowed", "pay toll rejected when pending action is buy_or_end_turn")
+
+
+func test_pay_toll_rejected_with_invalid_owner_index() -> void:
+    var config: Config = Config.new("res://configs/demo_002.toml")
+    var game_match: GameMatch = GameMatch.new(config, [])
+    var client_a: MatchTestClient = MatchTestClient.new()
+    var client_b: MatchTestClient = MatchTestClient.new()
+    assert_eq(str(game_match.assign_client("alice", client_a).get("reason", "")), "", "first client should register")
+    assert_eq(str(game_match.assign_client("bob", client_b).get("reason", "")), "", "second client should register")
+
+    var tiles: Array = game_match.board_state.get("tiles", [])
+    var tile: Dictionary = tiles[6]
+    tile["owner_index"] = 1
+    tile["miner_batches"] = 2
+    tiles[6] = tile
+    game_match.board_state["tiles"] = tiles
+
+    game_match.rpc_roll_dice("demo_002", "alice")
+    game_match.pending_action["owner_index"] = 99
+    var reason: String = game_match.rpc_pay_toll("demo_002", "alice")
+    assert_eq(reason, "invalid_owner", "pay toll rejects invalid owner index")
+
+
+func test_pay_toll_rejected_when_owner_is_payer() -> void:
+    var config: Config = Config.new("res://configs/demo_002.toml")
+    var game_match: GameMatch = GameMatch.new(config, [])
+    var client_a: MatchTestClient = MatchTestClient.new()
+    var client_b: MatchTestClient = MatchTestClient.new()
+    assert_eq(str(game_match.assign_client("alice", client_a).get("reason", "")), "", "first client should register")
+    assert_eq(str(game_match.assign_client("bob", client_b).get("reason", "")), "", "second client should register")
+
+    var tiles: Array = game_match.board_state.get("tiles", [])
+    var tile: Dictionary = tiles[6]
+    tile["owner_index"] = 1
+    tile["miner_batches"] = 2
+    tiles[6] = tile
+    game_match.board_state["tiles"] = tiles
+
+    game_match.rpc_roll_dice("demo_002", "alice")
+    game_match.pending_action["owner_index"] = 0
+    var reason: String = game_match.rpc_pay_toll("demo_002", "alice")
+    assert_eq(reason, "invalid_owner", "pay toll rejects self as owner")
+
+
+func test_pay_toll_rejected_with_invalid_toll_amount() -> void:
+    var config: Config = Config.new("res://configs/demo_002.toml")
+    var game_match: GameMatch = GameMatch.new(config, [])
+    var client_a: MatchTestClient = MatchTestClient.new()
+    var client_b: MatchTestClient = MatchTestClient.new()
+    assert_eq(str(game_match.assign_client("alice", client_a).get("reason", "")), "", "first client should register")
+    assert_eq(str(game_match.assign_client("bob", client_b).get("reason", "")), "", "second client should register")
+
+    var tiles: Array = game_match.board_state.get("tiles", [])
+    var tile: Dictionary = tiles[6]
+    tile["owner_index"] = 1
+    tile["miner_batches"] = 2
+    tiles[6] = tile
+    game_match.board_state["tiles"] = tiles
+
+    game_match.rpc_roll_dice("demo_002", "alice")
+    game_match.pending_action["amount"] = 0.0
+    var reason: String = game_match.rpc_pay_toll("demo_002", "alice")
+    assert_eq(reason, "invalid_toll_amount", "pay toll rejects non-positive toll amount")
 
 
 func test_end_turn_rejected_for_non_current_player() -> void:
