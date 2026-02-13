@@ -270,3 +270,12 @@ func _handle_buy_property(game_id: String, player_id: String, tile_index: int) -
     var seq: int = int(result.get("seq", 0))
     if not reason.is_empty():
         _rpc_to_peer(sender_id, "rpc_action_rejected", [seq, reason])
+
+
+func _handle_pay_toll(game_id: String, player_id: String) -> void:
+    var sender_id: int = _get_sender_id()
+    var result: Dictionary = server.rpc_pay_toll(game_id, player_id, sender_id)
+    var reason: String = str(result.get("reason", ""))
+    var seq: int = int(result.get("seq", 0))
+    if not reason.is_empty():
+        _rpc_to_peer(sender_id, "rpc_action_rejected", [seq, reason])

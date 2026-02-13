@@ -149,9 +149,10 @@ This section defines the server-authoritative flow needed to complete a full fir
 - `{ type, player_index, tile_index, game_id, metadata }`
 - `type` for v0:
 - `buy_or_end_turn` (unowned property/special_property)
+- `pay_toll` (property/special_property owned by another player, when `toll_due > 0`)
 - `end_turn` (all other immediate no-choice landings in this milestone)
 - Only one pending action is active per match at a time.
-- Pending action is cleared only when resolved (buy success or end turn success).
+- Pending action is cleared only when resolved (buy success, toll paid, or end turn success).
 
 #### Deferred Intents (No Extra Resolution Phase in v0)
 - Actions submitted outside the active turn that could affect board economics (example: miner placement intent) are accepted as intents, not immediate state mutations.
@@ -178,12 +179,20 @@ This section defines the server-authoritative flow needed to complete a full fir
 - tile must still be unowned and buyable
 - player must have sufficient fiat balance
 - on success: deduct fiat, set owner, clear pending action, advance turn
+- `rpc_pay_toll(game_id, player_id)`:
+- allowed only when pending action type is `pay_toll`
+- server uses pending action snapshot values (`amount`, `owner_index`) captured at landing time
+- player must have sufficient fiat balance for `amount`
+- on success: debit payer, credit owner, emit toll event, clear pending action, advance turn
 - Deferred intents do not run in the middle of the current player's landing resolution.
-- Auto-advance is server-driven for v0: after the player's buy/skip decision resolves, server immediately emits next `rpc_turn_started` without waiting for an additional confirmation RPC.
+- Auto-advance is server-driven for v0: after buy/skip/toll resolution, server immediately emits next `rpc_turn_started` without waiting for an additional confirmation RPC.
 
 #### Broadcast Order (v0)
 - Buy path:
 - `rpc_property_acquired`
+- `rpc_turn_started` (next player)
+- Toll path:
+- `rpc_toll_paid`
 - `rpc_turn_started` (next player)
 - End-turn path:
 - `rpc_turn_started` (next player)
@@ -198,6 +207,23 @@ This section defines the server-authoritative flow needed to complete a full fir
 - Reconnected client must not infer pending action from older local events; snapshot is authoritative.
 - After snapshot + `rpc_sync_complete`, client prompts from snapshot state only.
 - Snapshot should include deferred intents (or sufficient canonical data to deterministically rebuild them) when they can affect later turns.
+
+### Text-Only Client Prompt Contract (v0)
+- Prompt source of truth is `action_required` from `rpc_tile_landed` or pending action from snapshot on reconnect.
+- `buy_or_end_turn` prompt:
+- `prompt: buy property on tile=<tile> city=<city>? [y/n]`
+- `y` sends `rpc_buy_property`; `n` or empty sends `rpc_end_turn`.
+- `pay_toll` prompt:
+- `prompt: pay toll amount=<amount> owner=<owner_index> tile=<tile> city=<city> [enter]`
+- pressing enter sends `rpc_pay_toll` (no skip option in v0).
+- `end_turn` prompt:
+- no user choice required; client can send `rpc_end_turn` immediately.
+- On reconnect sync:
+- if snapshot pending action is `buy_or_end_turn`, show buy prompt again.
+- if snapshot pending action is `pay_toll`, show toll prompt again.
+- if snapshot pending action is `end_turn`, send `rpc_end_turn`.
+- if no pending action and current player is local player, show roll prompt.
+- On `rpc_action_rejected`, client logs `reason` and keeps waiting for the next authoritative event/snapshot; it does not invent local state transitions.
 
 ### Incident Draw Authority (Decision)
 - Incident card draw is server-triggered as part of landing resolution, not a client-request action.
@@ -214,10 +240,10 @@ This section defines the server-authoritative flow needed to complete a full fir
 - `rpc_roll_dice(match_id: String, player_id: String)`
 - `rpc_end_turn(match_id: String, player_id: String)`
 - `rpc_buy_property(match_id: String, player_id: String, tile_index: int)`
+- `rpc_pay_toll(match_id: String, player_id: String)`
 - `rpc_sync_request(game_id: String, player_id: String, last_applied_seq: int)`
 
 ### Client -> Server RPCs (Planned)
-- `rpc_pay_toll(match_id: String, player_id: String)`
 - `rpc_place_miner_order(match_id: String, player_id: String, orders_by_tile: Dictionary)`
 
 ### Server -> Client RPCs (Events)

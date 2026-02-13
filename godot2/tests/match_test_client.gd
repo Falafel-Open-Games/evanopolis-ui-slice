@@ -118,6 +118,18 @@ func rpc_property_acquired(seq: int, player_index: int, tile_index: int, price: 
     )
 
 
+func rpc_toll_paid(seq: int, payer_index: int, owner_index: int, amount: float) -> void:
+    events.append(
+        {
+            "method": "rpc_toll_paid",
+            "seq": seq,
+            "payer_index": payer_index,
+            "owner_index": owner_index,
+            "amount": amount,
+        },
+    )
+
+
 func rpc_state_snapshot(seq: int, snapshot: Dictionary) -> void:
     events.append(
         {

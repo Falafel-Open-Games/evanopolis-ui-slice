@@ -20,8 +20,10 @@ stateDiagram-v2
     TileLanded --> PendingActionSet: server stores pending action
     PendingActionSet --> AwaitingPendingAction: prompt current player
     AwaitingPendingAction --> ResolvingBuy: rpc_buy_property
+    AwaitingPendingAction --> ResolvingPayToll: rpc_pay_toll
     AwaitingPendingAction --> ResolvingEndTurn: rpc_end_turn
     ResolvingBuy --> TurnAdvanced: rpc_property_acquired + rpc_turn_started
+    ResolvingPayToll --> TurnAdvanced: rpc_toll_paid + rpc_turn_started
     ResolvingEndTurn --> TurnAdvanced: rpc_turn_started
     TurnAdvanced --> TurnStarted: next player
 
@@ -44,7 +46,7 @@ stateDiagram-v2
 
 Notes:
 - "Pending action" is authoritative server state and gates which action RPCs are valid.
-- v0 action set is `buy_or_end_turn` and `end_turn`; incident/toll/inspection branches are added later.
+- v0 action set is `buy_or_end_turn`, `pay_toll`, and `end_turn`; incident/inspection branches are added later.
 - Outside-turn actions are recorded as deferred intents and never mutate the currently resolving turn.
 - Deferred intents activate only at a deterministic boundary (`effective_from_turn` / equivalent rule).
 - Timeout behavior and penalties should be defined in `godot2/DESIGN.md`.
