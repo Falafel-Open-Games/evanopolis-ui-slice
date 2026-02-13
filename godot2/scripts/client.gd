@@ -34,6 +34,9 @@ extends RefCounted
 @abstract func rpc_cycle_started(seq: int, cycle: int, inflation_active: bool) -> void
 
 
+@abstract func rpc_property_acquired(seq: int, player_index: int, tile_index: int, price: float) -> void
+
+
 @abstract func rpc_state_snapshot(seq: int, snapshot: Dictionary) -> void
 
 

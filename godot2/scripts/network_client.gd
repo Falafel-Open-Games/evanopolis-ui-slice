@@ -52,6 +52,10 @@ func rpc_cycle_started(seq: int, cycle: int, inflation_active: bool) -> void:
     server_node.rpc_id(peer_id, "rpc_cycle_started", seq, cycle, inflation_active)
 
 
+func rpc_property_acquired(seq: int, player_index: int, tile_index: int, price: float) -> void:
+    server_node.rpc_id(peer_id, "rpc_property_acquired", seq, player_index, tile_index, price)
+
+
 func rpc_state_snapshot(seq: int, snapshot: Dictionary) -> void:
     server_node.rpc_id(peer_id, "rpc_state_snapshot", seq, snapshot)
 

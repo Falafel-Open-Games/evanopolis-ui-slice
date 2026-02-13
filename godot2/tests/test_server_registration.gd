@@ -141,3 +141,101 @@ func test_peer_disconnect_detaches_match_client_slot() -> void:
 
     assert_false(server.peer_slots.has(11), "peer slot removed on disconnect")
     assert_true(game_match.clients[0] == null, "disconnected peer client detached from match slot")
+
+
+func test_end_turn_rejects_invalid_game_id() -> void:
+    var server: HeadlessServer = HeadlessServer.new()
+    var result: Dictionary = server.rpc_end_turn("missing_game", "alice", 1)
+    assert_eq(str(result.get("reason", "")), "invalid_game_id", "end turn rejects invalid game id")
+
+
+func test_end_turn_rejects_unregistered_peer() -> void:
+    var config: Config = Config.new("res://configs/demo_002.toml")
+    var server: HeadlessServer = HeadlessServer.new()
+    server.create_match(config)
+    var result: Dictionary = server.rpc_end_turn("demo_002", "alice", 1)
+    assert_eq(str(result.get("reason", "")), "unregistered_peer", "end turn rejects unknown peer")
+
+
+func test_end_turn_rejects_peer_game_id_mismatch() -> void:
+    var config: Config = Config.new("res://configs/demo_002.toml")
+    var server: HeadlessServer = HeadlessServer.new()
+    server.create_match(config)
+    server.peer_slots[1] = {
+        "game_id": "demo_003",
+        "player_id": "alice",
+        "player_index": 0,
+    }
+    var result: Dictionary = server.rpc_end_turn("demo_002", "alice", 1)
+    assert_eq(str(result.get("reason", "")), "peer_game_id_mismatch", "end turn rejects peer game mismatch")
+
+
+func test_end_turn_rejects_peer_player_mismatch() -> void:
+    var config: Config = Config.new("res://configs/demo_002.toml")
+    var server: HeadlessServer = HeadlessServer.new()
+    server.create_match(config)
+    server.peer_slots[1] = {
+        "game_id": "demo_002",
+        "player_id": "alice",
+        "player_index": 0,
+    }
+    var result: Dictionary = server.rpc_end_turn("demo_002", "bob", 1)
+    assert_eq(str(result.get("reason", "")), "peer_player_mismatch", "end turn rejects peer player mismatch")
+
+
+func test_buy_property_rejects_invalid_game_id() -> void:
+    var server: HeadlessServer = HeadlessServer.new()
+    var result: Dictionary = server.rpc_buy_property("missing_game", "alice", 6, 1)
+    assert_eq(str(result.get("reason", "")), "invalid_game_id", "buy rejects invalid game id")
+
+
+func test_buy_property_rejects_unregistered_peer() -> void:
+    var config: Config = Config.new("res://configs/demo_002.toml")
+    var server: HeadlessServer = HeadlessServer.new()
+    server.create_match(config)
+    var result: Dictionary = server.rpc_buy_property("demo_002", "alice", 6, 1)
+    assert_eq(str(result.get("reason", "")), "unregistered_peer", "buy rejects unknown peer")
+
+
+func test_buy_property_rejects_peer_game_id_mismatch() -> void:
+    var config: Config = Config.new("res://configs/demo_002.toml")
+    var server: HeadlessServer = HeadlessServer.new()
+    server.create_match(config)
+    server.peer_slots[1] = {
+        "game_id": "demo_003",
+        "player_id": "alice",
+        "player_index": 0,
+    }
+    var result: Dictionary = server.rpc_buy_property("demo_002", "alice", 6, 1)
+    assert_eq(str(result.get("reason", "")), "peer_game_id_mismatch", "buy rejects peer game mismatch")
+
+
+func test_buy_property_rejects_peer_player_mismatch() -> void:
+    var config: Config = Config.new("res://configs/demo_002.toml")
+    var server: HeadlessServer = HeadlessServer.new()
+    server.create_match(config)
+    server.peer_slots[1] = {
+        "game_id": "demo_002",
+        "player_id": "alice",
+        "player_index": 0,
+    }
+    var result: Dictionary = server.rpc_buy_property("demo_002", "bob", 6, 1)
+    assert_eq(str(result.get("reason", "")), "peer_player_mismatch", "buy rejects peer player mismatch")
+
+
+func test_sync_snapshot_includes_pending_action() -> void:
+    var config: Config = Config.new("res://configs/demo_002.toml")
+    var server: HeadlessServer = HeadlessServer.new()
+    server.create_match(config)
+    server.authorize_peer(11, "alice")
+    server.authorize_peer(12, "bob")
+    assert_eq(str(server.register_remote_client("demo_002", "alice", 11, null).get("reason", "")), "", "alice joins")
+    assert_eq(str(server.register_remote_client("demo_002", "bob", 12, null).get("reason", "")), "", "bob joins")
+
+    assert_eq(str(server.rpc_roll_dice("demo_002", "alice", 11).get("reason", "")), "", "roll succeeds")
+    var sync_result: Dictionary = server.rpc_sync_request("demo_002", "alice", 11)
+    assert_eq(str(sync_result.get("reason", "")), "", "sync succeeds")
+    var snapshot: Dictionary = sync_result.get("snapshot", { })
+    var pending_action: Dictionary = snapshot.get("pending_action", { })
+    assert_eq(str(pending_action.get("type", "")), "buy_or_end_turn", "snapshot includes pending action type")
+    assert_eq(int(pending_action.get("tile_index", -1)), 6, "snapshot includes pending tile index")

@@ -19,4 +19,5 @@ func _init(config: Config) -> void:
     players.resize(config.player_count)
     for index in range(config.player_count):
         var player: PlayerState = PlayerState.new(index)
+        player.fiat_balance = 1000000.0
         players[index] = player

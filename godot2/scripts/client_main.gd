@@ -10,6 +10,9 @@ var player_id: String = ""
 var auth_token: String = ""
 var player_index: int = -1
 var current_player_index: int = 0
+var current_turn_number: int = 0
+var pending_action_type: String = ""
+var pending_action_tile_index: int = -1
 var board_state: Dictionary = { }
 var pending_game_started: bool = false
 var next_expected_seq: int = 1
@@ -129,6 +132,10 @@ func _handle_cycle_started(seq: int, cycle: int, inflation_active: bool) -> void
     _queue_event(seq, "_apply_cycle_started", [cycle, inflation_active])
 
 
+func _handle_property_acquired(seq: int, owner_player_index: int, tile_index: int, price: float) -> void:
+    _queue_event(seq, "_apply_property_acquired", [owner_player_index, tile_index, price])
+
+
 func _handle_state_snapshot(seq: int, snapshot: Dictionary) -> void:
     _queue_event(seq, "_apply_state_snapshot", [snapshot])
 
@@ -155,12 +162,15 @@ func _queue_event(seq: int, method: String, args: Array) -> void:
     _flush_events()
 
 
-func _flush_events() -> void:
+func _flush_events() -> int:
+    var applied_count: int = 0
     while pending_events.has(next_expected_seq):
         var entry: Dictionary = pending_events[next_expected_seq]
         pending_events.erase(next_expected_seq)
         callv(str(entry.get("method", "")), entry.get("args", []))
         next_expected_seq += 1
+        applied_count += 1
+    return applied_count
 
 
 func _apply_game_started(new_game_id: String) -> void:
@@ -205,6 +215,9 @@ func _apply_join_accepted(accepted_player_id: String, assigned_player_index: int
 
 func _apply_turn_started(player_index_value: int, turn_number: int, cycle: int) -> void:
     current_player_index = player_index_value
+    current_turn_number = turn_number
+    pending_action_type = ""
+    pending_action_tile_index = -1
     _log_server("turn started: player=%d, turn=%d, cycle=%d" % [player_index_value, turn_number, cycle])
     if player_index_value != player_index:
         return
@@ -231,6 +244,8 @@ func _apply_tile_landed(
         toll_due: float,
         action_required: String,
 ) -> void:
+    pending_action_type = action_required
+    pending_action_tile_index = tile_index
     if city.is_empty():
         _log_server(
             "tile landed: index=%d, tile_type=%s, owner_index=%d, toll_due=%.2f, action_required=%s" % [
@@ -252,6 +267,8 @@ func _apply_tile_landed(
             action_required,
         ],
     )
+    if player_index == current_player_index and action_required == "buy_or_end_turn":
+        await _start_buy_or_end_turn_prompt(tile_index, city)
 
 
 func _tile_info_from_index(tile_index: int) -> Dictionary:
@@ -267,19 +284,41 @@ func _apply_cycle_started(cycle: int, inflation_active: bool) -> void:
     _log_server("cycle started: cycle=%d, inflation_active=%s" % [cycle, inflation_active])
 
 
+func _apply_property_acquired(owner_player_index: int, tile_index: int, price: float) -> void:
+    var tile: Dictionary = _tile_info_from_index(tile_index)
+    if not tile.is_empty():
+        tile["owner_index"] = owner_player_index
+    pending_action_type = ""
+    pending_action_tile_index = -1
+    _log_server("property acquired: player=%d tile=%d price=%.2f" % [owner_player_index, tile_index, price])
+
+
 func _apply_state_snapshot(snapshot: Dictionary) -> void:
     game_id = str(snapshot.get("game_id", game_id))
     current_player_index = int(snapshot.get("current_player_index", current_player_index))
+    current_turn_number = int(snapshot.get("turn_number", current_turn_number))
+    var pending_action: Dictionary = snapshot.get("pending_action", { })
+    pending_action_type = str(pending_action.get("type", ""))
+    pending_action_tile_index = int(pending_action.get("tile_index", -1))
     board_state = snapshot.get("board_state", { })
     pending_game_started = false
-    var turn_number: int = int(snapshot.get("turn_number", 0))
     var cycle: int = int(snapshot.get("current_cycle", 0))
     var has_started: bool = bool(snapshot.get("has_started", false))
     var board_size: int = int(board_state.get("size", 0))
     var players: Array = snapshot.get("players", [])
     _log_server(
-        "state snapshot: game_id=%s turn=%d cycle=%d current_player=%d players=%d board_size=%d started=%s"
-        % [game_id, turn_number, cycle, current_player_index, players.size(), board_size, has_started],
+        "state snapshot: game_id=%s turn=%d cycle=%d current_player=%d players=%d board_size=%d started=%s pending_action=%s pending_tile=%d"
+        % [
+            game_id,
+            current_turn_number,
+            cycle,
+            current_player_index,
+            players.size(),
+            board_size,
+            has_started,
+            pending_action_type,
+            pending_action_tile_index,
+        ],
     )
     var player_summaries: Array[String] = []
     for player_variant in players:
@@ -304,10 +343,12 @@ func _apply_sync_complete(final_seq: int) -> void:
     var queued_after_drop: int = pending_events.size()
     next_expected_seq = final_seq + 1
     sync_in_progress = false
-    _flush_events()
+    var applied_count: int = _flush_events()
+    if applied_count == 0:
+        await _resume_after_sync_from_snapshot()
     _log_server(
-        "sync complete: final_seq=%d next_expected_seq=%d dropped_events=%d queued_before=%d queued_after_drop=%d"
-        % [final_seq, next_expected_seq, dropped_count, queued_before, queued_after_drop],
+        "sync complete: final_seq=%d next_expected_seq=%d dropped_events=%d queued_before=%d queued_after_drop=%d applied_after_sync=%d"
+        % [final_seq, next_expected_seq, dropped_count, queued_before, queued_after_drop, applied_count],
     )
 
 
@@ -326,6 +367,16 @@ func _request_roll() -> void:
     _rpc_to_server("rpc_roll_dice", [game_id, player_id])
 
 
+func _request_buy_property(tile_index: int) -> void:
+    _log_client("buy property: game_id=%s, player_id=%s, tile_index=%d" % [game_id, player_id, tile_index])
+    _rpc_to_server("rpc_buy_property", [game_id, player_id, tile_index])
+
+
+func _request_end_turn() -> void:
+    _log_client("end turn: game_id=%s, player_id=%s" % [game_id, player_id])
+    _rpc_to_server("rpc_end_turn", [game_id, player_id])
+
+
 func _rpc_to_server(method: String, args: Array = []) -> void:
     var payload: Array = [1, method]
     payload.append_array(args)
@@ -341,6 +392,50 @@ func _drop_stale_pending_events(final_seq: int) -> int:
     for key in stale_keys:
         pending_events.erase(key)
     return stale_keys.size()
+
+
+func _resume_after_sync_from_snapshot() -> void:
+    if player_index != current_player_index:
+        return
+    if pending_action_type == "buy_or_end_turn":
+        var city: String = ""
+        if pending_action_tile_index >= 0:
+            var tile: Dictionary = _tile_info_from_index(pending_action_tile_index)
+            city = str(tile.get("city", ""))
+        _log_server("sync resume: pending buy_or_end_turn tile=%d city=%s" % [pending_action_tile_index, city])
+        await _start_buy_or_end_turn_prompt(pending_action_tile_index, city)
+        return
+    if pending_action_type == "end_turn":
+        _log_server("sync resume: pending end_turn")
+        _request_end_turn()
+        return
+    _log_server("sync resume: prompting roll for current turn=%d" % current_turn_number)
+    await _start_turn_prompt()
+
+
+func _start_buy_or_end_turn_prompt(tile_index: int, city: String) -> void:
+    var label_city: String = city
+    if label_city.is_empty():
+        label_city = "unknown"
+    _log_prompt("buy property on tile=%d city=%s? [y/n]" % [tile_index, label_city])
+    var buy_property: bool = _wait_for_buy_choice()
+    if buy_property:
+        _request_buy_property(tile_index)
+        return
+    _request_end_turn()
+
+
+func _wait_for_buy_choice() -> bool:
+    if not OS.has_method("read_string_from_stdin"):
+        _log_note("stdin not available; defaulting to end turn")
+        return false
+    var input_text: String = OS.read_string_from_stdin().strip_edges().to_lower()
+    if input_text == "y" or input_text == "yes":
+        return true
+    if input_text == "n" or input_text == "no" or input_text.is_empty():
+        return false
+    _log_note("unknown response '%s'; defaulting to end turn" % input_text)
+    return false
 
 
 func _wait_for_enter() -> void:

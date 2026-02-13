@@ -246,9 +246,27 @@ func _auth_fail(peer_id: int, reason: String, detail: String = "") -> void:
 
 
 func _handle_roll_dice(game_id: String, player_id: String) -> void:
-    var sender_id: int = multiplayer.get_remote_sender_id()
+    var sender_id: int = _get_sender_id()
     var result: Dictionary = server.rpc_roll_dice(game_id, player_id, sender_id)
     var reason: String = str(result.get("reason", ""))
     var seq: int = int(result.get("seq", 0))
     if not reason.is_empty():
-        rpc_id(sender_id, "rpc_action_rejected", seq, reason)
+        _rpc_to_peer(sender_id, "rpc_action_rejected", [seq, reason])
+
+
+func _handle_end_turn(game_id: String, player_id: String) -> void:
+    var sender_id: int = _get_sender_id()
+    var result: Dictionary = server.rpc_end_turn(game_id, player_id, sender_id)
+    var reason: String = str(result.get("reason", ""))
+    var seq: int = int(result.get("seq", 0))
+    if not reason.is_empty():
+        _rpc_to_peer(sender_id, "rpc_action_rejected", [seq, reason])
+
+
+func _handle_buy_property(game_id: String, player_id: String, tile_index: int) -> void:
+    var sender_id: int = _get_sender_id()
+    var result: Dictionary = server.rpc_buy_property(game_id, player_id, tile_index, sender_id)
+    var reason: String = str(result.get("reason", ""))
+    var seq: int = int(result.get("seq", 0))
+    if not reason.is_empty():
+        _rpc_to_peer(sender_id, "rpc_action_rejected", [seq, reason])

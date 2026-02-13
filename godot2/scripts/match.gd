@@ -14,6 +14,7 @@ var has_started: bool = false
 var player_ids: Array[String]
 var next_event_seq: int = 1
 var board_state: Dictionary = { }
+var pending_action: Dictionary = { }
 
 
 func _init(config_node: Config, client_nodes: Array[Client]) -> void:
@@ -112,6 +113,9 @@ func rpc_roll_dice(game_id: String, player_id: String) -> void:
     if resolved_index != state.current_player_index:
         _send_to_player(resolved_index, "rpc_action_rejected", ["not_current_player"])
         return
+    if not pending_action.is_empty():
+        _send_to_player(resolved_index, "rpc_action_rejected", ["pending_action_required"])
+        return
     var die_1: int = rng.randi_range(1, 6)
     var die_2: int = rng.randi_range(1, 6)
     var total: int = die_1 + die_2
@@ -139,6 +143,72 @@ func _server_move_pawn(steps: int) -> void:
             str(landing_context.get("action_required", "")),
         ],
     )
+    var action_required: String = str(landing_context.get("action_required", ""))
+    if action_required == "buy_or_end_turn":
+        _set_pending_action("buy_or_end_turn", to_tile)
+        return
+    if action_required == "end_turn":
+        _set_pending_action("end_turn", to_tile)
+        _advance_turn()
+        return
+    _set_pending_action(action_required, to_tile)
+
+
+func rpc_end_turn(game_id: String, player_id: String) -> String:
+    if not has_started:
+        return "match_not_started"
+    if game_id != state.game_id:
+        return "invalid_game_id"
+    var resolved_index: int = _player_index_from_id(player_id)
+    if resolved_index < 0:
+        return "invalid_player_id"
+    if resolved_index != state.current_player_index:
+        return "not_current_player"
+    if pending_action.is_empty():
+        return "no_pending_action"
+    var pending_type: String = str(pending_action.get("type", ""))
+    if pending_type != "buy_or_end_turn" and pending_type != "end_turn":
+        return "action_not_allowed"
+    _advance_turn()
+    return ""
+
+
+func rpc_buy_property(game_id: String, player_id: String, tile_index: int) -> String:
+    if not has_started:
+        return "match_not_started"
+    if game_id != state.game_id:
+        return "invalid_game_id"
+    var resolved_index: int = _player_index_from_id(player_id)
+    if resolved_index < 0:
+        return "invalid_player_id"
+    if resolved_index != state.current_player_index:
+        return "not_current_player"
+    if pending_action.is_empty():
+        return "no_pending_action"
+    if str(pending_action.get("type", "")) != "buy_or_end_turn":
+        return "action_not_allowed"
+    var pending_tile_index: int = int(pending_action.get("tile_index", -1))
+    if pending_tile_index != tile_index:
+        return "tile_mismatch"
+    var tile: Dictionary = _tile_from_index(tile_index)
+    if int(tile.get("owner_index", -1)) >= 0:
+        return "property_already_owned"
+    var tile_type: String = str(tile.get("tile_type", ""))
+    if not _is_property_tile(tile_type):
+        return "tile_not_buyable"
+    var city: String = str(tile.get("city", ""))
+    var price: float = _compute_property_price(city)
+    var buyer: PlayerState = state.players[resolved_index]
+    if buyer.fiat_balance < price:
+        return "insufficient_fiat"
+    buyer.fiat_balance -= price
+    tile["owner_index"] = resolved_index
+    var tiles: Array = board_state.get("tiles", [])
+    tiles[tile_index] = tile
+    board_state["tiles"] = tiles
+    _broadcast("rpc_property_acquired", [resolved_index, tile_index, price])
+    _advance_turn()
+    return ""
 
 
 func _compute_passed_tiles_with_effects(from_tile: int, steps: int, board_size: int) -> Array[int]:
@@ -339,7 +409,31 @@ func build_state_snapshot() -> Dictionary:
         "has_started": has_started,
         "board_state": board_state.duplicate(true),
         "players": players_snapshot,
+        "pending_action": pending_action.duplicate(true),
     }
+
+
+func _set_pending_action(action_type: String, tile_index: int) -> void:
+    pending_action = {
+        "type": action_type,
+        "player_index": state.current_player_index,
+        "tile_index": tile_index,
+        "game_id": state.game_id,
+    }
+
+
+func _clear_pending_action() -> void:
+    pending_action = { }
+
+
+func _advance_turn() -> void:
+    _clear_pending_action()
+    var next_player_index: int = state.current_player_index + 1
+    if next_player_index >= clients.size():
+        next_player_index = 0
+        state.turn_number += 1
+    state.current_player_index = next_player_index
+    _broadcast("rpc_turn_started", [state.current_player_index, state.turn_number, state.current_cycle])
 
 
 func _broadcast(method: String, args: Array) -> void:

@@ -17,6 +17,16 @@ func rpc_roll_dice(game_id: String, player_id: String) -> void:
 
 
 @rpc("any_peer")
+func rpc_end_turn(game_id: String, player_id: String) -> void:
+    _handle_end_turn(game_id, player_id)
+
+
+@rpc("any_peer")
+func rpc_buy_property(game_id: String, player_id: String, tile_index: int) -> void:
+    _handle_buy_property(game_id, player_id, tile_index)
+
+
+@rpc("any_peer")
 func rpc_sync_request(game_id: String, player_id: String, last_applied_seq: int) -> void:
     _handle_sync_request(game_id, player_id, last_applied_seq)
 
@@ -85,6 +95,11 @@ func rpc_cycle_started(seq: int, cycle: int, inflation_active: bool) -> void:
 
 
 @rpc("authority")
+func rpc_property_acquired(seq: int, player_index: int, tile_index: int, price: float) -> void:
+    _handle_property_acquired(seq, player_index, tile_index, price)
+
+
+@rpc("authority")
 func rpc_state_snapshot(seq: int, snapshot: Dictionary) -> void:
     _handle_state_snapshot(seq, snapshot)
 
@@ -108,6 +123,14 @@ func _handle_auth(token: String) -> void:
 
 
 func _handle_roll_dice(game_id: String, player_id: String) -> void:
+    pass
+
+
+func _handle_end_turn(game_id: String, player_id: String) -> void:
+    pass
+
+
+func _handle_buy_property(game_id: String, player_id: String, tile_index: int) -> void:
     pass
 
 
@@ -164,6 +187,10 @@ func _handle_tile_landed(
 
 
 func _handle_cycle_started(seq: int, cycle: int, inflation_active: bool) -> void:
+    pass
+
+
+func _handle_property_acquired(seq: int, player_index: int, tile_index: int, price: float) -> void:
     pass
 
 
