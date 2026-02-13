@@ -14,6 +14,7 @@ var board_state: Dictionary = { }
 var pending_game_started: bool = false
 var next_expected_seq: int = 1
 var pending_events: Dictionary = { }
+var sync_in_progress: bool = false
 
 
 func _ready() -> void:
@@ -64,7 +65,7 @@ func _connect_to_server() -> void:
 
 func _on_connected_to_server() -> void:
     print("client: connected")
-    rpc_id(1, "rpc_auth", auth_token)
+    _rpc_to_server("rpc_auth", [auth_token])
 
 
 func _on_connection_failed() -> void:
@@ -113,19 +114,27 @@ func _handle_pawn_moved(seq: int, from_tile: int, to_tile: int, passed_tiles: Ar
 
 
 func _handle_tile_landed(
-    seq: int,
-    tile_index: int,
-    tile_type: String,
-    city: String,
-    owner_index: int,
-    toll_due: float,
-    action_required: String,
+        seq: int,
+        tile_index: int,
+        tile_type: String,
+        city: String,
+        owner_index: int,
+        toll_due: float,
+        action_required: String,
 ) -> void:
     _queue_event(seq, "_apply_tile_landed", [tile_index, tile_type, city, owner_index, toll_due, action_required])
 
 
 func _handle_cycle_started(seq: int, cycle: int, inflation_active: bool) -> void:
     _queue_event(seq, "_apply_cycle_started", [cycle, inflation_active])
+
+
+func _handle_state_snapshot(seq: int, snapshot: Dictionary) -> void:
+    _queue_event(seq, "_apply_state_snapshot", [snapshot])
+
+
+func _handle_sync_complete(seq: int, final_seq: int) -> void:
+    _queue_event(seq, "_apply_sync_complete", [final_seq])
 
 
 func _handle_action_rejected(seq: int, reason: String) -> void:
@@ -136,8 +145,12 @@ func _queue_event(seq: int, method: String, args: Array) -> void:
     if seq <= 0:
         callv(method, args)
         return
+    if seq < next_expected_seq:
+        return
     pending_events[seq] = { "method": method, "args": args }
     if player_index < 0:
+        return
+    if sync_in_progress:
         return
     _flush_events()
 
@@ -172,7 +185,7 @@ func _apply_auth_ok(authorized_player_id: String, exp: int) -> void:
         multiplayer.multiplayer_peer.close()
         return
     _log_server("auth ok: player_id=%s exp=%d" % [player_id, exp])
-    rpc_id(1, "rpc_join", game_id, player_id)
+    _rpc_to_server("rpc_join", [game_id, player_id])
 
 
 func _apply_auth_error(reason: String) -> void:
@@ -185,24 +198,9 @@ func _apply_join_accepted(accepted_player_id: String, assigned_player_index: int
         return
     player_index = assigned_player_index
     _log_server("join accepted: player_id=%s player_index=%d" % [player_id, player_index])
-    var pending_start: int = _smallest_pending_sequence()
-    if pending_start > 0:
-        next_expected_seq = pending_start
-    elif last_seq > 0:
-        next_expected_seq = last_seq + 1
-    _flush_events()
-    if pending_game_started:
-        pending_game_started = false
-        _log_server("game started: game_id=%s" % game_id)
-
-
-func _smallest_pending_sequence() -> int:
-    var smallest: int = -1
-    for seq_key in pending_events.keys():
-        var seq_value: int = int(seq_key)
-        if smallest < 0 or seq_value < smallest:
-            smallest = seq_value
-    return smallest
+    sync_in_progress = true
+    var last_applied_seq: int = next_expected_seq - 1
+    _rpc_to_server("rpc_sync_request", [game_id, player_id, last_applied_seq])
 
 
 func _apply_turn_started(player_index_value: int, turn_number: int, cycle: int) -> void:
@@ -226,12 +224,12 @@ func _apply_pawn_moved(from_tile: int, to_tile: int, passed_tiles: Array[int]) -
 
 
 func _apply_tile_landed(
-    tile_index: int,
-    tile_type: String,
-    city: String,
-    owner_index: int,
-    toll_due: float,
-    action_required: String,
+        tile_index: int,
+        tile_type: String,
+        city: String,
+        owner_index: int,
+        toll_due: float,
+        action_required: String,
 ) -> void:
     if city.is_empty():
         _log_server(
@@ -269,6 +267,50 @@ func _apply_cycle_started(cycle: int, inflation_active: bool) -> void:
     _log_server("cycle started: cycle=%d, inflation_active=%s" % [cycle, inflation_active])
 
 
+func _apply_state_snapshot(snapshot: Dictionary) -> void:
+    game_id = str(snapshot.get("game_id", game_id))
+    current_player_index = int(snapshot.get("current_player_index", current_player_index))
+    board_state = snapshot.get("board_state", { })
+    pending_game_started = false
+    var turn_number: int = int(snapshot.get("turn_number", 0))
+    var cycle: int = int(snapshot.get("current_cycle", 0))
+    var has_started: bool = bool(snapshot.get("has_started", false))
+    var board_size: int = int(board_state.get("size", 0))
+    var players: Array = snapshot.get("players", [])
+    _log_server(
+        "state snapshot: game_id=%s turn=%d cycle=%d current_player=%d players=%d board_size=%d started=%s"
+        % [game_id, turn_number, cycle, current_player_index, players.size(), board_size, has_started],
+    )
+    var player_summaries: Array[String] = []
+    for player_variant in players:
+        var player: Dictionary = player_variant
+        player_summaries.append(
+            "p%d(pos=%d laps=%d fiat=%.2f btc=%.8f inspection=%s)" % [
+                int(player.get("player_index", -1)),
+                int(player.get("position", -1)),
+                int(player.get("laps", 0)),
+                float(player.get("fiat_balance", 0.0)),
+                float(player.get("bitcoin_balance", 0.0)),
+                bool(player.get("in_inspection", false)),
+            ],
+        )
+    if not player_summaries.is_empty():
+        _log_server("state snapshot players: %s" % [", ".join(player_summaries)])
+
+
+func _apply_sync_complete(final_seq: int) -> void:
+    var queued_before: int = pending_events.size()
+    var dropped_count: int = _drop_stale_pending_events(final_seq)
+    var queued_after_drop: int = pending_events.size()
+    next_expected_seq = final_seq + 1
+    sync_in_progress = false
+    _flush_events()
+    _log_server(
+        "sync complete: final_seq=%d next_expected_seq=%d dropped_events=%d queued_before=%d queued_after_drop=%d"
+        % [final_seq, next_expected_seq, dropped_count, queued_before, queued_after_drop],
+    )
+
+
 func _apply_action_rejected(reason: String) -> void:
     _log_server("action rejected: reason=%s" % reason)
 
@@ -281,7 +323,24 @@ func _start_turn_prompt() -> void:
 
 func _request_roll() -> void:
     _log_client("roll dice: game_id=%s, player_id=%s" % [game_id, player_id])
-    rpc_id(1, "rpc_roll_dice", game_id, player_id)
+    _rpc_to_server("rpc_roll_dice", [game_id, player_id])
+
+
+func _rpc_to_server(method: String, args: Array = []) -> void:
+    var payload: Array = [1, method]
+    payload.append_array(args)
+    Callable(self, "rpc_id").callv(payload)
+
+
+func _drop_stale_pending_events(final_seq: int) -> int:
+    var stale_keys: Array = []
+    for seq_key in pending_events.keys():
+        var seq_value: int = int(seq_key)
+        if seq_value <= final_seq:
+            stale_keys.append(seq_key)
+    for key in stale_keys:
+        pending_events.erase(key)
+    return stale_keys.size()
 
 
 func _wait_for_enter() -> void:

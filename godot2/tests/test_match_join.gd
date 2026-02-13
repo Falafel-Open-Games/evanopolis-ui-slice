@@ -188,11 +188,11 @@ func test_game_start_emitted_once_after_full() -> void:
 
 
 func _assert_game_start_events(
-    game_started: Array[Dictionary],
-    board_state: Array[Dictionary],
-    turn_started: Array[Dictionary],
-    game_id: String,
-    board_size: int,
+        game_started: Array[Dictionary],
+        board_state: Array[Dictionary],
+        turn_started: Array[Dictionary],
+        game_id: String,
+        board_size: int,
 ) -> void:
     assert_eq(game_started.size(), 1, "expected one game started event")
     assert_eq(board_state.size(), 1, "expected one board state event")

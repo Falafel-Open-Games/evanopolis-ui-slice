@@ -21,17 +21,23 @@ extends RefCounted
 
 
 @abstract func rpc_tile_landed(
-    seq: int,
-    tile_index: int,
-    tile_type: String,
-    city: String,
-    owner_index: int,
-    toll_due: float,
-    action_required: String,
+        seq: int,
+        tile_index: int,
+        tile_type: String,
+        city: String,
+        owner_index: int,
+        toll_due: float,
+        action_required: String,
 ) -> void
 
 
 @abstract func rpc_cycle_started(seq: int, cycle: int, inflation_active: bool) -> void
+
+
+@abstract func rpc_state_snapshot(seq: int, snapshot: Dictionary) -> void
+
+
+@abstract func rpc_sync_complete(seq: int, final_seq: int) -> void
 
 
 @abstract func rpc_action_rejected(seq: int, reason: String) -> void

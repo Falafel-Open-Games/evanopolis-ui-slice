@@ -16,6 +16,11 @@ func rpc_roll_dice(game_id: String, player_id: String) -> void:
     _handle_roll_dice(game_id, player_id)
 
 
+@rpc("any_peer")
+func rpc_sync_request(game_id: String, player_id: String, last_applied_seq: int) -> void:
+    _handle_sync_request(game_id, player_id, last_applied_seq)
+
+
 @rpc("authority")
 func rpc_game_started(seq: int, new_game_id: String) -> void:
     _handle_game_started(seq, new_game_id)
@@ -63,13 +68,13 @@ func rpc_pawn_moved(seq: int, from_tile: int, to_tile: int, passed_tiles: Array[
 
 @rpc("authority")
 func rpc_tile_landed(
-    seq: int,
-    tile_index: int,
-    tile_type: String,
-    city: String,
-    owner_index: int,
-    toll_due: float,
-    action_required: String,
+        seq: int,
+        tile_index: int,
+        tile_type: String,
+        city: String,
+        owner_index: int,
+        toll_due: float,
+        action_required: String,
 ) -> void:
     _handle_tile_landed(seq, tile_index, tile_type, city, owner_index, toll_due, action_required)
 
@@ -77,6 +82,16 @@ func rpc_tile_landed(
 @rpc("authority")
 func rpc_cycle_started(seq: int, cycle: int, inflation_active: bool) -> void:
     _handle_cycle_started(seq, cycle, inflation_active)
+
+
+@rpc("authority")
+func rpc_state_snapshot(seq: int, snapshot: Dictionary) -> void:
+    _handle_state_snapshot(seq, snapshot)
+
+
+@rpc("authority")
+func rpc_sync_complete(seq: int, final_seq: int) -> void:
+    _handle_sync_complete(seq, final_seq)
 
 
 @rpc("authority")
@@ -93,6 +108,10 @@ func _handle_auth(token: String) -> void:
 
 
 func _handle_roll_dice(game_id: String, player_id: String) -> void:
+    pass
+
+
+func _handle_sync_request(game_id: String, player_id: String, last_applied_seq: int) -> void:
     pass
 
 
@@ -133,18 +152,26 @@ func _handle_pawn_moved(seq: int, from_tile: int, to_tile: int, passed_tiles: Ar
 
 
 func _handle_tile_landed(
-    seq: int,
-    tile_index: int,
-    tile_type: String,
-    city: String,
-    owner_index: int,
-    toll_due: float,
-    action_required: String,
+        seq: int,
+        tile_index: int,
+        tile_type: String,
+        city: String,
+        owner_index: int,
+        toll_due: float,
+        action_required: String,
 ) -> void:
     pass
 
 
 func _handle_cycle_started(seq: int, cycle: int, inflation_active: bool) -> void:
+    pass
+
+
+func _handle_state_snapshot(seq: int, snapshot: Dictionary) -> void:
+    pass
+
+
+func _handle_sync_complete(seq: int, final_seq: int) -> void:
     pass
 
 
