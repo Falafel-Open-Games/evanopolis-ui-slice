@@ -3,8 +3,27 @@ extends GutTest
 const ClientMain = preload("res://scripts/client_main.gd")
 
 
-func test_late_join_flushes_pending_game_start() -> void:
-    var client: ClientMain = ClientMain.new()
+class ClientMainDouble:
+    extends "res://scripts/client_main.gd"
+
+    var server_calls: Array[Dictionary] = []
+
+
+    func _rpc_to_server(method: String, args: Array = []) -> void:
+        server_calls.append(
+            {
+                "method": method,
+                "args": args,
+            },
+        )
+
+
+    func _start_turn_prompt() -> void:
+        pass
+
+
+func test_join_requests_snapshot_sync_and_drops_pre_sync_events() -> void:
+    var client: ClientMainDouble = ClientMainDouble.new()
     client.player_id = "p2"
     client.game_id = "pending"
 
@@ -14,11 +33,122 @@ func test_late_join_flushes_pending_game_start() -> void:
     assert_eq(client.pending_events.size(), 2, "events queue before join acceptance")
 
     client._handle_join_accepted(0, "p2", 1, 4)
+    assert_eq(client.sync_in_progress, true, "join accepted enters sync mode")
+    assert_eq(client.server_calls.size(), 1, "client requests sync after join acceptance")
+    assert_eq(str(client.server_calls[0].get("method", "")), "rpc_sync_request", "sync request rpc emitted")
 
-    assert_eq(client.pending_events.size(), 0, "pending events flushed after join accepted")
-    assert_eq(client.game_id, "demo_002", "game id updated from queued game started")
-    assert_eq(client.current_player_index, 0, "turn started applied from queued event")
+    client._handle_state_snapshot(
+        0,
+        {
+            "game_id": "demo_002",
+            "turn_number": 2,
+            "current_player_index": 1,
+            "current_cycle": 1,
+            "board_state": {
+                "size": 24,
+                "tiles": [],
+            },
+            "players": [],
+        },
+    )
+    client._handle_sync_complete(0, 4)
+
+    assert_eq(client.pending_events.size(), 0, "stale queued events dropped after snapshot sync")
+    assert_eq(client.game_id, "demo_002", "game id updated from snapshot")
+    assert_eq(client.current_player_index, 1, "current player updated from snapshot")
+    assert_eq(client.next_expected_seq, 5, "next sequence advanced to sync final seq")
+    assert_eq(client.sync_in_progress, false, "sync mode exits after sync complete")
     assert_eq(client.pending_game_started, false, "no pending game started after flush")
+
+    client.free()
+
+
+func test_sync_complete_flushes_live_events_queued_during_sync() -> void:
+    var client: ClientMainDouble = ClientMainDouble.new()
+    client.player_id = "p2"
+    client.game_id = "demo_002"
+
+    client._handle_join_accepted(0, "p2", 1, 0)
+    assert_eq(client.sync_in_progress, true, "sync mode started")
+
+    client._handle_turn_started(5, 0, 2, 1)
+    assert_eq(client.pending_events.size(), 1, "live event queued while sync is in progress")
+
+    client._handle_state_snapshot(
+        0,
+        {
+            "game_id": "demo_002",
+            "turn_number": 2,
+            "current_player_index": 1,
+            "current_cycle": 1,
+            "board_state": {
+                "size": 24,
+                "tiles": [],
+            },
+            "players": [],
+        },
+    )
+    client._handle_sync_complete(0, 4)
+
+    assert_eq(client.pending_events.size(), 0, "queued live events flushed after sync")
+    assert_eq(client.current_player_index, 0, "queued turn event applied after sync complete")
+    assert_eq(client.next_expected_seq, 6, "next sequence moved past flushed event")
+    assert_eq(client.sync_in_progress, false, "sync mode exited")
+
+    client.free()
+
+
+func test_queue_event_ignores_sequences_older_than_next_expected() -> void:
+    var client: ClientMain = ClientMain.new()
+    client.player_index = 0
+    client.next_expected_seq = 6
+
+    client._handle_turn_started(5, 1, 3, 1)
+
+    assert_eq(client.pending_events.size(), 0, "stale event is ignored")
+    assert_eq(client.current_player_index, 0, "stale event is not applied")
+
+    client.free()
+
+
+func test_state_snapshot_logs_with_players_present() -> void:
+    var client: ClientMain = ClientMain.new()
+
+    client._apply_state_snapshot(
+        {
+            "game_id": "demo_002",
+            "turn_number": 3,
+            "current_player_index": 1,
+            "current_cycle": 2,
+            "has_started": true,
+            "board_state": {
+                "size": 24,
+                "tiles": [],
+            },
+            "players": [
+                {
+                    "player_index": 0,
+                    "position": 6,
+                    "laps": 0,
+                    "fiat_balance": 1000000.0,
+                    "bitcoin_balance": 0.5,
+                    "in_inspection": false,
+                },
+                {
+                    "player_index": 1,
+                    "position": 3,
+                    "laps": 1,
+                    "fiat_balance": 950000.0,
+                    "bitcoin_balance": 0.25,
+                    "in_inspection": true,
+                },
+            ],
+        },
+    )
+
+    assert_eq(client.game_id, "demo_002", "snapshot applies game id")
+    assert_eq(client.current_player_index, 1, "snapshot applies current player")
+    assert_eq(int(client.board_state.get("size", 0)), 24, "snapshot applies board state")
 
     client.free()
 

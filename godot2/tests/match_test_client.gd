@@ -1,4 +1,5 @@
 extends "res://scripts/client.gd"
+
 class_name MatchTestClient
 
 var events: Array[Dictionary] = []
@@ -72,13 +73,13 @@ func rpc_pawn_moved(seq: int, from_tile: int, to_tile: int, passed_tiles: Array[
 
 
 func rpc_tile_landed(
-    seq: int,
-    tile_index: int,
-    tile_type: String,
-    city: String,
-    owner_index: int,
-    toll_due: float,
-    action_required: String,
+        seq: int,
+        tile_index: int,
+        tile_type: String,
+        city: String,
+        owner_index: int,
+        toll_due: float,
+        action_required: String,
 ) -> void:
     events.append(
         {
@@ -101,6 +102,26 @@ func rpc_cycle_started(seq: int, cycle: int, inflation_active: bool) -> void:
             "seq": seq,
             "cycle": cycle,
             "inflation_active": inflation_active,
+        },
+    )
+
+
+func rpc_state_snapshot(seq: int, snapshot: Dictionary) -> void:
+    events.append(
+        {
+            "method": "rpc_state_snapshot",
+            "seq": seq,
+            "snapshot": snapshot,
+        },
+    )
+
+
+func rpc_sync_complete(seq: int, final_seq: int) -> void:
+    events.append(
+        {
+            "method": "rpc_sync_complete",
+            "seq": seq,
+            "final_seq": final_seq,
         },
     )
 

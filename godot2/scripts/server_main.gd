@@ -145,7 +145,7 @@ func _handle_join(game_id: String, player_id: String) -> void:
     var seq: int = int(result.get("seq", 0))
     if not reason.is_empty():
         print("server: join rejected game_id=%s player_id=%s peer=%d reason=%s" % [game_id, player_id, sender_id, reason])
-        _rpc_to_peer(sender_id, "rpc_action_rejected", seq, reason)
+        _rpc_to_peer(sender_id, "rpc_action_rejected", [seq, reason])
         return
     var replaced_peer_id: int = int(result.get("replaced_peer_id", -1))
     if replaced_peer_id > 0:
@@ -153,7 +153,7 @@ func _handle_join(game_id: String, player_id: String) -> void:
         _disconnect_peer(replaced_peer_id)
     var assigned_index: int = int(result.get("player_index", -1))
     var last_seq: int = int(result.get("last_seq", 0))
-    _rpc_to_peer(sender_id, "rpc_join_accepted", seq, player_id, assigned_index, last_seq)
+    _rpc_to_peer(sender_id, "rpc_join_accepted", [seq, player_id, assigned_index, last_seq])
     print("server: join game_id=%s player_id=%s player=%d peer=%d" % [game_id, player_id, assigned_index, sender_id])
 
 
@@ -166,6 +166,24 @@ func _handle_auth(token: String) -> void:
         _auth_fail(sender_id, "missing_auth_service")
         return
     _verify_token(sender_id, token)
+
+
+func _handle_sync_request(game_id: String, player_id: String, last_applied_seq: int) -> void:
+    var sender_id: int = _get_sender_id()
+    var result: Dictionary = server.rpc_sync_request(game_id, player_id, sender_id)
+    var reason: String = str(result.get("reason", ""))
+    var seq: int = int(result.get("seq", 0))
+    if not reason.is_empty():
+        _rpc_to_peer(sender_id, "rpc_action_rejected", [seq, reason])
+        return
+    var snapshot: Dictionary = result.get("snapshot", { })
+    var final_seq: int = int(result.get("final_seq", 0))
+    _rpc_to_peer(sender_id, "rpc_state_snapshot", [0, snapshot])
+    _rpc_to_peer(sender_id, "rpc_sync_complete", [0, final_seq])
+    print(
+        "server: sync complete game_id=%s player_id=%s peer=%d client_last_seq=%d final_seq=%d"
+        % [game_id, player_id, sender_id, last_applied_seq, final_seq],
+    )
 
 
 func _verify_token(peer_id: int, token: String) -> void:
@@ -205,8 +223,10 @@ func _get_sender_id() -> int:
     return multiplayer.get_remote_sender_id()
 
 
-func _rpc_to_peer(peer_id: int, method: String, arg1: Variant = null, arg2: Variant = null, arg3: Variant = null, arg4: Variant = null) -> void:
-    rpc_id(peer_id, method, arg1, arg2, arg3, arg4)
+func _rpc_to_peer(peer_id: int, method: String, args: Array = []) -> void:
+    var payload: Array = [peer_id, method]
+    payload.append_array(args)
+    Callable(self, "rpc_id").callv(payload)
 
 
 func _disconnect_peer(peer_id: int) -> void:

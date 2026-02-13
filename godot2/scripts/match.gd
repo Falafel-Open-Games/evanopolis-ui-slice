@@ -72,6 +72,12 @@ func assign_client(player_id: String, client: Client) -> Dictionary:
     return { "reason": reason, "player_index": empty_index, "reconnected": false }
 
 
+func detach_client(player_id: String, player_index: int) -> void:
+    assert(player_index >= 0 and player_index < clients.size())
+    assert(player_ids[player_index] == player_id)
+    clients[player_index] = null
+
+
 func _has_all_clients() -> bool:
     for client in clients:
         if client == null:
@@ -310,6 +316,30 @@ func next_sequence() -> int:
 
 func last_sequence() -> int:
     return next_event_seq - 1
+
+
+func build_state_snapshot() -> Dictionary:
+    var players_snapshot: Array[Dictionary] = []
+    for player in state.players:
+        players_snapshot.append(
+            {
+                "player_index": player.player_index,
+                "fiat_balance": player.fiat_balance,
+                "bitcoin_balance": player.bitcoin_balance,
+                "position": player.position,
+                "laps": player.laps,
+                "in_inspection": player.in_inspection,
+            },
+        )
+    return {
+        "game_id": state.game_id,
+        "turn_number": state.turn_number,
+        "current_player_index": state.current_player_index,
+        "current_cycle": state.current_cycle,
+        "has_started": has_started,
+        "board_state": board_state.duplicate(true),
+        "players": players_snapshot,
+    }
 
 
 func _broadcast(method: String, args: Array) -> void:

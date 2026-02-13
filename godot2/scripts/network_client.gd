@@ -37,19 +37,27 @@ func rpc_pawn_moved(seq: int, from_tile: int, to_tile: int, passed_tiles: Array[
 
 
 func rpc_tile_landed(
-    seq: int,
-    tile_index: int,
-    tile_type: String,
-    city: String,
-    owner_index: int,
-    toll_due: float,
-    action_required: String,
+        seq: int,
+        tile_index: int,
+        tile_type: String,
+        city: String,
+        owner_index: int,
+        toll_due: float,
+        action_required: String,
 ) -> void:
     server_node.rpc_id(peer_id, "rpc_tile_landed", seq, tile_index, tile_type, city, owner_index, toll_due, action_required)
 
 
 func rpc_cycle_started(seq: int, cycle: int, inflation_active: bool) -> void:
     server_node.rpc_id(peer_id, "rpc_cycle_started", seq, cycle, inflation_active)
+
+
+func rpc_state_snapshot(seq: int, snapshot: Dictionary) -> void:
+    server_node.rpc_id(peer_id, "rpc_state_snapshot", seq, snapshot)
+
+
+func rpc_sync_complete(seq: int, final_seq: int) -> void:
+    server_node.rpc_id(peer_id, "rpc_sync_complete", seq, final_seq)
 
 
 func rpc_action_rejected(seq: int, reason: String) -> void:

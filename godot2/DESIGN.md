@@ -90,6 +90,23 @@ This builds on the sibling auth design: JWTs are validated via `auth(token)` and
 - JWT expiry rejects join/resume; clients must re-auth to get a fresh token.
 - Concurrent connections for the same `player_id` are not supported; newest replaces older.
 
+### Reconnect Catch-up Sync (Decision)
+- Reconnect sync is server-authoritative and `seq`-driven.
+- Client keeps `last_applied_seq` locally and sends it after `rpc_join_accepted`.
+- Server always sends a full authoritative snapshot for reconnect in v1.
+- After snapshot delivery, server sends `rpc_sync_complete(final_seq)` and client resumes live stream processing.
+
+#### Ordering Rules
+- During catch-up, client must pause live event application and queue incoming live events.
+- Client applies snapshot atomically, updates `last_applied_seq`, then drains queued live events in `seq` order.
+- Duplicate or out-of-order events (`seq <= last_applied_seq`) are ignored.
+
+#### Snapshot Content Rules
+- Snapshot contains only authoritative gameplay state required to resume:
+- players, balances, board/tile ownership/miners, pawn positions, turn/cycle state, and pending actions.
+- Snapshot must not include RNG seed or RNG internal state.
+- Dice/randomness remains server-only authority at all times.
+
 ### First Action: Roll Dice
 Client sends:
 - `RollDice { match_id: String, player_id: String }`
@@ -108,6 +125,7 @@ All calls are Godot Multiplayer RPCs (not REST). Define which side owns each RPC
 - Send player-specific responses (e.g., `rpc_join_accepted`, `rpc_action_rejected`) only to the requesting client.
 - Broadcast events include a monotonic `seq` (per match). Clients buffer out-of-order broadcast events until missing sequence numbers arrive.
 - Player-specific events use `seq = 0` and are applied immediately (not buffered).
+- On reconnect, client sends `rpc_sync_request` with `last_applied_seq`; server responds with a full snapshot then `rpc_sync_complete`.
 
 ## Board Data Sync Strategy (Decision)
 - Use both:
@@ -136,6 +154,7 @@ All calls are Godot Multiplayer RPCs (not REST). Define which side owns each RPC
 ### Client -> Server RPCs
 - `rpc_join(game_id: String, player_id: String)`
 - `rpc_roll_dice(match_id: String, player_id: String)`
+- `rpc_sync_request(game_id: String, player_id: String, last_applied_seq: int)`
 
 ### Client -> Server RPCs (Planned)
 - `rpc_end_turn(match_id: String, player_id: String)`
@@ -160,6 +179,7 @@ All calls are Godot Multiplayer RPCs (not REST). Define which side owns each RPC
 - `rpc_toll_paid(seq: int, payer_index: int, owner_index: int, amount: float)`
 - `rpc_player_sent_to_inspection(seq: int, player_index: int, reason: String)`
 - `rpc_state_snapshot(seq: int, snapshot: GameState)`
+- `rpc_sync_complete(seq: int, final_seq: int)`
 - `rpc_action_rejected(seq: int, reason: String)`
 
 ## Core State Structure (Draft)
