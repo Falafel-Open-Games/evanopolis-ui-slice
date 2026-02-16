@@ -180,7 +180,6 @@ func get_player_accent_color(player_index: int) -> Color:
     return players[player_index].accent_color
 
 func set_accent_color(player_index: int, new_color: Color) -> void:
-    print("set_accent_color %s, %s, %s" % [player_index, new_color, players.size()])
     if player_index < 0 or player_index >= players.size():
         return
 

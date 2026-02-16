@@ -114,8 +114,9 @@ func _on_dices_rolled(dice_1: int, dice_2: int, total: int) -> void:
 
 func _on_pawn_move_finished(_end_tile_index: int, _player_index: int) -> void:
     var tile_info = game_state.get_tile_info(_end_tile_index)
+    var owner_name = game_state.get_player_username(tile_info.owner_index) if tile_info.owner_index != -1 else "NO OWNER"
     print("tile_info %s, %s. %s" % [tile_info.city, tile_info.property_price, tile_info.owner_index])
-    card_ui.set_card(tile_info.city, tile_info.tile_type, tile_info.property_price, tile_info.owner_index, tile_info.miner_batches)
+    card_ui.set_card(tile_info.city, tile_info.tile_type, tile_info.property_price, tile_info.owner_index, tile_info.miner_batches, owner_name)
 
     if tile_info.tile_type == "property":
         var buy_visible: bool = (
@@ -150,7 +151,8 @@ func _on_miner_batches_changed(tile_index: int, miner_batches: int, owner_index:
 
 func _on_property_purchased(tile_index: int) -> void:
     var tile_info = game_state.get_tile_info(tile_index)
-    card_ui.set_card(tile_info.city, tile_info.tile_type, tile_info.property_price, tile_info.owner_index, tile_info.miner_batches)
+    var owner_name = game_state.get_player_username(tile_info.owner_index) if tile_info.owner_index != -1 else "NO OWNER"
+    card_ui.set_card(tile_info.city, tile_info.tile_type, tile_info.property_price, tile_info.owner_index, tile_info.miner_batches, owner_name)
     put_away_property_button.visible = true
 
 # UI
