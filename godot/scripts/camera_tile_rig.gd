@@ -142,14 +142,14 @@ func _get_follow_target_position() -> Vector3:
 	return target_pos
 
 func _bind_game_controller() -> void:
-	if not game_controller.dice_roll_started.is_connected(_on_dice_roll_started):
-		game_controller.dice_roll_started.connect(_on_dice_roll_started)
+	if not game_controller.pawn_move_started.is_connected(_on_pawn_move_started):
+		game_controller.pawn_move_started.connect(_on_pawn_move_started)
 	if not game_controller.turn_ended.is_connected(_on_turn_ended):
 		game_controller.turn_ended.connect(_on_turn_ended)
 	if not game_controller.turn_started.is_connected(_on_turn_started):
 		game_controller.turn_started.connect(_on_turn_started)
 
-func _on_dice_roll_started(start_tile_index: int, end_tile_index: int, player_index: int) -> void:
+func _on_pawn_move_started(start_tile_index: int, end_tile_index: int, player_index: int) -> void:
 	_cancel_dice_camera_sequence()
 	var pawn: Node3D = _get_pawn(player_index)
 	start_follow(pawn)

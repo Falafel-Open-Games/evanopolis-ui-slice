@@ -1,0 +1,105 @@
+[gd_scene load_steps=2 format=3 uid="uid://bq4767bbrdlve"]
+
+[ext_resource type="Script" uid="uid://braklbiosnmm3" path="res://scripts/ui_controller.gd" id="1_ahhtf"]
+
+[node name="Hud" type="Control" node_paths=PackedStringArray("timer_label", "player_name", "player_balance", "player_color", "dice_1_label", "dice_2_label", "end_turn_button", "roll_dice_button")]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_ahhtf")
+timer_label = NodePath("MarginContainer/VBoxContainer/Timer")
+player_name = NodePath("MarginContainer/VBoxContainer/VBoxContainer/HBoxContainer/PlayerName")
+player_balance = NodePath("MarginContainer/VBoxContainer/VBoxContainer/PlayerBalance")
+player_color = NodePath("MarginContainer/VBoxContainer/VBoxContainer/HBoxContainer/PlayerColor")
+dice_1_label = NodePath("MarginContainer/VBoxContainer/HBoxContainer/Dice_1")
+dice_2_label = NodePath("MarginContainer/VBoxContainer/HBoxContainer/Dice_2")
+end_turn_button = NodePath("MarginContainer/MarginContainer/HBoxContainer/EndTurnBtn")
+roll_dice_button = NodePath("MarginContainer/MarginContainer/HBoxContainer/RollDicesBtn")
+
+[node name="MarginContainer" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 40
+theme_override_constants/margin_top = 40
+theme_override_constants/margin_right = 40
+theme_override_constants/margin_bottom = 40
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer"]
+layout_mode = 2
+
+[node name="Timer" type="Label" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 1
+text = "MM:SS"
+horizontal_alignment = 1
+
+[node name="HBoxContainer" type="HBoxContainer" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 40
+
+[node name="Dice_1" type="Label" parent="MarginContainer/VBoxContainer/HBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_font_sizes/font_size = 40
+text = "1"
+horizontal_alignment = 2
+
+[node name="Dice_2" type="Label" parent="MarginContainer/VBoxContainer/HBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_font_sizes/font_size = 40
+text = "1"
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+
+[node name="HBoxContainer" type="HBoxContainer" parent="MarginContainer/VBoxContainer/VBoxContainer"]
+layout_mode = 2
+alignment = 2
+
+[node name="PlayerColor" type="ColorRect" parent="MarginContainer/VBoxContainer/VBoxContainer/HBoxContainer"]
+custom_minimum_size = Vector2(24, 24)
+layout_mode = 2
+size_flags_horizontal = 8
+size_flags_vertical = 4
+color = Color(0.05882353, 0.89411765, 0.40784314, 1)
+
+[node name="PlayerName" type="Label" parent="MarginContainer/VBoxContainer/VBoxContainer/HBoxContainer"]
+layout_mode = 2
+text = "Player 1"
+horizontal_alignment = 2
+
+[node name="PlayerBalance" type="Label" parent="MarginContainer/VBoxContainer/VBoxContainer"]
+layout_mode = 2
+text = "25 EVA | 2 BTC"
+horizontal_alignment = 2
+
+[node name="MarginContainer" type="MarginContainer" parent="MarginContainer"]
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 8
+theme_override_constants/margin_bottom = 80
+
+[node name="HBoxContainer" type="HBoxContainer" parent="MarginContainer/MarginContainer"]
+layout_mode = 2
+theme_override_constants/separation = 40
+
+[node name="RollDicesBtn" type="Button" parent="MarginContainer/MarginContainer/HBoxContainer"]
+custom_minimum_size = Vector2(200, 80)
+layout_mode = 2
+text = "ROLL DICES"
+
+[node name="EndTurnBtn" type="Button" parent="MarginContainer/MarginContainer/HBoxContainer"]
+custom_minimum_size = Vector2(200, 80)
+layout_mode = 2
+text = "END TURN"
