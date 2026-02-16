@@ -16,7 +16,7 @@ corner_radius_top_right = 24
 corner_radius_bottom_right = 24
 corner_radius_bottom_left = 24
 
-[node name="Hud" type="Control" node_paths=PackedStringArray("timer_label", "player_name", "player_balance", "player_color", "dice_1_label", "dice_2_label", "end_turn_button", "roll_dice_button", "card_ui")]
+[node name="Hud" type="Control" node_paths=PackedStringArray("timer_label", "player_name", "player_balance", "player_color", "dice_1_label", "dice_2_label", "end_turn_button", "roll_dice_button", "buy_property_button", "pass_property_button", "put_away_property_button", "card_ui")]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -32,7 +32,10 @@ dice_1_label = NodePath("MarginContainer/VBoxContainer/HBoxContainer/Dice_1")
 dice_2_label = NodePath("MarginContainer/VBoxContainer/HBoxContainer/Dice_2")
 end_turn_button = NodePath("MarginContainer/MarginContainer/HBoxContainer/EndTurnBtn")
 roll_dice_button = NodePath("MarginContainer/MarginContainer/HBoxContainer/RollDicesBtn")
-card_ui = NodePath("MarginContainer/Card")
+buy_property_button = NodePath("MarginContainer/MarginContainer/HBoxContainer/BuyPropertyBtn")
+pass_property_button = NodePath("MarginContainer/MarginContainer/HBoxContainer/PassPropertyBtn")
+put_away_property_button = NodePath("MarginContainer/MarginContainer/HBoxContainer/PutAwayPropertyBtn")
+card_ui = NodePath("Card")
 
 [node name="MarginContainer" type="MarginContainer" parent="."]
 layout_mode = 1
@@ -119,11 +122,33 @@ custom_minimum_size = Vector2(200, 80)
 layout_mode = 2
 text = "END TURN"
 
-[node name="Card" type="Panel" parent="MarginContainer" node_paths=PackedStringArray("title_label", "card_type_label", "price_label", "owner_label", "miners_label", "card_image")]
-visible = false
-custom_minimum_size = Vector2(300, 500)
+[node name="BuyPropertyBtn" type="Button" parent="MarginContainer/MarginContainer/HBoxContainer"]
+custom_minimum_size = Vector2(200, 80)
 layout_mode = 2
-size_flags_horizontal = 4
+text = "BUY"
+
+[node name="PassPropertyBtn" type="Button" parent="MarginContainer/MarginContainer/HBoxContainer"]
+custom_minimum_size = Vector2(200, 80)
+layout_mode = 2
+text = "PASS"
+
+[node name="PutAwayPropertyBtn" type="Button" parent="MarginContainer/MarginContainer/HBoxContainer"]
+custom_minimum_size = Vector2(200, 80)
+layout_mode = 2
+text = "PUT AWAY"
+
+[node name="Card" type="Panel" parent="." node_paths=PackedStringArray("title_label", "card_type_label", "price_label", "owner_label", "miners_label", "card_image")]
+custom_minimum_size = Vector2(300, 500)
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -400.0
+offset_top = 150.0
+offset_right = -100.0
+offset_bottom = 650.0
+grow_horizontal = 0
+size_flags_horizontal = 0
 size_flags_vertical = 4
 theme_override_styles/panel = SubResource("StyleBoxFlat_ahhtf")
 script = ExtResource("2_oo0fn")
@@ -134,7 +159,7 @@ owner_label = NodePath("MarginContainer/Bottom/Owner")
 miners_label = NodePath("MarginContainer/Bottom/Miners")
 card_image = NodePath("MarginContainer/CardImage")
 
-[node name="MarginContainer" type="MarginContainer" parent="MarginContainer/Card"]
+[node name="MarginContainer" type="MarginContainer" parent="Card"]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -146,25 +171,25 @@ theme_override_constants/margin_top = 24
 theme_override_constants/margin_right = 24
 theme_override_constants/margin_bottom = 24
 
-[node name="Top" type="VBoxContainer" parent="MarginContainer/Card/MarginContainer"]
+[node name="Top" type="VBoxContainer" parent="Card/MarginContainer"]
 layout_mode = 2
 size_flags_vertical = 0
 
-[node name="CardTitle" type="Label" parent="MarginContainer/Card/MarginContainer/Top"]
+[node name="CardTitle" type="Label" parent="Card/MarginContainer/Top"]
 layout_mode = 2
 size_flags_vertical = 0
 theme_override_font_sizes/font_size = 24
 text = "CITY_NAME"
 horizontal_alignment = 1
 
-[node name="CardType" type="Label" parent="MarginContainer/Card/MarginContainer/Top"]
+[node name="CardType" type="Label" parent="Card/MarginContainer/Top"]
 layout_mode = 2
 size_flags_vertical = 0
 theme_override_font_sizes/font_size = 16
 text = "card_type"
 horizontal_alignment = 1
 
-[node name="CardImage" type="TextureRect" parent="MarginContainer/Card/MarginContainer"]
+[node name="CardImage" type="TextureRect" parent="Card/MarginContainer"]
 custom_minimum_size = Vector2(0, 250)
 layout_mode = 2
 size_flags_vertical = 4
@@ -172,20 +197,20 @@ texture = ExtResource("3_5ysmq")
 expand_mode = 1
 stretch_mode = 4
 
-[node name="Bottom" type="VBoxContainer" parent="MarginContainer/Card/MarginContainer"]
+[node name="Bottom" type="VBoxContainer" parent="Card/MarginContainer"]
 layout_mode = 2
 size_flags_vertical = 8
 alignment = 2
 
-[node name="Price" type="Label" parent="MarginContainer/Card/MarginContainer/Bottom"]
+[node name="Price" type="Label" parent="Card/MarginContainer/Bottom"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 20
 text = "PRICE"
 
-[node name="Owner" type="Label" parent="MarginContainer/Card/MarginContainer/Bottom"]
+[node name="Owner" type="Label" parent="Card/MarginContainer/Bottom"]
 layout_mode = 2
 text = "IS AVAILABLE"
 
-[node name="Miners" type="Label" parent="MarginContainer/Card/MarginContainer/Bottom"]
+[node name="Miners" type="Label" parent="Card/MarginContainer/Bottom"]
 layout_mode = 2
 text = "MINERS: 0"

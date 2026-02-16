@@ -3,6 +3,8 @@ extends Node
 
 signal end_turn_button_pressed
 signal roll_dice_button_pressed
+signal buy_property_button_pressed
+signal pass_property_button_pressed
 signal dice_result_shown(dice_1: int, dice_2: int, total: int)
 
 @export var game_controller: GameController
@@ -16,6 +18,9 @@ signal dice_result_shown(dice_1: int, dice_2: int, total: int)
 @export var dice_2_label : Label
 @export var end_turn_button : Button
 @export var roll_dice_button : Button
+@export var buy_property_button : Button
+@export var pass_property_button : Button
+@export var put_away_property_button : Button
 @export var card_ui : CardUi
 
 func _ready() -> void:
@@ -24,6 +29,9 @@ func _ready() -> void:
     dice_2_label.visible = false
     end_turn_button.visible = false
     roll_dice_button.visible = false
+    buy_property_button.visible = false
+    pass_property_button.visible = false
+    put_away_property_button.visible = false
 
     # bind states
     _bind_game_state()
@@ -40,6 +48,12 @@ func _bind_ui_elements() -> void:
         end_turn_button.pressed.connect(_on_end_turn_button_pressed)
     if not roll_dice_button.pressed.is_connected(_on_roll_dice_button_pressed):
         roll_dice_button.pressed.connect(_on_roll_dice_button_pressed)
+    if not buy_property_button.pressed.is_connected(_on_buy_property_button_pressed):
+        buy_property_button.pressed.connect(_on_buy_property_button_pressed)
+    if not pass_property_button.pressed.is_connected(_on_pass_property_button_pressed):
+        pass_property_button.pressed.connect(_on_pass_property_button_pressed)
+    if not put_away_property_button.pressed.is_connected(_on_put_away_property_button_pressed):
+        put_away_property_button.pressed.connect(_on_put_away_property_button_pressed)
 
 func _bind_game_controller() -> void:
     if not game_controller.timer_elapsed.is_connected(_on_timer_elapsed):
@@ -52,6 +66,8 @@ func _bind_game_controller() -> void:
         game_controller.dices_rolled.connect(_on_dices_rolled)
     if not game_controller.pawn_move_finished.is_connected(_on_pawn_move_finished):
         game_controller.pawn_move_finished.connect(_on_pawn_move_finished)
+    if not game_controller.property_purchased.is_connected(_on_property_purchased):
+        game_controller.property_purchased.connect(_on_property_purchased)
 
 func _bind_game_state() -> void:
     if not game_state.player_changed.is_connected(_on_player_changed):
@@ -97,10 +113,20 @@ func _on_dices_rolled(dice_1: int, dice_2: int, total: int) -> void:
     dice_result_shown.emit(dice_1, dice_2, total)
 
 func _on_pawn_move_finished(_end_tile_index: int, _player_index: int) -> void:
-    end_turn_button.visible = true
     var tile_info = game_state.get_tile_info(_end_tile_index)
     print("tile_info %s, %s. %s" % [tile_info.city, tile_info.property_price, tile_info.owner_index])
     card_ui.set_card(tile_info.city, tile_info.tile_type, tile_info.property_price, tile_info.owner_index, tile_info.miner_batches)
+
+    if tile_info.tile_type == "property":
+        var buy_visible: bool = (
+            (tile_info.tile_type == "property" or tile_info.tile_type == "special_property")
+            and tile_info.owner_index == -1
+        )
+
+        buy_property_button.visible = buy_visible
+        pass_property_button.visible = buy_visible
+    else:
+        end_turn_button.visible = true
 
 func _on_player_changed(new_index: int) -> void:
     print("_on_player_changed %s" % [new_index])
@@ -122,14 +148,34 @@ func _on_turn_state_changed(_player_index: int, turn_number: int, cycle_number: 
 func _on_miner_batches_changed(tile_index: int, miner_batches: int, owner_index: int) -> void:
     print("_on_turn_state_changed %s %s %s" % [tile_index, miner_batches, owner_index])
 
+func _on_property_purchased(tile_index: int) -> void:
+    var tile_info = game_state.get_tile_info(tile_index)
+    card_ui.set_card(tile_info.city, tile_info.tile_type, tile_info.property_price, tile_info.owner_index, tile_info.miner_batches)
+    put_away_property_button.visible = true
 
 # UI
 
 func _on_end_turn_button_pressed() -> void:
-    end_turn_button.visible = false
     card_ui.hide_card()
+    end_turn_button.visible = false
     end_turn_button_pressed.emit()
 
 func _on_roll_dice_button_pressed() -> void:
     roll_dice_button.visible = false
     roll_dice_button_pressed.emit()
+
+func _on_buy_property_button_pressed() -> void:
+    buy_property_button.visible = false
+    pass_property_button.visible = false
+    buy_property_button_pressed.emit()
+
+func _on_pass_property_button_pressed() -> void:
+    buy_property_button.visible = false
+    pass_property_button.visible = false
+    card_ui.hide_card()
+    pass_property_button_pressed.emit()
+
+func _on_put_away_property_button_pressed() -> void:
+    put_away_property_button.visible = false
+    card_ui.hide_card()
+    end_turn_button.visible = true

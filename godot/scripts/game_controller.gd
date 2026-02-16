@@ -4,6 +4,7 @@ extends Node
 signal dices_rolled(dice_1: int, dice_2: int, total: int)
 signal pawn_move_started(start_tile_index: int, end_tile_index: int, player_index: int)
 signal pawn_move_finished(end_tile_index: int, player_index: int)
+signal property_purchased(tile_index: int)
 signal turn_ended(next_player_index: int, next_tile_index: int)
 signal turn_started(player_index: int, tile_index: int)
 signal timer_elapsed(turn_duration: int, time_elapsed: float)
@@ -73,6 +74,9 @@ func _bind_ui_controller() -> void:
         ui_controller.roll_dice_button_pressed.connect(_on_roll_dice_pressed)
     if not ui_controller.dice_result_shown.is_connected(_on_dice_result_shown):
         ui_controller.dice_result_shown.connect(_on_dice_result_shown)
+    if not ui_controller.buy_property_button_pressed.is_connected(_on_buy_requested):
+        ui_controller.buy_property_button_pressed.connect(_on_buy_requested)
+
 
 # func _bind_sidebar() -> void:
 # 	if not turn_actions.end_turn_button.pressed.is_connected(_on_end_turn_pressed):
@@ -390,6 +394,7 @@ func _on_buy_requested() -> void:
     assert(did_purchase)
     _flip_tile(current_tile_index)
     _update_tile_info(current_tile_index)
+    property_purchased.emit(current_tile_index)
 
 func _on_toll_payment_requested() -> void:
     assert(game_state)
