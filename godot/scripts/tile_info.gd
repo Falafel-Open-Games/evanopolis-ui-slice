@@ -5,7 +5,7 @@ var tile_type: String
 var city: String
 var incident_kind: String
 var occupants: Array[int]
-var property_price: float
+var property_price: float # TODO: CHANGE PRICE TO INT
 var special_property_name: String
 var special_property_price: float
 var owner_index: int

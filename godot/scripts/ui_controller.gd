@@ -16,6 +16,7 @@ signal dice_result_shown(dice_1: int, dice_2: int, total: int)
 @export var dice_2_label : Label
 @export var end_turn_button : Button
 @export var roll_dice_button : Button
+@export var card_ui : CardUi
 
 func _ready() -> void:
     # reset UI
@@ -97,6 +98,9 @@ func _on_dices_rolled(dice_1: int, dice_2: int, total: int) -> void:
 
 func _on_pawn_move_finished(_end_tile_index: int, _player_index: int) -> void:
     end_turn_button.visible = true
+    var tile_info = game_state.get_tile_info(_end_tile_index)
+    print("tile_info %s, %s. %s" % [tile_info.city, tile_info.property_price, tile_info.owner_index])
+    card_ui.set_card(tile_info.city, tile_info.tile_type, tile_info.property_price, tile_info.owner_index, tile_info.miner_batches)
 
 func _on_player_changed(new_index: int) -> void:
     print("_on_player_changed %s" % [new_index])
@@ -123,6 +127,7 @@ func _on_miner_batches_changed(tile_index: int, miner_batches: int, owner_index:
 
 func _on_end_turn_button_pressed() -> void:
     end_turn_button.visible = false
+    card_ui.hide_card()
     end_turn_button_pressed.emit()
 
 func _on_roll_dice_button_pressed() -> void:
