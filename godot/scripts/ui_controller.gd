@@ -22,14 +22,18 @@ signal dice_result_shown(dice_1: int, dice_2: int, total: int)
 @export var pass_property_button : Button
 @export var put_away_property_button : Button
 @export var card_ui : CardUi
-@export var balance_variation_panel : Panel
+@export var balance_variation_panel : PanelContainer
 @export var balance_variation_label : Label
 @export var balance_variation_spend_color : Color
 @export var balance_variation_receive_color : Color
+@export var turn_indicator_panel : PanelContainer
+@export var turn_indicator_label : Label
+@export var turn_indicator_player_color : ColorRect
 
 const TIMER_START_GAME := 2.0
 const TIMER_APPLY_DICES_RESULT := 1.0
 const TIMER_BALANCE_VARIATION := 3.0
+const TIMER_TURN_INDICATOR := 3.0
 
 func _ready() -> void:
     # reset UI
@@ -41,6 +45,7 @@ func _ready() -> void:
     pass_property_button.visible = false
     put_away_property_button.visible = false
     balance_variation_panel.visible = false
+    turn_indicator_panel.visible = false
 
     # bind states
     _bind_game_state()
@@ -104,6 +109,31 @@ func _on_turn_started(player_index: int, tile_index: int):
     var bitcoin_balance = game_state.get_player_bitcoin_balance(player_index)
     player_balance.text = "%s EVA | %s BTC" % [fiat_balance, bitcoin_balance]
     player_color.color = game_state.get_player_accent_color(player_index)
+
+    turn_indicator_label.text = "%s IS UP" % game_state.get_player_username(player_index).to_upper()
+    turn_indicator_player_color.color = game_state.get_player_accent_color(player_index)
+    turn_indicator_panel.visible = true
+    _show_turn_indicator_panel()
+
+    await get_tree().create_timer(TIMER_TURN_INDICATOR).timeout
+
+    _hide_turn_indicator_panel()
+
+func _show_turn_indicator_panel():
+    var tween := create_tween()
+    tween.set_parallel(false)
+    var viewport_size := get_viewport().get_visible_rect().size
+    turn_indicator_panel.position.x = viewport_size.x
+    turn_indicator_panel.position.y = 100
+    tween.tween_property(turn_indicator_panel, "position:x", viewport_size.x - turn_indicator_panel.size.x, 0.5).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_BACK)
+
+func _hide_turn_indicator_panel():
+    var tween := create_tween()
+    tween.set_parallel(false)
+    var viewport_size := get_viewport().get_visible_rect().size
+    turn_indicator_panel.position.x = viewport_size.x - turn_indicator_panel.size.x
+    turn_indicator_panel.position.y = 100
+    tween.tween_property(turn_indicator_panel, "position:x", viewport_size.x, 0.5).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_BACK)
 
 func _on_turn_ended(next_player_index: int, next_tile_index: int):
     print("_on_turn_ended %s %s" % [next_player_index, next_tile_index])
