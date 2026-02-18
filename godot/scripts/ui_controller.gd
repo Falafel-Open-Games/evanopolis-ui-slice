@@ -22,6 +22,14 @@ signal dice_result_shown(dice_1: int, dice_2: int, total: int)
 @export var pass_property_button : Button
 @export var put_away_property_button : Button
 @export var card_ui : CardUi
+@export var balance_variation_panel : Panel
+@export var balance_variation_label : Label
+@export var balance_variation_spend_color : Color
+@export var balance_variation_receive_color : Color
+
+const TIMER_START_GAME := 2.0
+const TIMER_APPLY_DICES_RESULT := 1.0
+const TIMER_BALANCE_VARIATION := 3.0
 
 func _ready() -> void:
     # reset UI
@@ -32,6 +40,7 @@ func _ready() -> void:
     buy_property_button.visible = false
     pass_property_button.visible = false
     put_away_property_button.visible = false
+    balance_variation_panel.visible = false
 
     # bind states
     _bind_game_state()
@@ -39,7 +48,7 @@ func _ready() -> void:
     _bind_ui_elements()
 
 func _start_game() -> void:
-    await get_tree().create_timer(2.0).timeout
+    await get_tree().create_timer(TIMER_START_GAME).timeout
 
     roll_dice_button.visible = true
 
@@ -106,7 +115,7 @@ func _on_dices_rolled(dice_1: int, dice_2: int, total: int) -> void:
     dice_1_label.text = str(dice_1)
     dice_2_label.text = str(dice_2)
 
-    await get_tree().create_timer(1.0).timeout
+    await get_tree().create_timer(TIMER_APPLY_DICES_RESULT).timeout
 
     dice_1_label.visible = false
     dice_2_label.visible = false
@@ -116,14 +125,11 @@ func _on_pawn_move_finished(_end_tile_index: int, _player_index: int) -> void:
     var tile_info = game_state.get_tile_info(_end_tile_index)
     var owner_name = game_state.get_player_username(tile_info.owner_index) if tile_info.owner_index != -1 else "NO OWNER"
     print("tile_info %s, %s. %s" % [tile_info.city, tile_info.property_price, tile_info.owner_index])
-    card_ui.set_card(tile_info.city, tile_info.tile_type, tile_info.property_price, tile_info.owner_index, tile_info.miner_batches, owner_name)
+    var is_property = tile_info.tile_type == Utils.TileType.PROPERTY or tile_info.tile_type == Utils.TileType.SPECIAL_PROPERTY
 
-    if tile_info.tile_type == "property":
-        var buy_visible: bool = (
-            (tile_info.tile_type == "property" or tile_info.tile_type == "special_property")
-            and tile_info.owner_index == -1
-        )
-
+    if is_property:
+        card_ui.set_card(tile_info.city, tile_info.tile_type, tile_info.property_price, tile_info.owner_index, tile_info.miner_batches, owner_name)
+        var buy_visible: bool = tile_info.owner_index == -1
         buy_property_button.visible = buy_visible
         pass_property_button.visible = buy_visible
     else:
@@ -142,6 +148,7 @@ func _on_player_position_changed(tile_index: int, slot_index: int) -> void:
 
 func _on_player_data_changed(player_index: int, player_data: PlayerData) -> void:
     print("_on_player_data_changed %s %s" % [player_index, player_data])
+    player_balance.text = "%s EVA | %s BTC" % [player_data.fiat_balance, player_data.bitcoin_balance]
 
 func _on_turn_state_changed(_player_index: int, turn_number: int, cycle_number: int) -> void:
     print("_on_turn_state_changed %s %s %s" % [_player_index, turn_number, cycle_number])
@@ -154,12 +161,36 @@ func _on_property_purchased(tile_index: int) -> void:
     var owner_name = game_state.get_player_username(tile_info.owner_index) if tile_info.owner_index != -1 else "NO OWNER"
     card_ui.set_card(tile_info.city, tile_info.tile_type, tile_info.property_price, tile_info.owner_index, tile_info.miner_batches, owner_name)
     put_away_property_button.visible = true
+    _spend_value_balance_variation(int(tile_info.property_price))
+
+func _spend_value_balance_variation(spent_value: int):
+    balance_variation_label.text = "- %s EVA" % str(spent_value)
+    var stylebox := balance_variation_panel.get_theme_stylebox("panel").duplicate()
+    stylebox.bg_color = balance_variation_spend_color
+    balance_variation_panel.add_theme_stylebox_override("panel", stylebox)
+    balance_variation_panel.visible = true
+
+    await get_tree().create_timer(TIMER_BALANCE_VARIATION).timeout
+
+    balance_variation_panel.visible = false
+
+func _receive_value_balance_variation(add_value: int):
+    balance_variation_label.text = "+ %s EVA" % str(add_value)
+    var stylebox := balance_variation_panel.get_theme_stylebox("panel").duplicate()
+    stylebox.bg_color = balance_variation_receive_color
+    balance_variation_panel.add_theme_stylebox_override("panel", stylebox)
+    balance_variation_panel.visible = true
+
+    await get_tree().create_timer(TIMER_BALANCE_VARIATION).timeout
+
+    balance_variation_panel.visible = false
 
 # UI
 
 func _on_end_turn_button_pressed() -> void:
     card_ui.hide_card()
     end_turn_button.visible = false
+    balance_variation_panel.visible = false
     end_turn_button_pressed.emit()
 
 func _on_roll_dice_button_pressed() -> void:
@@ -176,8 +207,10 @@ func _on_pass_property_button_pressed() -> void:
     pass_property_button.visible = false
     card_ui.hide_card()
     pass_property_button_pressed.emit()
+    end_turn_button.visible = true
 
 func _on_put_away_property_button_pressed() -> void:
     put_away_property_button.visible = false
+    balance_variation_panel.visible = false
     card_ui.hide_card()
     end_turn_button.visible = true

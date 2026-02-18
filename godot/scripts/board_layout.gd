@@ -169,22 +169,22 @@ func _apply_colors() -> void:
 		if not tile is BoardTile:
 			continue
 		var info: TileInfo = game_state.get_tile_info(tile_index)
-		var tile_type: String = info.tile_type
+		var tile_type: Utils.TileType = info.tile_type
 		var tile_color: Color = Color.WHITE
 		var top_material: Material = null
 		var bottom_material: Material = null
 		match tile_type:
-			"start":
+			Utils.TileType.START:
 				tile_color = Color.DIM_GRAY
 				top_material = _start_top_material
 				bottom_material = _start_bottom_material
-			"inspection":
+			Utils.TileType.INSPECTION:
 				tile_color = Color.DIM_GRAY
-			"incident":
+			Utils.TileType.INCIDENT:
 				tile_color = Color.ORANGE
-			"special_property":
+			Utils.TileType.SPECIAL_PROPERTY:
 				tile_color = Color.WHITE
-			"property":
+			Utils.TileType.PROPERTY:
 				var city: String = info.city
 				tile_color = Palette.CITY_COLORS_BY_NAME.get(city, Color.WHITE)
 				top_material = CITY_TOP_MATERIALS.get(city, null)

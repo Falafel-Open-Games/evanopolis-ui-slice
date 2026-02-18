@@ -147,16 +147,16 @@ func _on_dice_requested() -> void:
 func _update_tile_info(tile_index: int) -> void:
     assert(game_state)
     var info: TileInfo = game_state.get_tile_info(tile_index)
-    var tile_type: String = info.tile_type
+    var tile_type: Utils.TileType = info.tile_type
     var city: String = info.city
     var incident_kind: String = info.incident_kind
     var price: float = 0.0
-    if tile_type == "property":
+    if tile_type == Utils.TileType.PROPERTY:
         price = game_state.get_tile_price(info)
-    elif tile_type == "special_property":
+    elif tile_type == Utils.TileType.SPECIAL_PROPERTY:
         price = game_state.get_tile_price(info)
     var buy_visible: bool = (
-        (tile_type == "property" or tile_type == "special_property")
+        (tile_type == Utils.TileType.PROPERTY or tile_type == Utils.TileType.SPECIAL_PROPERTY)
         and info.owner_index == -1
     )
     var is_owned: bool = info.owner_index != -1
@@ -193,7 +193,7 @@ func _update_toll_actions(info: TileInfo) -> void:
     assert(game_state)
     pending_toll_owner_index = -1
     pending_toll_fiat = 0.0
-    if info.tile_type == "property" and info.owner_index != -1:
+    if info.tile_type == Utils.TileType.PROPERTY and info.owner_index != -1:
         if info.owner_index != game_state.current_player_index:
             var toll_amount: float = game_state.get_energy_toll(info)
             var payer_index: int = game_state.current_player_index

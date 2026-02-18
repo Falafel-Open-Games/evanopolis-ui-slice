@@ -161,7 +161,7 @@ func get_payout_per_miner_for_cycle(_cycle_number: int) -> float:
 func apply_property_payout(tile_index: int) -> void:
     assert(tile_index >= 0 and tile_index < tiles.size())
     var tile: TileInfo = tiles[tile_index]
-    if tile.tile_type != "property":
+    if tile.tile_type != Utils.TileType.PROPERTY:
         return
     if tile.owner_index < 0:
         return
@@ -204,7 +204,7 @@ func get_owned_property_indices(player_index: int) -> Array[int]:
     var results: Array[int] = []
     for tile_index in range(tiles.size()):
         var tile: TileInfo = tiles[tile_index]
-        if tile.tile_type == "property" and tile.owner_index == player_index:
+        if tile.tile_type == Utils.TileType.PROPERTY and tile.owner_index == player_index:
             results.append(tile_index)
     return results
 
@@ -224,7 +224,7 @@ func set_pending_miner_order(player_index: int, order: Dictionary, use_bitcoin: 
         var tile_index: int = int(tile_key)
         assert(tile_index >= 0 and tile_index < tiles.size())
         var tile: TileInfo = tiles[tile_index]
-        assert(tile.tile_type == "property")
+        assert(tile.tile_type == Utils.TileType.PROPERTY)
         assert(tile.owner_index == player_index)
         var batches: int = int(order[tile_key])
         if batches <= 0:
@@ -339,34 +339,34 @@ func _build_tile_info() -> void:
         if side_slot == 0:
             match side_index:
                 0:
-                    info.tile_type = "start"
+                    info.tile_type = Utils.TileType.START
                 3:
-                    info.tile_type = "inspection"
+                    info.tile_type = Utils.TileType.INSPECTION
                 1, 2, 4, 5:
-                    info.tile_type = "incident"
+                    info.tile_type = Utils.TileType.INCIDENT
                     info.incident_kind = _incident_kind_for_side(side_index)
         elif side_slot == 1:
             if GameConfig.disable_special_properties:
-                info.tile_type = "property"
+                info.tile_type = Utils.TileType.PROPERTY
                 info.city = _city_for_side(side_index)
                 info.property_price = CITY_BASE_PRICE.get(info.city, 0.0)
             else:
-                info.tile_type = "special_property"
+                info.tile_type = Utils.TileType.SPECIAL_PROPERTY
                 var special_index: int = side_index
                 if special_index >= 0 and special_index < SPECIAL_PROPERTIES.size():
                     info.special_property_name = SPECIAL_PROPERTIES[special_index]["name"]
                     info.special_property_price = SPECIAL_PROPERTIES[special_index]["price"]
         else:
-            info.tile_type = "property"
+            info.tile_type = Utils.TileType.PROPERTY
             info.city = _city_for_side(side_index)
             info.property_price = CITY_BASE_PRICE.get(info.city, 0.0)
 
         tiles[tile_index] = info
 
 func _get_base_tile_price(tile: TileInfo) -> float:
-    if tile.tile_type == "property":
+    if tile.tile_type == Utils.TileType.PROPERTY:
         return tile.property_price
-    if tile.tile_type == "special_property":
+    if tile.tile_type == Utils.TileType.SPECIAL_PROPERTY:
         return tile.special_property_price
     return 0.0
 
@@ -376,7 +376,7 @@ func _get_inflation_multiplier() -> float:
 
 func _is_tile_buyable(tile: TileInfo) -> bool:
     return (
-        (tile.tile_type == "property" or tile.tile_type == "special_property")
+        (tile.tile_type == Utils.TileType.PROPERTY or tile.tile_type == Utils.TileType.SPECIAL_PROPERTY)
         and tile.owner_index == -1
     )
 

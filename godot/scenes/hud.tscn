@@ -1,8 +1,15 @@
-[gd_scene load_steps=5 format=3 uid="uid://bq4767bbrdlve"]
+[gd_scene load_steps=6 format=3 uid="uid://bq4767bbrdlve"]
 
 [ext_resource type="Script" uid="uid://braklbiosnmm3" path="res://scripts/ui_controller.gd" id="1_ahhtf"]
 [ext_resource type="Script" uid="uid://cyo4nro23c03e" path="res://scripts/card_ui.gd" id="2_oo0fn"]
 [ext_resource type="Texture2D" uid="uid://bgugtamtwrjyy" path="res://textures/card-assuncion-with-mining.jpg" id="3_5ysmq"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_5ysmq"]
+bg_color = Color(0.6462312, 0.1687957, 0.1939081, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_ahhtf"]
 bg_color = Color(0.1375669, 0.14706111, 0.15290019, 1)
@@ -16,7 +23,7 @@ corner_radius_top_right = 24
 corner_radius_bottom_right = 24
 corner_radius_bottom_left = 24
 
-[node name="Hud" type="Control" node_paths=PackedStringArray("timer_label", "player_name", "player_balance", "player_color", "dice_1_label", "dice_2_label", "end_turn_button", "roll_dice_button", "buy_property_button", "pass_property_button", "put_away_property_button", "card_ui")]
+[node name="Hud" type="Control" node_paths=PackedStringArray("timer_label", "player_name", "player_balance", "player_color", "dice_1_label", "dice_2_label", "end_turn_button", "roll_dice_button", "buy_property_button", "pass_property_button", "put_away_property_button", "card_ui", "balance_variation_panel", "balance_variation_label")]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -26,7 +33,7 @@ grow_vertical = 2
 script = ExtResource("1_ahhtf")
 timer_label = NodePath("MarginContainer/VBoxContainer/Timer")
 player_name = NodePath("MarginContainer/VBoxContainer/VBoxContainer/HBoxContainer/PlayerName")
-player_balance = NodePath("MarginContainer/VBoxContainer/VBoxContainer/PlayerBalance")
+player_balance = NodePath("MarginContainer/VBoxContainer/VBoxContainer/HBoxContainer2/PlayerBalance")
 player_color = NodePath("MarginContainer/VBoxContainer/VBoxContainer/HBoxContainer/PlayerColor")
 dice_1_label = NodePath("MarginContainer/VBoxContainer/HBoxContainer/Dice_1")
 dice_2_label = NodePath("MarginContainer/VBoxContainer/HBoxContainer/Dice_2")
@@ -36,6 +43,10 @@ buy_property_button = NodePath("MarginContainer/MarginContainer/HBoxContainer/Bu
 pass_property_button = NodePath("MarginContainer/MarginContainer/HBoxContainer/PassPropertyBtn")
 put_away_property_button = NodePath("MarginContainer/MarginContainer/HBoxContainer/PutAwayPropertyBtn")
 card_ui = NodePath("Card")
+balance_variation_panel = NodePath("MarginContainer/VBoxContainer/VBoxContainer/HBoxContainer2/BalanceVariationPanel")
+balance_variation_label = NodePath("MarginContainer/VBoxContainer/VBoxContainer/HBoxContainer2/BalanceVariationPanel/MarginContainer/BalanceVariationValue")
+balance_variation_spend_color = Color(0.64705884, 0.16862746, 0.19215687, 1)
+balance_variation_receive_color = Color(0.13949195, 0.6035106, 0.39961886, 1)
 
 [node name="MarginContainer" type="MarginContainer" parent="."]
 layout_mode = 1
@@ -97,7 +108,37 @@ layout_mode = 2
 text = "Player 1"
 horizontal_alignment = 2
 
-[node name="PlayerBalance" type="Label" parent="MarginContainer/VBoxContainer/VBoxContainer"]
+[node name="HBoxContainer2" type="HBoxContainer" parent="MarginContainer/VBoxContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_constants/separation = 24
+alignment = 2
+
+[node name="BalanceVariationPanel" type="Panel" parent="MarginContainer/VBoxContainer/VBoxContainer/HBoxContainer2"]
+custom_minimum_size = Vector2(100, 40)
+layout_mode = 2
+size_flags_horizontal = 8
+size_flags_vertical = 4
+theme_override_styles/panel = SubResource("StyleBoxFlat_5ysmq")
+
+[node name="MarginContainer" type="MarginContainer" parent="MarginContainer/VBoxContainer/VBoxContainer/HBoxContainer2/BalanceVariationPanel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 8
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 8
+theme_override_constants/margin_bottom = 8
+
+[node name="BalanceVariationValue" type="Label" parent="MarginContainer/VBoxContainer/VBoxContainer/HBoxContainer2/BalanceVariationPanel/MarginContainer"]
+layout_mode = 2
+text = "- 5 EVA"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="PlayerBalance" type="Label" parent="MarginContainer/VBoxContainer/VBoxContainer/HBoxContainer2"]
 layout_mode = 2
 text = "25 EVA | 2 BTC"
 horizontal_alignment = 2

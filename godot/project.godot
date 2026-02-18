@@ -19,6 +19,7 @@ config/icon="res://icon.svg"
 
 Palette="*res://scripts/autoload/color_palette.gd"
 GameConfig="*res://scripts/autoload/game_config.gd"
+Utils="*res://scripts/autoload/utils.gd"
 
 [display]
 

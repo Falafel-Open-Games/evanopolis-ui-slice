@@ -13,10 +13,10 @@ var card_assuncion_with_mining_path = "res://textures/card-assuncion-with-mining
 func _ready() -> void:
     hide_card()
 
-func set_card(title: String, type: String, price: float, owner_index: int, miners: int, owner_name: String):
+func set_card(title: String, type: Utils.TileType, price: float, owner_index: int, miners: int, owner_name: String):
     visible = true
     title_label.text = title.to_upper()
-    card_type_label.text = type
+    card_type_label.text = Utils.TileType.keys()[type]
     price_label.text = str(price)
     owner_label.text = "AVAILABLE" if owner_index == -1 else "OWNED BY %s" % [owner_name]
     miners_label.text = "MINERS: %s" % [miners]
@@ -29,8 +29,8 @@ func hide_card():
     visible = false
 
 # func _set_card_texture(title: String, type: String, miners: int):
-func _set_card_texture(title: String, type: String, owner_index: int):
-    if type != "property":
+func _set_card_texture(title: String, type: Utils.TileType, owner_index: int):
+    if type != Utils.TileType.PROPERTY:
         card_image.visible = false
         return
 

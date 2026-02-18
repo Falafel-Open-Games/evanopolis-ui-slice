@@ -1,7 +1,7 @@
 class_name TileInfo
 extends RefCounted
 
-var tile_type: String
+var tile_type: Utils.TileType
 var city: String
 var incident_kind: String
 var occupants: Array[int]
@@ -12,7 +12,7 @@ var owner_index: int
 var miner_batches: int
 
 func _init() -> void:
-	tile_type = "unknown"
+	tile_type = Utils.TileType.UNKNOWN
 	city = ""
 	incident_kind = ""
 	occupants = []
