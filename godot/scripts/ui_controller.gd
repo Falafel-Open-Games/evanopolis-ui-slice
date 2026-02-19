@@ -14,8 +14,8 @@ signal dice_result_shown(dice_1: int, dice_2: int, total: int)
 @export var player_name : Label
 @export var player_balance : Label
 @export var player_color : ColorRect
-@export var dice_1_label : Label
-@export var dice_2_label : Label
+@export var dice_1_texture_rect : TextureRect
+@export var dice_2_texture_rect : TextureRect
 @export var end_turn_button : Button
 @export var roll_dice_button : Button
 @export var buy_property_button : Button
@@ -35,10 +35,19 @@ const TIMER_APPLY_DICES_RESULT := 1.0
 const TIMER_BALANCE_VARIATION := 3.0
 const TIMER_TURN_INDICATOR := 3.0
 
+var dice_texture_regions := [
+    Rect2(0, 0, 200, 200),
+    Rect2(240, 0, 200, 200),
+    Rect2(480, 0, 200, 200),
+    Rect2(0, 240, 200, 200),
+    Rect2(240, 240, 200, 200),
+    Rect2(480, 240, 200, 200),
+]
+
 func _ready() -> void:
     # reset UI
-    dice_1_label.visible = false
-    dice_2_label.visible = false
+    dice_1_texture_rect.visible = false
+    dice_2_texture_rect.visible = false
     end_turn_button.visible = false
     roll_dice_button.visible = false
     buy_property_button.visible = false
@@ -140,15 +149,19 @@ func _on_turn_ended(next_player_index: int, next_tile_index: int):
 
 func _on_dices_rolled(dice_1: int, dice_2: int, total: int) -> void:
     print("_on_dices_rolled %s + %s = %s" % [dice_1, dice_2, total])
-    dice_1_label.visible = true
-    dice_2_label.visible = true
-    dice_1_label.text = str(dice_1)
-    dice_2_label.text = str(dice_2)
+    dice_1_texture_rect.visible = true
+    dice_2_texture_rect.visible = true
+
+    var atlas_1 = dice_1_texture_rect.texture as AtlasTexture
+    atlas_1.region = dice_texture_regions[dice_1 - 1]
+
+    var atlas_2 = dice_2_texture_rect.texture as AtlasTexture
+    atlas_2.region = dice_texture_regions[dice_2 - 1]
 
     await get_tree().create_timer(TIMER_APPLY_DICES_RESULT).timeout
 
-    dice_1_label.visible = false
-    dice_2_label.visible = false
+    dice_1_texture_rect.visible = false
+    dice_2_texture_rect.visible = false
     dice_result_shown.emit(dice_1, dice_2, total)
 
 func _on_pawn_move_finished(_end_tile_index: int, _player_index: int) -> void:
