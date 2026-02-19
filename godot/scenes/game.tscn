@@ -55,6 +55,7 @@ pawn_wait_time_per_tile = 0.2
 ui_controller = NodePath("../Hud")
 
 [node name="Table" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.1348363)
 mesh = SubResource("PlaneMesh_8cj0n")
 
 [node name="Environment" type="Node3D" parent="."]

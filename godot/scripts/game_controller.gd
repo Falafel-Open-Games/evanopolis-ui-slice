@@ -424,7 +424,7 @@ func _flip_tile(tile_index: int) -> void:
     assert(tile)
     var board_tile: BoardTile = tile as BoardTile
     assert(board_tile)
-    board_tile.set_owned_visual(true)
+    board_tile.set_owned_visual(true, game_state.get_player_accent_color(game_state.current_player_index))
 
 func _on_player_data_changed(player_index: int, player_data: PlayerData) -> void:
     assert(player_index >= 0 and player_index < GameConfig.player_count)
