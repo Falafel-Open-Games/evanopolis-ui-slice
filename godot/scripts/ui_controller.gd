@@ -5,6 +5,7 @@ signal end_turn_button_pressed
 signal roll_dice_button_pressed
 signal buy_property_button_pressed
 signal pass_property_button_pressed
+signal map_overview_button_pressed(is_active: bool)
 signal dice_result_shown(dice_1: int, dice_2: int, total: int)
 
 @export var game_controller: GameController
@@ -21,6 +22,7 @@ signal dice_result_shown(dice_1: int, dice_2: int, total: int)
 @export var buy_property_button : Button
 @export var pass_property_button : Button
 @export var put_away_property_button : Button
+@export var map_overview_button : Button
 @export var card_ui : CardUi
 @export var balance_variation_panel : PanelContainer
 @export var balance_variation_label : Label
@@ -44,6 +46,8 @@ var dice_texture_regions := [
     Rect2(480, 240, 200, 200),
 ]
 
+var _is_map_overview_active: bool = false
+
 func _ready() -> void:
     # reset UI
     dice_1_texture_rect.visible = false
@@ -55,6 +59,7 @@ func _ready() -> void:
     put_away_property_button.visible = false
     balance_variation_panel.visible = false
     turn_indicator_panel.visible = false
+    map_overview_button.visible = false
 
     # bind states
     _bind_game_state()
@@ -65,6 +70,7 @@ func _start_game() -> void:
     await get_tree().create_timer(TIMER_START_GAME).timeout
 
     roll_dice_button.visible = true
+    map_overview_button.visible = true
 
 func _bind_ui_elements() -> void:
     if not end_turn_button.pressed.is_connected(_on_end_turn_button_pressed):
@@ -77,6 +83,8 @@ func _bind_ui_elements() -> void:
         pass_property_button.pressed.connect(_on_pass_property_button_pressed)
     if not put_away_property_button.pressed.is_connected(_on_put_away_property_button_pressed):
         put_away_property_button.pressed.connect(_on_put_away_property_button_pressed)
+    if not map_overview_button.pressed.is_connected(_on_map_overview_button_pressed):
+        map_overview_button.pressed.connect(_on_map_overview_button_pressed)
 
 func _bind_game_controller() -> void:
     if not game_controller.timer_elapsed.is_connected(_on_timer_elapsed):
@@ -87,6 +95,8 @@ func _bind_game_controller() -> void:
         game_controller.turn_ended.connect(_on_turn_ended)
     if not game_controller.dices_rolled.is_connected(_on_dices_rolled):
         game_controller.dices_rolled.connect(_on_dices_rolled)
+    if not game_controller.pawn_move_started.is_connected(_on_pawn_move_started):
+        game_controller.pawn_move_started.connect(_on_pawn_move_started)
     if not game_controller.pawn_move_finished.is_connected(_on_pawn_move_finished):
         game_controller.pawn_move_finished.connect(_on_pawn_move_finished)
     if not game_controller.property_purchased.is_connected(_on_property_purchased):
@@ -113,6 +123,7 @@ func _on_timer_elapsed(turn_duration: int, time_elapsed: float):
 func _on_turn_started(player_index: int, tile_index: int):
     print("_on_turn_started %s %s" % [player_index, tile_index])
     roll_dice_button.visible = true
+    map_overview_button.visible = true
     player_name.text = game_state.get_player_username(player_index)
     var fiat_balance = game_state.get_player_fiat_balance(player_index)
     var bitcoin_balance = game_state.get_player_bitcoin_balance(player_index)
@@ -164,11 +175,15 @@ func _on_dices_rolled(dice_1: int, dice_2: int, total: int) -> void:
     dice_2_texture_rect.visible = false
     dice_result_shown.emit(dice_1, dice_2, total)
 
+func _on_pawn_move_started(_start_tile_index: int, _end_tile_index: int, _player_index: int) -> void:
+    map_overview_button.visible = false
+
 func _on_pawn_move_finished(_end_tile_index: int, _player_index: int) -> void:
     var tile_info = game_state.get_tile_info(_end_tile_index)
     var owner_name = game_state.get_player_username(tile_info.owner_index) if tile_info.owner_index != -1 else "NO OWNER"
-    print("tile_info %s, %s. %s" % [tile_info.city, tile_info.property_price, tile_info.owner_index])
     var is_property = tile_info.tile_type == Utils.TileType.PROPERTY or tile_info.tile_type == Utils.TileType.SPECIAL_PROPERTY
+
+    map_overview_button.visible = true
 
     if is_property:
         card_ui.set_card(tile_info.city, tile_info.tile_type, tile_info.property_price, tile_info.owner_index, tile_info.miner_batches, owner_name)
@@ -257,3 +272,7 @@ func _on_put_away_property_button_pressed() -> void:
     balance_variation_panel.visible = false
     card_ui.hide_card()
     end_turn_button.visible = true
+
+func _on_map_overview_button_pressed() -> void:
+    _is_map_overview_active = not _is_map_overview_active
+    map_overview_button_pressed.emit(_is_map_overview_active)

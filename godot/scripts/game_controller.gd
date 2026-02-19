@@ -8,6 +8,7 @@ signal property_purchased(tile_index: int)
 signal turn_ended(next_player_index: int, next_tile_index: int)
 signal turn_started(player_index: int, tile_index: int)
 signal timer_elapsed(turn_duration: int, time_elapsed: float)
+signal map_overview_button_pressed(is_active: bool)
 
 # @export var turn_actions: TurnActions
 @export var left_sidebar_list: BoxContainer
@@ -76,6 +77,8 @@ func _bind_ui_controller() -> void:
         ui_controller.dice_result_shown.connect(_on_dice_result_shown)
     if not ui_controller.buy_property_button_pressed.is_connected(_on_buy_requested):
         ui_controller.buy_property_button_pressed.connect(_on_buy_requested)
+    if not ui_controller.map_overview_button_pressed.is_connected(_on_map_overview_pressed):
+        ui_controller.map_overview_button_pressed.connect(_on_map_overview_pressed)
 
 
 # func _bind_sidebar() -> void:
@@ -395,6 +398,9 @@ func _on_buy_requested() -> void:
     _flip_tile(current_tile_index)
     _update_tile_info(current_tile_index)
     property_purchased.emit(current_tile_index)
+
+func _on_map_overview_pressed(is_active: bool):
+    map_overview_button_pressed.emit(is_active)
 
 func _on_toll_payment_requested() -> void:
     assert(game_state)
