@@ -83,5 +83,5 @@ transform = Transform3D(-0.25881904, 0, -0.9659258, 0, 1, 0, 0.9659258, 0, -0.25
 transform = Transform3D(-0.25881904, 0, -0.9659258, 0, 1, 0, 0.9659258, 0, -0.25881904, 0.024, 0, 0)
 
 [node name="OwnerColor" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.04, 0, 0, 0, -2.1855695e-09, 0.1, 0, -0.05, -4.371139e-09, 0, 0.0017876029, 0.008488938)
+transform = Transform3D(0.04, 0, 0, 0, -3.059797e-09, 0.1, 0, -0.07, -4.371139e-09, 0, 0.0017876029, 0.017402329)
 mesh = SubResource("QuadMesh_jy7pm")
