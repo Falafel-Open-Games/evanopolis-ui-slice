@@ -23,6 +23,7 @@ signal dice_result_shown(dice_1: int, dice_2: int, total: int)
 @export var pass_property_button : Button
 @export var put_away_property_button : Button
 @export var map_overview_button : Button
+@export var inventory_button : Button
 @export var card_ui : CardUi
 @export var balance_variation_panel : PanelContainer
 @export var balance_variation_label : Label
@@ -31,6 +32,7 @@ signal dice_result_shown(dice_1: int, dice_2: int, total: int)
 @export var turn_indicator_panel : PanelContainer
 @export var turn_indicator_label : Label
 @export var turn_indicator_player_color : ColorRect
+@export var inventory : Control
 
 const TIMER_START_GAME := 2.0
 const TIMER_APPLY_DICES_RESULT := 1.0
@@ -47,6 +49,7 @@ var dice_texture_regions := [
 ]
 
 var _is_map_overview_active: bool = false
+var _is_inventory_active: bool = false
 
 func _ready() -> void:
     # reset UI
@@ -60,6 +63,8 @@ func _ready() -> void:
     balance_variation_panel.visible = false
     turn_indicator_panel.visible = false
     map_overview_button.visible = false
+    card_ui.hide_card()
+    inventory.set_inventory(game_controller, game_state)
 
     # bind states
     _bind_game_state()
@@ -85,6 +90,8 @@ func _bind_ui_elements() -> void:
         put_away_property_button.pressed.connect(_on_put_away_property_button_pressed)
     if not map_overview_button.pressed.is_connected(_on_map_overview_button_pressed):
         map_overview_button.pressed.connect(_on_map_overview_button_pressed)
+    if not inventory_button.pressed.is_connected(_on_inventory_button_pressed):
+        inventory_button.pressed.connect(_on_inventory_button_pressed)
 
 func _bind_game_controller() -> void:
     if not game_controller.timer_elapsed.is_connected(_on_timer_elapsed):
@@ -276,3 +283,11 @@ func _on_put_away_property_button_pressed() -> void:
 func _on_map_overview_button_pressed() -> void:
     _is_map_overview_active = not _is_map_overview_active
     map_overview_button_pressed.emit(_is_map_overview_active)
+
+func _on_inventory_button_pressed() -> void:
+    _is_inventory_active = not _is_inventory_active
+
+    if _is_inventory_active:
+        inventory.show_inventory()
+    else:
+        inventory.hide_inventory()

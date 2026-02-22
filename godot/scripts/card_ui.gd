@@ -10,8 +10,19 @@ extends Panel
 
 var card_assuncion_with_mining_path = "res://textures/card-assuncion-with-mining.jpg"
 
+# var _is_card_active: bool = false
+var _initial_pos_y: float
+var _initial_rot_deg: float
+var _target_pos_y: float
+
 func _ready() -> void:
-    hide_card()
+    mouse_entered.connect(_on_mouse_entered)
+    mouse_exited.connect(_on_mouse_exited)
+
+func set_initial_position():
+    _initial_pos_y = self.position.y
+    _target_pos_y = _initial_pos_y - 320
+    _initial_rot_deg = self.rotation_degrees
 
 func set_card(title: String, type: Utils.TileType, price: float, owner_index: int, miners: int, owner_name: String):
     visible = true
@@ -23,7 +34,6 @@ func set_card(title: String, type: Utils.TileType, price: float, owner_index: in
     miners_label.visible = miners > 0
 
     _set_card_texture(title, type, owner_index)
-
 
 func hide_card():
     visible = false
@@ -53,3 +63,31 @@ func _get_texture_path(title: String, owner_index: int) -> String:
 func to_dash_slug(text: String) -> String:
     var normalized := text.strip_edges().to_lower()
     return normalized.replace(" ", "-")
+
+func _gui_input(event: InputEvent) -> void:
+    if event is InputEventMouseButton \
+    and event.button_index == MOUSE_BUTTON_LEFT \
+    and event.pressed:
+        _on_clicked()
+
+func _on_clicked() -> void:
+    pass
+    # _is_card_active = not _is_card_active
+
+    # var target_position_y = self.position.y - _card_delta_pos_y if _is_card_active else self.position.y + _card_delta_pos_y
+
+    # var tween := create_tween()
+    # tween.set_parallel(false)
+    # tween.tween_property(self, "position:y", target_position_y, 0.5).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_BACK)
+
+func _on_mouse_entered() -> void:
+    _move_card(_target_pos_y, _initial_rot_deg - 5.0)
+
+func _on_mouse_exited() -> void:
+    _move_card(_initial_pos_y, _initial_rot_deg)
+
+func _move_card(target_position_y: float, target_rotation_deg: float) -> void:
+    var tween := create_tween()
+    tween.set_parallel(true)
+    tween.tween_property(self, "position:y", target_position_y, 0.5).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_BACK)
+    tween.tween_property(self, "rotation_degrees", target_rotation_deg, 0.5).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_BACK)
