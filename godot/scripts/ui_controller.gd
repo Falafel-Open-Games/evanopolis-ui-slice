@@ -5,6 +5,7 @@ signal end_turn_button_pressed
 signal roll_dice_button_pressed
 signal buy_property_button_pressed
 signal pass_property_button_pressed
+signal pay_toll_button_pressed
 signal map_overview_button_pressed(is_active: bool)
 signal dice_result_shown(dice_1: int, dice_2: int, total: int)
 
@@ -21,7 +22,6 @@ signal dice_result_shown(dice_1: int, dice_2: int, total: int)
 @export var roll_dice_button : Button
 @export var buy_property_button : Button
 @export var pass_property_button : Button
-@export var put_away_property_button : Button
 @export var pay_toll_button : Button
 @export var map_overview_button : Button
 @export var inventory_button : Button
@@ -61,7 +61,6 @@ func _ready() -> void:
     roll_dice_button.visible = false
     buy_property_button.visible = false
     pass_property_button.visible = false
-    put_away_property_button.visible = false
     balance_variation_panel.visible = false
     turn_indicator_panel.visible = false
     map_overview_button.visible = false
@@ -90,10 +89,8 @@ func _bind_ui_elements() -> void:
         buy_property_button.pressed.connect(_on_buy_property_button_pressed)
     if not pass_property_button.pressed.is_connected(_on_pass_property_button_pressed):
         pass_property_button.pressed.connect(_on_pass_property_button_pressed)
-    if not put_away_property_button.pressed.is_connected(_on_put_away_property_button_pressed):
-        put_away_property_button.pressed.connect(_on_put_away_property_button_pressed)
-    if not pay_toll_button.pressed.is_connected(_on_pay_toll_button_button_pressed):
-        pay_toll_button.pressed.connect(_on_pay_toll_button_button_pressed)
+    if not pay_toll_button.pressed.is_connected(_on_pay_toll_button_pressed):
+        pay_toll_button.pressed.connect(_on_pay_toll_button_pressed)
     if not map_overview_button.pressed.is_connected(_on_map_overview_button_pressed):
         map_overview_button.pressed.connect(_on_map_overview_button_pressed)
     if not inventory_button.pressed.is_connected(_on_inventory_button_pressed):
@@ -116,6 +113,8 @@ func _bind_game_controller() -> void:
         game_controller.pawn_move_finished.connect(_on_pawn_move_finished)
     if not game_controller.property_purchased.is_connected(_on_property_purchased):
         game_controller.property_purchased.connect(_on_property_purchased)
+    if not game_controller.toll_payment_confirmed.is_connected(_on_toll_payment_confirmed):
+        game_controller.toll_payment_confirmed.connect(_on_toll_payment_confirmed)
 
 func _bind_game_state() -> void:
     if not game_state.player_changed.is_connected(_on_player_changed):
@@ -233,6 +232,9 @@ func _on_player_position_changed(tile_index: int, slot_index: int) -> void:
 
 func _on_player_data_changed(player_index: int, player_data: PlayerData) -> void:
     print("_on_player_data_changed %s %s" % [player_index, player_data])
+    if player_index != game_state.current_player_index:
+        return
+
     player_balance.text = "%s EVA | %s BTC" % [player_data.fiat_balance, player_data.bitcoin_balance]
 
 func _on_turn_state_changed(_player_index: int, turn_number: int, cycle_number: int) -> void:
@@ -243,11 +245,16 @@ func _on_miner_batches_changed(tile_index: int, miner_batches: int, owner_index:
 
 func _on_property_purchased(tile_index: int) -> void:
     var tile_info = game_state.get_tile_info(tile_index)
-    var owner_name = game_state.get_player_username(tile_info.owner_index) if tile_info.owner_index != -1 else "NO OWNER"
-    var toll_amount = game_state.get_energy_toll(tile_info)
-    card_ui.set_card_owned(tile_info.city, tile_info.tile_type, toll_amount, tile_info.miner_batches, owner_name)
-    put_away_property_button.visible = true
     _spend_value_balance_variation(int(tile_info.property_price))
+
+func _on_toll_payment_confirmed(is_payed: bool, toll_value: float) -> void:
+    # TODO: bankrupt player if payment is declined
+    print("_on_toll_payment_confirmed %s, %s" % [is_payed, toll_value])
+    end_turn_button.visible = true
+    card_ui.hide_card()
+
+    if is_payed:
+        _spend_value_balance_variation(int(toll_value))
 
 func _spend_value_balance_variation(spent_value: int):
     balance_variation_label.text = "- %s EVA" % str(spent_value)
@@ -287,6 +294,7 @@ func _on_buy_property_button_pressed() -> void:
     buy_property_button.visible = false
     pass_property_button.visible = false
     card_ui.hide_card()
+    end_turn_button.visible = true
     buy_property_button_pressed.emit()
 
 func _on_pass_property_button_pressed() -> void:
@@ -296,15 +304,9 @@ func _on_pass_property_button_pressed() -> void:
     pass_property_button_pressed.emit()
     end_turn_button.visible = true
 
-func _on_put_away_property_button_pressed() -> void:
-    put_away_property_button.visible = false
-    balance_variation_panel.visible = false
-    card_ui.hide_card()
-    end_turn_button.visible = true
-
-func _on_pay_toll_button_button_pressed() -> void:
+func _on_pay_toll_button_pressed() -> void:
     pay_toll_button.visible = false
-    # TODO: add payment functionality
+    pay_toll_button_pressed.emit()
     pass
 
 func _on_map_overview_button_pressed() -> void:

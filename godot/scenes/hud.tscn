@@ -50,7 +50,7 @@ end_turn_button = NodePath("MarginContainer/MarginContainer/HBoxContainer/EndTur
 roll_dice_button = NodePath("MarginContainer/MarginContainer/HBoxContainer/RollDicesBtn")
 buy_property_button = NodePath("MarginContainer/MarginContainer/HBoxContainer/BuyPropertyBtn")
 pass_property_button = NodePath("MarginContainer/MarginContainer/HBoxContainer/PassPropertyBtn")
-put_away_property_button = NodePath("MarginContainer/MarginContainer/HBoxContainer/PutAwayPropertyBtn")
+put_away_property_button = NodePath("")
 pay_toll_button = NodePath("MarginContainer/MarginContainer/HBoxContainer/PayToll")
 map_overview_button = NodePath("MarginContainer/VBoxContainer/VBoxContainer/HBoxContainer3/MapOverviewBtn")
 inventory_button = NodePath("MarginContainer/VBoxContainer/VBoxContainer/HBoxContainer3/InventoryBtn")
@@ -203,11 +203,6 @@ text = "BUY"
 custom_minimum_size = Vector2(200, 80)
 layout_mode = 2
 text = "PASS"
-
-[node name="PutAwayPropertyBtn" type="Button" parent="MarginContainer/MarginContainer/HBoxContainer"]
-custom_minimum_size = Vector2(200, 80)
-layout_mode = 2
-text = "PUT AWAY"
 
 [node name="PayToll" type="Button" parent="MarginContainer/MarginContainer/HBoxContainer"]
 custom_minimum_size = Vector2(200, 80)

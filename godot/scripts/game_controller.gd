@@ -9,6 +9,7 @@ signal turn_ended(next_player_index: int, next_tile_index: int)
 signal turn_started(player_index: int, tile_index: int)
 signal timer_elapsed(turn_duration: int, time_elapsed: float)
 signal map_overview_button_pressed(is_active: bool)
+signal toll_payment_confirmed(is_payed: bool, toll_value: float)
 
 # @export var turn_actions: TurnActions
 @export var left_sidebar_list: BoxContainer
@@ -79,6 +80,8 @@ func _bind_ui_controller() -> void:
         ui_controller.buy_property_button_pressed.connect(_on_buy_requested)
     if not ui_controller.map_overview_button_pressed.is_connected(_on_map_overview_pressed):
         ui_controller.map_overview_button_pressed.connect(_on_map_overview_pressed)
+    if not ui_controller.pay_toll_button_pressed.is_connected(_on_toll_payment_requested):
+        ui_controller.pay_toll_button_pressed.connect(_on_toll_payment_requested)
 
 
 # func _bind_sidebar() -> void:
@@ -192,6 +195,7 @@ func _update_tile_info(tile_index: int) -> void:
     _update_toll_actions(info)
 
 func _update_toll_actions(info: TileInfo) -> void:
+    print("_update_toll_actions %s" % info.city)
     # assert(turn_actions)
     assert(game_state)
     pending_toll_owner_index = -1
@@ -403,6 +407,7 @@ func _on_map_overview_pressed(is_active: bool):
     map_overview_button_pressed.emit(is_active)
 
 func _on_toll_payment_requested() -> void:
+    print("_on_toll_payment_requested")
     assert(game_state)
     # assert(turn_actions)
     if pending_toll_owner_index == -1:
@@ -417,6 +422,7 @@ func _on_toll_payment_requested() -> void:
         var info: TileInfo = game_state.get_tile_info(current_tile_index)
         _update_toll_actions(info)
         return
+    toll_payment_confirmed.emit(did_pay, pending_toll_fiat)
     pending_toll_owner_index = -1
     pending_toll_fiat = 0.0
     # turn_actions.hide_toll_actions(true)
