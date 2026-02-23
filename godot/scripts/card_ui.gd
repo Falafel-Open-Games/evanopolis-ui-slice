@@ -1,6 +1,8 @@
 class_name CardUi
 extends Panel
 
+signal card_selected(tile_index: int)
+
 @export var title_label: Label
 @export var card_type_label: Label
 @export var price_label: Label
@@ -14,6 +16,7 @@ var card_assuncion_with_mining_path = "res://textures/card-assuncion-with-mining
 var _initial_pos_y: float
 var _initial_rot_deg: float
 var _target_pos_y: float
+var _tile_index: int
 
 func _ready() -> void:
     mouse_entered.connect(_on_mouse_entered)
@@ -24,7 +27,7 @@ func set_initial_position():
     _target_pos_y = _initial_pos_y - 320
     _initial_rot_deg = self.rotation_degrees
 
-func set_card(title: String, type: Utils.TileType, price: float, owner_index: int, miners: int, owner_name: String):
+func set_card(title: String, type: Utils.TileType, price: float, owner_index: int, miners: int, owner_name: String, tile_index: int = -1):
     visible = true
     title_label.text = title.to_upper()
     card_type_label.text = Utils.TileType.keys()[type]
@@ -32,6 +35,7 @@ func set_card(title: String, type: Utils.TileType, price: float, owner_index: in
     owner_label.text = "AVAILABLE" if owner_index == -1 else "OWNED BY %s" % [owner_name]
     miners_label.text = "MINERS: %s" % [miners]
     miners_label.visible = miners > 0
+    _tile_index = tile_index
 
     _set_card_texture(title, type, owner_index)
 
@@ -71,14 +75,10 @@ func _gui_input(event: InputEvent) -> void:
         _on_clicked()
 
 func _on_clicked() -> void:
-    pass
-    # _is_card_active = not _is_card_active
+    if _tile_index == -1:
+        return
 
-    # var target_position_y = self.position.y - _card_delta_pos_y if _is_card_active else self.position.y + _card_delta_pos_y
-
-    # var tween := create_tween()
-    # tween.set_parallel(false)
-    # tween.tween_property(self, "position:y", target_position_y, 0.5).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_BACK)
+    card_selected.emit(_tile_index)
 
 func _on_mouse_entered() -> void:
     _move_card(_target_pos_y, _initial_rot_deg - 5.0)

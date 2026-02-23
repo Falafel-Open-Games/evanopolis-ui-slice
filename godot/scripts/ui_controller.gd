@@ -33,6 +33,7 @@ signal dice_result_shown(dice_1: int, dice_2: int, total: int)
 @export var turn_indicator_label : Label
 @export var turn_indicator_player_color : ColorRect
 @export var inventory : Control
+@export var card_dialog : CardDialog
 
 const TIMER_START_GAME := 2.0
 const TIMER_APPLY_DICES_RESULT := 1.0
@@ -64,6 +65,7 @@ func _ready() -> void:
     turn_indicator_panel.visible = false
     map_overview_button.visible = false
     card_ui.hide_card()
+    card_dialog.close_dialog()
     inventory.set_inventory(game_controller, game_state)
 
     # bind states
@@ -92,6 +94,8 @@ func _bind_ui_elements() -> void:
         map_overview_button.pressed.connect(_on_map_overview_button_pressed)
     if not inventory_button.pressed.is_connected(_on_inventory_button_pressed):
         inventory_button.pressed.connect(_on_inventory_button_pressed)
+    if not inventory.card_selected.is_connected(_on_card_selected):
+        inventory.card_selected.connect(_on_card_selected)
 
 func _bind_game_controller() -> void:
     if not game_controller.timer_elapsed.is_connected(_on_timer_elapsed):
@@ -265,6 +269,7 @@ func _on_roll_dice_button_pressed() -> void:
 func _on_buy_property_button_pressed() -> void:
     buy_property_button.visible = false
     pass_property_button.visible = false
+    card_ui.hide_card()
     buy_property_button_pressed.emit()
 
 func _on_pass_property_button_pressed() -> void:
@@ -291,3 +296,11 @@ func _on_inventory_button_pressed() -> void:
         inventory.show_inventory()
     else:
         inventory.hide_inventory()
+
+func _on_card_selected(tile_index: int) -> void:
+    var tile_info = game_state.get_tile_info(tile_index)
+    var owner_name = game_state.get_player_username(tile_info.owner_index) if tile_info.owner_index != -1 else "NO OWNER"
+    var is_property = tile_info.tile_type == Utils.TileType.PROPERTY or tile_info.tile_type == Utils.TileType.SPECIAL_PROPERTY
+
+    if is_property:
+        card_dialog.open_dialog(tile_info.city, tile_info.tile_type, tile_info.property_price, tile_info.owner_index, tile_info.miner_batches, owner_name)

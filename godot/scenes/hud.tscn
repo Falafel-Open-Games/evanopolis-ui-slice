@@ -32,7 +32,7 @@ corner_radius_top_right = 40
 corner_radius_bottom_right = 40
 corner_radius_bottom_left = 40
 
-[node name="Hud" type="Control" node_paths=PackedStringArray("timer_label", "player_name", "player_balance", "player_color", "dice_1_texture_rect", "dice_2_texture_rect", "end_turn_button", "roll_dice_button", "buy_property_button", "pass_property_button", "put_away_property_button", "map_overview_button", "inventory_button", "card_ui", "balance_variation_panel", "balance_variation_label", "turn_indicator_panel", "turn_indicator_label", "turn_indicator_player_color", "inventory")]
+[node name="Hud" type="Control" node_paths=PackedStringArray("timer_label", "player_name", "player_balance", "player_color", "dice_1_texture_rect", "dice_2_texture_rect", "end_turn_button", "roll_dice_button", "buy_property_button", "pass_property_button", "put_away_property_button", "map_overview_button", "inventory_button", "card_ui", "balance_variation_panel", "balance_variation_label", "turn_indicator_panel", "turn_indicator_label", "turn_indicator_player_color", "inventory", "card_dialog")]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -62,6 +62,7 @@ turn_indicator_panel = NodePath("TurnIndicator")
 turn_indicator_label = NodePath("TurnIndicator/MarginContainer/HBoxContainer/TurnIndicatorLabel")
 turn_indicator_player_color = NodePath("TurnIndicator/MarginContainer/HBoxContainer/TurnIndicatorPlayerColor")
 inventory = NodePath("Inventory")
+card_dialog = NodePath("CardDialog")
 
 [node name="MarginContainer" type="MarginContainer" parent="."]
 layout_mode = 1
@@ -252,7 +253,6 @@ text = "PLAYER 1 IS UP"
 horizontal_alignment = 2
 
 [node name="CardDialog" type="CanvasLayer" parent="." node_paths=PackedStringArray("card", "trade_button", "miners_button", "mortgage_button", "close_button")]
-visible = false
 script = ExtResource("4_6fi6k")
 card = NodePath("PanelContainer/MarginContainer/HBoxContainer/Card")
 trade_button = NodePath("PanelContainer/MarginContainer/HBoxContainer/VBoxContainer/TradeBtn")
@@ -261,7 +261,6 @@ mortgage_button = NodePath("PanelContainer/MarginContainer/HBoxContainer/VBoxCon
 close_button = NodePath("PanelContainer/CloseBtn")
 
 [node name="ColorRect" type="ColorRect" parent="CardDialog"]
-visible = false
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -270,7 +269,6 @@ grow_vertical = 2
 color = Color(0, 0, 0, 0.5019608)
 
 [node name="PanelContainer" type="PanelContainer" parent="CardDialog"]
-visible = false
 anchors_preset = 8
 anchor_left = 0.5
 anchor_top = 0.5
@@ -285,7 +283,6 @@ grow_vertical = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_uo2fv")
 
 [node name="MarginContainer" type="MarginContainer" parent="CardDialog/PanelContainer"]
-visible = false
 layout_mode = 2
 theme_override_constants/margin_left = 40
 theme_override_constants/margin_top = 40
@@ -298,6 +295,7 @@ theme_override_constants/separation = 40
 
 [node name="Card" parent="CardDialog/PanelContainer/MarginContainer/HBoxContainer" instance=ExtResource("3_5ysmq")]
 layout_mode = 2
+mouse_filter = 2
 
 [node name="VBoxContainer" type="VBoxContainer" parent="CardDialog/PanelContainer/MarginContainer/HBoxContainer"]
 layout_mode = 2
@@ -320,7 +318,6 @@ theme_override_font_sizes/font_size = 40
 text = "MORTGAGE"
 
 [node name="CloseBtn" type="Button" parent="CardDialog/PanelContainer"]
-visible = false
 layout_mode = 2
 size_flags_horizontal = 8
 size_flags_vertical = 0

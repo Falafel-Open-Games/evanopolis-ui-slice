@@ -1,6 +1,5 @@
 extends Control
 
-
 @export var card_scene: PackedScene                     # assign Card.tscn in inspector
 @export var max_cards: int = 12
 @export var base_radius: float = 420.0                  # "distance" from pivot to card center
@@ -11,6 +10,8 @@ extends Control
 var game_controller: GameController
 var game_state: GameState
 var _cards: Array[Control] = []
+
+signal card_selected(tile_index: int)
 
 func _ready() -> void:
     anchor_left = 0.0
@@ -46,6 +47,7 @@ func _animate_inventory(target_position_y: int):
 func clear_cards() -> void:
     for c in _cards:
         if is_instance_valid(c):
+            c.card_selected.disconnect(_on_card_selected)
             c.queue_free()
     _cards.clear()
 
@@ -58,6 +60,7 @@ func spawn_cards(count: int) -> void:
         add_child(card)
         card.pivot_offset = card.size * 0.5   # rotate around center
         _cards.append(card)
+        card.card_selected.connect(_on_card_selected)
 
     _layout_cards()
 
@@ -110,6 +113,10 @@ func _on_property_purchased(tile_index: int) -> void:
     var tile_info = game_state.get_tile_info(tile_index)
     _populate_cards(tile_info.owner_index)
 
+func _on_card_selected(tile_index: int) -> void:
+    print("card selected %s" % tile_index)
+    card_selected.emit(tile_index)
+
 func _populate_cards(player_index: int):
     clear_cards()
     var owned_tiles: Array[int] = game_state.get_owned_property_indices(player_index)
@@ -117,9 +124,10 @@ func _populate_cards(player_index: int):
     spawn_cards(owned_tiles_size)
 
     for i in range(owned_tiles_size):
-        var tile_info = game_state.get_tile_info(owned_tiles[i])
+        var tile_index = owned_tiles[i]
+        var tile_info = game_state.get_tile_info(tile_index)
         var owner_name = game_state.get_player_username(tile_info.owner_index) if tile_info.owner_index != -1 else "NO OWNER"
         var is_property = tile_info.tile_type == Utils.TileType.PROPERTY or tile_info.tile_type == Utils.TileType.SPECIAL_PROPERTY
 
         if is_property:
-            _cards[i].set_card(tile_info.city, tile_info.tile_type, tile_info.property_price, tile_info.owner_index, tile_info.miner_batches, owner_name)
+            _cards[i].set_card(tile_info.city, tile_info.tile_type, tile_info.property_price, tile_info.owner_index, tile_info.miner_batches, owner_name, tile_index)
