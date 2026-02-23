@@ -32,7 +32,7 @@ corner_radius_top_right = 40
 corner_radius_bottom_right = 40
 corner_radius_bottom_left = 40
 
-[node name="Hud" type="Control" node_paths=PackedStringArray("timer_label", "player_name", "player_balance", "player_color", "dice_1_texture_rect", "dice_2_texture_rect", "end_turn_button", "roll_dice_button", "buy_property_button", "pass_property_button", "put_away_property_button", "map_overview_button", "inventory_button", "card_ui", "balance_variation_panel", "balance_variation_label", "turn_indicator_panel", "turn_indicator_label", "turn_indicator_player_color", "inventory", "card_dialog")]
+[node name="Hud" type="Control" node_paths=PackedStringArray("timer_label", "player_name", "player_balance", "player_color", "dice_1_texture_rect", "dice_2_texture_rect", "end_turn_button", "roll_dice_button", "buy_property_button", "pass_property_button", "put_away_property_button", "pay_toll_button", "map_overview_button", "inventory_button", "card_ui", "balance_variation_panel", "balance_variation_label", "turn_indicator_panel", "turn_indicator_label", "turn_indicator_player_color", "inventory", "card_dialog")]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -51,6 +51,7 @@ roll_dice_button = NodePath("MarginContainer/MarginContainer/HBoxContainer/RollD
 buy_property_button = NodePath("MarginContainer/MarginContainer/HBoxContainer/BuyPropertyBtn")
 pass_property_button = NodePath("MarginContainer/MarginContainer/HBoxContainer/PassPropertyBtn")
 put_away_property_button = NodePath("MarginContainer/MarginContainer/HBoxContainer/PutAwayPropertyBtn")
+pay_toll_button = NodePath("MarginContainer/MarginContainer/HBoxContainer/PayToll")
 map_overview_button = NodePath("MarginContainer/VBoxContainer/VBoxContainer/HBoxContainer3/MapOverviewBtn")
 inventory_button = NodePath("MarginContainer/VBoxContainer/VBoxContainer/HBoxContainer3/InventoryBtn")
 card_ui = NodePath("Card")
@@ -208,6 +209,11 @@ custom_minimum_size = Vector2(200, 80)
 layout_mode = 2
 text = "PUT AWAY"
 
+[node name="PayToll" type="Button" parent="MarginContainer/MarginContainer/HBoxContainer"]
+custom_minimum_size = Vector2(200, 80)
+layout_mode = 2
+text = "PAY"
+
 [node name="Card" parent="." instance=ExtResource("3_5ysmq")]
 layout_mode = 1
 offset_left = -395.0
@@ -253,6 +259,7 @@ text = "PLAYER 1 IS UP"
 horizontal_alignment = 2
 
 [node name="CardDialog" type="CanvasLayer" parent="." node_paths=PackedStringArray("card", "trade_button", "miners_button", "mortgage_button", "close_button")]
+visible = false
 script = ExtResource("4_6fi6k")
 card = NodePath("PanelContainer/MarginContainer/HBoxContainer/Card")
 trade_button = NodePath("PanelContainer/MarginContainer/HBoxContainer/VBoxContainer/TradeBtn")

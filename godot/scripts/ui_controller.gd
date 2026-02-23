@@ -22,6 +22,7 @@ signal dice_result_shown(dice_1: int, dice_2: int, total: int)
 @export var buy_property_button : Button
 @export var pass_property_button : Button
 @export var put_away_property_button : Button
+@export var pay_toll_button : Button
 @export var map_overview_button : Button
 @export var inventory_button : Button
 @export var card_ui : CardUi
@@ -64,6 +65,7 @@ func _ready() -> void:
     balance_variation_panel.visible = false
     turn_indicator_panel.visible = false
     map_overview_button.visible = false
+    pay_toll_button.visible = false
     card_ui.hide_card()
     card_dialog.close_dialog()
     inventory.set_inventory(game_controller, game_state)
@@ -90,6 +92,8 @@ func _bind_ui_elements() -> void:
         pass_property_button.pressed.connect(_on_pass_property_button_pressed)
     if not put_away_property_button.pressed.is_connected(_on_put_away_property_button_pressed):
         put_away_property_button.pressed.connect(_on_put_away_property_button_pressed)
+    if not pay_toll_button.pressed.is_connected(_on_pay_toll_button_button_pressed):
+        pay_toll_button.pressed.connect(_on_pay_toll_button_button_pressed)
     if not map_overview_button.pressed.is_connected(_on_map_overview_button_pressed):
         map_overview_button.pressed.connect(_on_map_overview_button_pressed)
     if not inventory_button.pressed.is_connected(_on_inventory_button_pressed):
@@ -191,16 +195,28 @@ func _on_pawn_move_started(_start_tile_index: int, _end_tile_index: int, _player
 
 func _on_pawn_move_finished(_end_tile_index: int, _player_index: int) -> void:
     var tile_info = game_state.get_tile_info(_end_tile_index)
-    var owner_name = game_state.get_player_username(tile_info.owner_index) if tile_info.owner_index != -1 else "NO OWNER"
     var is_property = tile_info.tile_type == Utils.TileType.PROPERTY or tile_info.tile_type == Utils.TileType.SPECIAL_PROPERTY
 
     map_overview_button.visible = true
 
     if is_property:
-        card_ui.set_card(tile_info.city, tile_info.tile_type, tile_info.property_price, tile_info.owner_index, tile_info.miner_batches, owner_name)
-        var buy_visible: bool = tile_info.owner_index == -1
-        buy_property_button.visible = buy_visible
-        pass_property_button.visible = buy_visible
+        if tile_info.owner_index == -1:
+            # Tile is available
+            buy_property_button.visible = true
+            pass_property_button.visible = true
+            card_ui.set_card_available(tile_info.city, tile_info.tile_type, tile_info.property_price)
+        elif tile_info.owner_index != game_state.current_player_index:
+            # Current player must pay the toll
+            pay_toll_button.visible = true
+            var toll_amount = game_state.get_energy_toll(tile_info)
+            var owner_name = game_state.get_player_username(tile_info.owner_index) if tile_info.owner_index != -1 else "NO OWNER"
+            card_ui.set_card_owned(tile_info.city, tile_info.tile_type, toll_amount, tile_info.miner_batches, owner_name)
+        else:
+            # Current player is the owner already
+            var toll_amount = game_state.get_energy_toll(tile_info)
+            var owner_name = game_state.get_player_username(tile_info.owner_index) if tile_info.owner_index != -1 else "NO OWNER"
+            card_ui.set_card_owned(tile_info.city, tile_info.tile_type, toll_amount, tile_info.miner_batches, owner_name)
+            end_turn_button.visible = true
     else:
         end_turn_button.visible = true
 
@@ -228,7 +244,8 @@ func _on_miner_batches_changed(tile_index: int, miner_batches: int, owner_index:
 func _on_property_purchased(tile_index: int) -> void:
     var tile_info = game_state.get_tile_info(tile_index)
     var owner_name = game_state.get_player_username(tile_info.owner_index) if tile_info.owner_index != -1 else "NO OWNER"
-    card_ui.set_card(tile_info.city, tile_info.tile_type, tile_info.property_price, tile_info.owner_index, tile_info.miner_batches, owner_name)
+    var toll_amount = game_state.get_energy_toll(tile_info)
+    card_ui.set_card_owned(tile_info.city, tile_info.tile_type, toll_amount, tile_info.miner_batches, owner_name)
     put_away_property_button.visible = true
     _spend_value_balance_variation(int(tile_info.property_price))
 
@@ -285,6 +302,11 @@ func _on_put_away_property_button_pressed() -> void:
     card_ui.hide_card()
     end_turn_button.visible = true
 
+func _on_pay_toll_button_button_pressed() -> void:
+    pay_toll_button.visible = false
+    # TODO: add payment functionality
+    pass
+
 func _on_map_overview_button_pressed() -> void:
     _is_map_overview_active = not _is_map_overview_active
     map_overview_button_pressed.emit(_is_map_overview_active)
@@ -301,6 +323,7 @@ func _on_card_selected(tile_index: int) -> void:
     var tile_info = game_state.get_tile_info(tile_index)
     var owner_name = game_state.get_player_username(tile_info.owner_index) if tile_info.owner_index != -1 else "NO OWNER"
     var is_property = tile_info.tile_type == Utils.TileType.PROPERTY or tile_info.tile_type == Utils.TileType.SPECIAL_PROPERTY
+    var toll_amount = game_state.get_energy_toll(tile_info)
 
     if is_property:
-        card_dialog.open_dialog(tile_info.city, tile_info.tile_type, tile_info.property_price, tile_info.owner_index, tile_info.miner_batches, owner_name)
+        card_dialog.open_dialog(tile_info.city, tile_info.tile_type, toll_amount, tile_info.miner_batches, owner_name)

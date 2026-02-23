@@ -128,6 +128,7 @@ func _populate_cards(player_index: int):
         var tile_info = game_state.get_tile_info(tile_index)
         var owner_name = game_state.get_player_username(tile_info.owner_index) if tile_info.owner_index != -1 else "NO OWNER"
         var is_property = tile_info.tile_type == Utils.TileType.PROPERTY or tile_info.tile_type == Utils.TileType.SPECIAL_PROPERTY
+        var toll_amount = game_state.get_energy_toll(tile_info)
 
         if is_property:
-            _cards[i].set_card(tile_info.city, tile_info.tile_type, tile_info.property_price, tile_info.owner_index, tile_info.miner_batches, owner_name, tile_index)
+            _cards[i].set_card_owned(tile_info.city, tile_info.tile_type, toll_amount, tile_info.miner_batches, owner_name, tile_index)

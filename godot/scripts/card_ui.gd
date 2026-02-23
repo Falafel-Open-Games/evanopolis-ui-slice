@@ -27,41 +27,50 @@ func set_initial_position():
     _target_pos_y = _initial_pos_y - 320
     _initial_rot_deg = self.rotation_degrees
 
-func set_card(title: String, type: Utils.TileType, price: float, owner_index: int, miners: int, owner_name: String, tile_index: int = -1):
+func set_card_available(title: String, type: Utils.TileType, price: float, tile_index: int = -1):
     visible = true
     title_label.text = title.to_upper()
     card_type_label.text = Utils.TileType.keys()[type]
     price_label.text = str(price)
-    owner_label.text = "AVAILABLE" if owner_index == -1 else "OWNED BY %s" % [owner_name]
-    miners_label.text = "MINERS: %s" % [miners]
-    miners_label.visible = miners > 0
+    owner_label.text = "AVAILABLE"
     _tile_index = tile_index
 
-    _set_card_texture(title, type, owner_index)
+    _set_card_texture(title, false, type)
+
+func set_card_owned(title: String, type: Utils.TileType, toll_amount: float, miners: int, owner_name: String, tile_index: int = -1):
+    visible = true
+    title_label.text = title.to_upper()
+    card_type_label.text = Utils.TileType.keys()[type]
+    price_label.text = str(toll_amount)
+    miners_label.text = "MINERS: %s" % [miners]
+    miners_label.visible = miners > 0
+    owner_label.text = "OWNED BY %s" % [owner_name]
+    _tile_index = tile_index
+
+    _set_card_texture(title, true, type)
 
 func hide_card():
     visible = false
 
 # func _set_card_texture(title: String, type: String, miners: int):
-func _set_card_texture(title: String, type: Utils.TileType, owner_index: int):
+func _set_card_texture(title: String, owned: bool, type: Utils.TileType = Utils.TileType.PROPERTY):
     if type != Utils.TileType.PROPERTY:
         card_image.visible = false
         return
 
     card_image.visible = true
-    var path = _get_texture_path(title, owner_index)
+    var path = _get_texture_path(title, owned)
     var texture: Texture2D = load(path)
     if texture == null:
         push_error("Texture not found at: %s" % path)
         return
     card_image.texture = texture
 
-func _get_texture_path(title: String, owner_index: int) -> String:
+func _get_texture_path(title: String, owned: bool) -> String:
     # func _get_texture_path(title: String, miners: int) -> String:
     # var has_miners = "with" if miners > 0 else "without"
-    var is_owned = "with" if owner_index != -1 else "without"
+    var is_owned = "with" if owned else "without"
     var base_path = "res://textures/card-%s-%s-mining.jpg" % [to_dash_slug(title), is_owned]
-    print("_get_texture_path %s, %s, %s" % [title, owner_index, base_path])
     return base_path
 
 func to_dash_slug(text: String) -> String:

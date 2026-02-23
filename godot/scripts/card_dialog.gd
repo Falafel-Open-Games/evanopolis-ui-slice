@@ -19,9 +19,9 @@ func _ready() -> void:
     if not close_button.pressed.is_connected(_on_close_button_pressed):
         close_button.pressed.connect(_on_close_button_pressed)
 
-func open_dialog(title: String, type: Utils.TileType, price: float, owner_index: int, miners: int, owner_name: String) -> void:
+func open_dialog(title: String, type: Utils.TileType, toll_amount: float, miners: int, owner_name: String) -> void:
     visible = true
-    card.set_card(title, type, price, owner_index, miners, owner_name)
+    card.set_card_owned(title, type, toll_amount, miners, owner_name)
 
 func close_dialog():
     visible = false
