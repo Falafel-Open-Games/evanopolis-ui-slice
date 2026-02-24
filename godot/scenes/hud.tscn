@@ -1,10 +1,11 @@
-[gd_scene load_steps=12 format=3 uid="uid://bq4767bbrdlve"]
+[gd_scene load_steps=13 format=3 uid="uid://bq4767bbrdlve"]
 
 [ext_resource type="Script" uid="uid://braklbiosnmm3" path="res://scripts/ui_controller.gd" id="1_ahhtf"]
 [ext_resource type="Texture2D" uid="uid://c517xfjbdurgf" path="res://textures/dices.png" id="2_6fi6k"]
 [ext_resource type="PackedScene" uid="uid://dyuw0t0ual1uo" path="res://scenes/card.tscn" id="3_5ysmq"]
 [ext_resource type="Script" uid="uid://bcii2rp8t5udr" path="res://scripts/card_dialog.gd" id="4_6fi6k"]
 [ext_resource type="Script" uid="uid://cvlqvy87n2wq5" path="res://scripts/card_inventory.gd" id="4_uo2fv"]
+[ext_resource type="Texture2D" uid="uid://bsdsirftpihua" path="res://textures/miner_icon.png" id="5_047uy"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_6fi6k"]
 atlas = ExtResource("2_6fi6k")
@@ -255,14 +256,18 @@ theme_override_font_sizes/font_size = 24
 text = "PLAYER 1 IS UP"
 horizontal_alignment = 2
 
-[node name="CardDialog" type="CanvasLayer" parent="." node_paths=PackedStringArray("card", "trade_button", "miners_button", "mortgage_button", "close_button")]
-visible = false
+[node name="CardDialog" type="CanvasLayer" parent="." node_paths=PackedStringArray("card", "trade_button", "miners_button", "mortgage_button", "close_button", "miner_confirm_button", "miners_buttons", "page_default", "page_miner", "miners_counter")]
 script = ExtResource("4_6fi6k")
 card = NodePath("PanelContainer/MarginContainer/HBoxContainer/Card")
-trade_button = NodePath("PanelContainer/MarginContainer/HBoxContainer/VBoxContainer/TradeBtn")
-miners_button = NodePath("PanelContainer/MarginContainer/HBoxContainer/VBoxContainer/MinersBtn")
-mortgage_button = NodePath("PanelContainer/MarginContainer/HBoxContainer/VBoxContainer/MortgageBtn")
+trade_button = NodePath("PanelContainer/MarginContainer/HBoxContainer/Page1/TradeBtn")
+miners_button = NodePath("PanelContainer/MarginContainer/HBoxContainer/Page1/MinersBtn")
+mortgage_button = NodePath("PanelContainer/MarginContainer/HBoxContainer/Page1/MortgageBtn")
 close_button = NodePath("PanelContainer/CloseBtn")
+miner_confirm_button = NodePath("PanelContainer/MarginContainer/HBoxContainer/Page2/MinersPayBtn")
+miners_buttons = [NodePath("PanelContainer/MarginContainer/HBoxContainer/Page2/HBoxContainer/TextureButton"), NodePath("PanelContainer/MarginContainer/HBoxContainer/Page2/HBoxContainer/TextureButton2"), NodePath("PanelContainer/MarginContainer/HBoxContainer/Page2/HBoxContainer/TextureButton3"), NodePath("PanelContainer/MarginContainer/HBoxContainer/Page2/HBoxContainer/TextureButton4")]
+page_default = NodePath("PanelContainer/MarginContainer/HBoxContainer/Page1")
+page_miner = NodePath("PanelContainer/MarginContainer/HBoxContainer/Page2")
+miners_counter = NodePath("PanelContainer/MarginContainer/HBoxContainer/Page2/Counter")
 
 [node name="ColorRect" type="ColorRect" parent="CardDialog"]
 anchors_preset = 15
@@ -278,9 +283,9 @@ anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -325.5
+offset_left = -400.0
 offset_top = -290.0
-offset_right = 325.5
+offset_right = 400.0
 offset_bottom = 290.0
 grow_horizontal = 2
 grow_vertical = 2
@@ -296,30 +301,101 @@ theme_override_constants/margin_bottom = 40
 [node name="HBoxContainer" type="HBoxContainer" parent="CardDialog/PanelContainer/MarginContainer"]
 layout_mode = 2
 theme_override_constants/separation = 40
+alignment = 1
 
 [node name="Card" parent="CardDialog/PanelContainer/MarginContainer/HBoxContainer" instance=ExtResource("3_5ysmq")]
 layout_mode = 2
 mouse_filter = 2
 
-[node name="VBoxContainer" type="VBoxContainer" parent="CardDialog/PanelContainer/MarginContainer/HBoxContainer"]
+[node name="Page1" type="VBoxContainer" parent="CardDialog/PanelContainer/MarginContainer/HBoxContainer"]
+visible = false
 layout_mode = 2
+size_flags_horizontal = 3
 theme_override_constants/separation = 24
 alignment = 1
 
-[node name="TradeBtn" type="Button" parent="CardDialog/PanelContainer/MarginContainer/HBoxContainer/VBoxContainer"]
-layout_mode = 2
-theme_override_font_sizes/font_size = 40
-text = "TRADE"
-
-[node name="MinersBtn" type="Button" parent="CardDialog/PanelContainer/MarginContainer/HBoxContainer/VBoxContainer"]
+[node name="MinersBtn" type="Button" parent="CardDialog/PanelContainer/MarginContainer/HBoxContainer/Page1"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 40
 text = "MINERS"
 
-[node name="MortgageBtn" type="Button" parent="CardDialog/PanelContainer/MarginContainer/HBoxContainer/VBoxContainer"]
+[node name="TradeBtn" type="Button" parent="CardDialog/PanelContainer/MarginContainer/HBoxContainer/Page1"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 40
+disabled = true
+text = "TRADE"
+
+[node name="MortgageBtn" type="Button" parent="CardDialog/PanelContainer/MarginContainer/HBoxContainer/Page1"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 40
+disabled = true
 text = "MORTGAGE"
+
+[node name="Page2" type="VBoxContainer" parent="CardDialog/PanelContainer/MarginContainer/HBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 24
+
+[node name="Title" type="Label" parent="CardDialog/PanelContainer/MarginContainer/HBoxContainer/Page2"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_font_sizes/font_size = 40
+text = "MINERS"
+
+[node name="HBoxContainer" type="HBoxContainer" parent="CardDialog/PanelContainer/MarginContainer/HBoxContainer/Page2"]
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 4
+theme_override_constants/separation = 24
+
+[node name="TextureButton" type="TextureButton" parent="CardDialog/PanelContainer/MarginContainer/HBoxContainer/Page2/HBoxContainer"]
+custom_minimum_size = Vector2(72, 80)
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 4
+texture_normal = ExtResource("5_047uy")
+ignore_texture_size = true
+stretch_mode = 4
+
+[node name="TextureButton2" type="TextureButton" parent="CardDialog/PanelContainer/MarginContainer/HBoxContainer/Page2/HBoxContainer"]
+custom_minimum_size = Vector2(72, 80)
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 4
+texture_normal = ExtResource("5_047uy")
+ignore_texture_size = true
+stretch_mode = 4
+
+[node name="TextureButton3" type="TextureButton" parent="CardDialog/PanelContainer/MarginContainer/HBoxContainer/Page2/HBoxContainer"]
+custom_minimum_size = Vector2(72, 80)
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 4
+texture_normal = ExtResource("5_047uy")
+ignore_texture_size = true
+stretch_mode = 4
+
+[node name="TextureButton4" type="TextureButton" parent="CardDialog/PanelContainer/MarginContainer/HBoxContainer/Page2/HBoxContainer"]
+custom_minimum_size = Vector2(72, 80)
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 4
+texture_normal = ExtResource("5_047uy")
+ignore_texture_size = true
+stretch_mode = 4
+
+[node name="Counter" type="Label" parent="CardDialog/PanelContainer/MarginContainer/HBoxContainer/Page2"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_font_sizes/font_size = 24
+text = "Adding 1 of 4 miners"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="MinersPayBtn" type="Button" parent="CardDialog/PanelContainer/MarginContainer/HBoxContainer/Page2"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 40
+text = "20 EVA"
 
 [node name="CloseBtn" type="Button" parent="CardDialog/PanelContainer"]
 layout_mode = 2

@@ -68,6 +68,7 @@ func _ready() -> void:
     card_ui.hide_card()
     card_dialog.close_dialog()
     inventory.set_inventory(game_controller, game_state)
+    card_dialog.set_dialog(game_controller, game_state)
 
     # bind states
     _bind_game_state()
