@@ -5,9 +5,10 @@ signal card_selected(tile_index: int)
 
 @export var title_label: Label
 @export var card_type_label: Label
+@export var price_title: Label
 @export var price_label: Label
 @export var owner_label: Label
-@export var miners_label: Label
+@export var miners_textures: Array[TextureRect]
 @export var card_image: TextureRect
 
 var card_assuncion_with_mining_path = "res://textures/card-assuncion-with-mining.jpg"
@@ -31,9 +32,13 @@ func set_card_available(title: String, type: Utils.TileType, price: float, tile_
     visible = true
     title_label.text = title.to_upper()
     card_type_label.text = Utils.TileType.keys()[type]
-    price_label.text = str(price)
+    price_title.text = "PRICE"
+    price_label.text = "%s EVA" % str(price)
     owner_label.text = "AVAILABLE"
     _tile_index = tile_index
+
+    for miner_texture in miners_textures:
+        miner_texture.modulate = Color(1,1,1, 0.5)
 
     _set_card_texture(title, false, type)
 
@@ -41,11 +46,16 @@ func set_card_owned(title: String, type: Utils.TileType, toll_amount: float, min
     visible = true
     title_label.text = title.to_upper()
     card_type_label.text = Utils.TileType.keys()[type]
-    price_label.text = str(toll_amount)
-    miners_label.text = "MINERS: %s" % [miners]
-    miners_label.visible = miners > 0
+    price_title.text = "ENERGY TOLL"
+    price_label.text = "%s EVA" % str(toll_amount)
     owner_label.text = "OWNED BY %s" % [owner_name]
     _tile_index = tile_index
+
+    for miner_texture in miners_textures:
+        miner_texture.modulate = Color(1,1,1, 0.2)
+
+    for i in miners:
+        miners_textures[i].modulate = Color(1,1,1, 1)
 
     _set_card_texture(title, true, type)
 

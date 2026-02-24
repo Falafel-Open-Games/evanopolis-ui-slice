@@ -1,7 +1,8 @@
-[gd_scene load_steps=4 format=3 uid="uid://dyuw0t0ual1uo"]
+[gd_scene load_steps=5 format=3 uid="uid://dyuw0t0ual1uo"]
 
 [ext_resource type="Script" uid="uid://cyo4nro23c03e" path="res://scripts/card_ui.gd" id="1_6u4wf"]
 [ext_resource type="Texture2D" uid="uid://bgugtamtwrjyy" path="res://textures/card-assuncion-with-mining.jpg" id="2_ktuci"]
+[ext_resource type="Texture2D" uid="uid://bsdsirftpihua" path="res://textures/miner_icon.png" id="3_ktuci"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_ahhtf"]
 bg_color = Color(0.1375669, 0.14706111, 0.15290019, 1)
@@ -15,7 +16,7 @@ corner_radius_top_right = 24
 corner_radius_bottom_right = 24
 corner_radius_bottom_left = 24
 
-[node name="Card" type="Panel" node_paths=PackedStringArray("title_label", "card_type_label", "price_label", "owner_label", "miners_label", "card_image")]
+[node name="Card" type="Panel" node_paths=PackedStringArray("title_label", "card_type_label", "price_title", "price_label", "owner_label", "miners_textures", "card_image")]
 custom_minimum_size = Vector2(300, 500)
 anchors_preset = 1
 anchor_left = 1.0
@@ -31,9 +32,10 @@ theme_override_styles/panel = SubResource("StyleBoxFlat_ahhtf")
 script = ExtResource("1_6u4wf")
 title_label = NodePath("MarginContainer/Top/CardTitle")
 card_type_label = NodePath("MarginContainer/Top/CardType")
-price_label = NodePath("MarginContainer/Bottom/Price")
+price_title = NodePath("MarginContainer/Bottom/Prices/PriceTitle")
+price_label = NodePath("MarginContainer/Bottom/Prices/PriceValue")
 owner_label = NodePath("MarginContainer/Bottom/Owner")
-miners_label = NodePath("MarginContainer/Bottom/Miners")
+miners_textures = [NodePath("MarginContainer/Bottom/Miners/Miner1"), NodePath("MarginContainer/Bottom/Miners/Miner2"), NodePath("MarginContainer/Bottom/Miners/Miner3"), NodePath("MarginContainer/Bottom/Miners/Miner4")]
 card_image = NodePath("MarginContainer/CardImage")
 
 [node name="MarginContainer" type="MarginContainer" parent="."]
@@ -77,17 +79,57 @@ stretch_mode = 4
 [node name="Bottom" type="VBoxContainer" parent="MarginContainer"]
 layout_mode = 2
 size_flags_vertical = 8
+theme_override_constants/separation = 8
 alignment = 2
 
-[node name="Price" type="Label" parent="MarginContainer/Bottom"]
+[node name="Miners" type="HBoxContainer" parent="MarginContainer/Bottom"]
+layout_mode = 2
+theme_override_constants/separation = 16
+alignment = 1
+
+[node name="Miner1" type="TextureRect" parent="MarginContainer/Bottom/Miners"]
+custom_minimum_size = Vector2(36, 40)
+layout_mode = 2
+texture = ExtResource("3_ktuci")
+expand_mode = 1
+stretch_mode = 4
+
+[node name="Miner2" type="TextureRect" parent="MarginContainer/Bottom/Miners"]
+custom_minimum_size = Vector2(36, 40)
+layout_mode = 2
+texture = ExtResource("3_ktuci")
+expand_mode = 1
+stretch_mode = 4
+
+[node name="Miner3" type="TextureRect" parent="MarginContainer/Bottom/Miners"]
+custom_minimum_size = Vector2(36, 40)
+layout_mode = 2
+texture = ExtResource("3_ktuci")
+expand_mode = 1
+stretch_mode = 4
+
+[node name="Miner4" type="TextureRect" parent="MarginContainer/Bottom/Miners"]
+custom_minimum_size = Vector2(36, 40)
+layout_mode = 2
+texture = ExtResource("3_ktuci")
+expand_mode = 1
+stretch_mode = 4
+
+[node name="Prices" type="HBoxContainer" parent="MarginContainer/Bottom"]
+layout_mode = 2
+
+[node name="PriceTitle" type="Label" parent="MarginContainer/Bottom/Prices"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 20
 text = "PRICE"
 
+[node name="PriceValue" type="Label" parent="MarginContainer/Bottom/Prices"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 20
+text = "00000"
+horizontal_alignment = 2
+
 [node name="Owner" type="Label" parent="MarginContainer/Bottom"]
 layout_mode = 2
 text = "IS AVAILABLE"
-
-[node name="Miners" type="Label" parent="MarginContainer/Bottom"]
-layout_mode = 2
-text = "MINERS: 0"
