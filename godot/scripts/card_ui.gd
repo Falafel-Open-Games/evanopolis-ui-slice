@@ -43,6 +43,7 @@ func set_card_available(title: String, type: Utils.TileType, price: float, tile_
     _set_card_texture(title, false, type)
 
 func set_card_owned(title: String, type: Utils.TileType, toll_amount: float, miners: int, owner_name: String, tile_index: int = -1):
+    print("set_card_owned miners = %s" % miners)
     visible = true
     title_label.text = title.to_upper()
     card_type_label.text = Utils.TileType.keys()[type]

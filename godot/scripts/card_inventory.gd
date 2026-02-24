@@ -32,6 +32,10 @@ func set_inventory(_game_controller: GameController, _game_state: GameState):
         game_controller.turn_started.connect(_on_turn_started)
     if not game_controller.property_purchased.is_connected(_on_property_purchased):
         game_controller.property_purchased.connect(_on_property_purchased)
+    if not game_state.player_data_changed.is_connected(_on_player_data_changed):
+        game_state.player_data_changed.connect(_on_player_data_changed)
+    if not game_state.miner_batches_changed.is_connected(_on_miner_batches_changed):
+        game_state.miner_batches_changed.connect(_on_miner_batches_changed)
 
 func show_inventory():
     _animate_inventory(0)
@@ -107,11 +111,25 @@ func _on_property_purchased(tile_index: int) -> void:
     var tile_info = game_state.get_tile_info(tile_index)
     _populate_cards(tile_info.owner_index)
 
+func _on_player_data_changed(player_index: int, player_data: PlayerData) -> void:
+    if player_index != game_state.current_player_index:
+        return
+
+    print("mining power %s" % player_data.mining_power)
+    _populate_cards(player_index)
+
+func _on_miner_batches_changed(tile_index: int, miner_batches: int, owner_index: int) -> void:
+    if owner_index != game_state.current_player_index:
+        return
+
+    _populate_cards(owner_index)
+
 func _on_card_selected(tile_index: int) -> void:
     print("card selected %s" % tile_index)
     card_selected.emit(tile_index)
 
 func _populate_cards(player_index: int):
+    print("_populate_cards %s" % player_index)
     clear_cards()
     var owned_tiles: Array[int] = game_state.get_owned_property_indices(player_index)
     var owned_tiles_size = owned_tiles.size()

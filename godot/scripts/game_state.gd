@@ -3,12 +3,12 @@ extends Node
 
 const SIDE_COUNT: int = 6
 const CITY_BASE_PRICE: Dictionary = {
-    "Caracas": 20000.0,
-    "Assuncion": 50000.0,
-    "Ciudad del Este": 80000.0,
-    "Minsk": 110000.0,
-    "Irkutsk": 150000.0,
-    "Rockdale": 200000.0,
+    "Caracas": 3.0,
+    "Assuncion": 4.0,
+    "Ciudad del Este": 5.0,
+    "Minsk": 6.0,
+    "Irkutsk": 7.0,
+    "Rockdale": 8.0,
 }
 const SPECIAL_PROPERTIES: Array[Dictionary] = [
     {"name": "Importadora 1", "price": 5.0},
@@ -20,7 +20,7 @@ const SPECIAL_PROPERTIES: Array[Dictionary] = [
 ]
 const PAYOUT_PER_MINER: float = 2.0
 const MAX_MINER_BATCHES_PER_PROPERTY: int = 4
-const MINER_BATCH_PRICE_FIAT_BASE: float = 320000.0
+const MINER_BATCH_PRICE_FIAT_BASE: float = 12
 
 var current_player_index: int
 var player_positions: Array[int]
@@ -371,8 +371,11 @@ func _get_base_tile_price(tile: TileInfo) -> float:
     return 0.0
 
 func _get_inflation_multiplier() -> float:
-    var inflation_cycles: int = int(floor(float(current_cycle) / 2.0))
-    return pow(1.1, inflation_cycles)
+    return 1.0
+
+    # TODO: implement inflation project wide
+    # var inflation_cycles: int = int(floor(float(current_cycle) / 2.0))
+    # return pow(1.1, inflation_cycles)
 
 func _is_tile_buyable(tile: TileInfo) -> bool:
     return (

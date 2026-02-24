@@ -23,8 +23,8 @@ signal dice_result_shown(dice_1: int, dice_2: int, total: int)
 @export var buy_property_button : Button
 @export var pass_property_button : Button
 @export var pay_toll_button : Button
-@export var map_overview_button : Button
-@export var inventory_button : Button
+@export var map_overview_button : TextureButton
+@export var inventory_button : TextureButton
 @export var card_ui : CardUi
 @export var balance_variation_panel : PanelContainer
 @export var balance_variation_label : Label
@@ -137,8 +137,12 @@ func _on_timer_elapsed(turn_duration: int, time_elapsed: float):
 
 func _on_turn_started(player_index: int, tile_index: int):
     print("_on_turn_started %s %s" % [player_index, tile_index])
-    roll_dice_button.visible = true
+
     map_overview_button.visible = true
+    inventory_button.visible = true
+    _is_inventory_active = false
+    inventory.hide_inventory()
+
     player_name.text = game_state.get_player_username(player_index)
     var fiat_balance = game_state.get_player_fiat_balance(player_index)
     var bitcoin_balance = game_state.get_player_bitcoin_balance(player_index)
@@ -185,6 +189,10 @@ func _on_turn_started(player_index: int, tile_index: int):
     turn_indicator_panel.visible = true
     _show_turn_indicator_panel()
 
+    await get_tree().create_timer(0.5).timeout
+
+    roll_dice_button.visible = true
+
     await get_tree().create_timer(TIMER_TURN_INDICATOR).timeout
 
     _hide_turn_indicator_panel()
@@ -227,18 +235,25 @@ func _on_dices_rolled(dice_1: int, dice_2: int, total: int) -> void:
 
 func _on_pawn_move_started(_start_tile_index: int, _end_tile_index: int, _player_index: int) -> void:
     map_overview_button.visible = false
+    inventory_button.visible = false
 
 func _on_pawn_move_finished(_end_tile_index: int, _player_index: int) -> void:
     var tile_info = game_state.get_tile_info(_end_tile_index)
     var is_property = tile_info.tile_type == Utils.TileType.PROPERTY or tile_info.tile_type == Utils.TileType.SPECIAL_PROPERTY
 
     map_overview_button.visible = true
+    inventory_button.visible = true
 
     if is_property:
         if tile_info.owner_index == -1:
             # Tile is available
             buy_property_button.visible = true
             pass_property_button.visible = true
+
+            var player_balance_fiat = game_state.get_player_fiat_balance(_player_index)
+            var is_affordable = tile_info.property_price < player_balance_fiat
+            buy_property_button.disabled = not is_affordable
+
             card_ui.set_card_available(tile_info.city, tile_info.tile_type, tile_info.property_price)
         elif tile_info.owner_index != game_state.current_player_index:
             # Current player must pay the toll
@@ -277,7 +292,13 @@ func _on_turn_state_changed(_player_index: int, turn_number: int, cycle_number: 
     print("_on_turn_state_changed %s %s %s" % [_player_index, turn_number, cycle_number])
 
 func _on_miner_batches_changed(tile_index: int, miner_batches: int, owner_index: int) -> void:
-    print("_on_turn_state_changed %s %s %s" % [tile_index, miner_batches, owner_index])
+    print("_on_miner_batches_changed %s %s %s" % [tile_index, miner_batches, owner_index])
+
+    if miner_batches <= 0:
+        return
+
+    var paid_total = game_state.get_miner_batch_price_fiat() * miner_batches
+    _spend_value_balance_variation(int(paid_total))
 
 func _on_property_purchased(tile_index: int) -> void:
     var tile_info = game_state.get_tile_info(tile_index)
@@ -364,7 +385,7 @@ func _on_card_selected(tile_index: int) -> void:
     var toll_amount = game_state.get_energy_toll(tile_info)
 
     if is_property:
-        card_dialog.open_dialog(tile_info.city, tile_info.tile_type, toll_amount, tile_info.miner_batches, owner_name)
+        card_dialog.open_dialog(tile_index, tile_info.city, tile_info.tile_type, toll_amount, tile_info.miner_batches, owner_name)
 
 func set_button_colors(button: Button, normal_color: Color, hover_color: Color, pressed_color: Color) -> void:
     # Font colors

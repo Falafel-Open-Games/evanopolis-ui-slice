@@ -15,6 +15,9 @@ extends CanvasLayer
 var _selected_miners : int
 var game_controller: GameController
 var game_state: GameState
+var _miner_batch_price: float
+var _current_miners_count: int
+var _current_tile_index: int
 
 func _ready() -> void:
     visible = false
@@ -27,6 +30,8 @@ func _ready() -> void:
         mortgage_button.pressed.connect(_on_mortgage_button_pressed)
     if not close_button.pressed.is_connected(_on_close_button_pressed):
         close_button.pressed.connect(_on_close_button_pressed)
+    if not miner_confirm_button.pressed.is_connected(_on_miner_confirm_button):
+        miner_confirm_button.pressed.connect(_on_miner_confirm_button)
 
     for i in range(miners_buttons.size()):
         var btn := miners_buttons[i]
@@ -40,13 +45,23 @@ func set_dialog(_game_controller: GameController, _game_state: GameState):
     game_controller = _game_controller
     game_state = _game_state
 
-    _on_miners_buttons_pressed(0) # Select 1 by default
-
-func open_dialog(title: String, type: Utils.TileType, toll_amount: float, miners: int, owner_name: String) -> void:
+func open_dialog(tile_index: int, title: String, type: Utils.TileType, toll_amount: float, miners: int, owner_name: String) -> void:
     visible = true
     page_default.visible = true
     page_miner.visible = false
     card.set_card_owned(title, type, toll_amount, miners, owner_name)
+    _current_tile_index = tile_index
+    _current_miners_count = miners
+
+    for btn in miners_buttons:
+        btn.modulate = Color(0, 0, 0, 1)
+        btn.disabled = false
+
+    for i in _current_miners_count:
+        miners_buttons[i].modulate = Color(0, 1, 0, 1)
+        miners_buttons[i].disabled = true
+
+    _on_miners_buttons_pressed(0) # Select 1 by default
 
 func close_dialog():
     visible = false
@@ -66,7 +81,7 @@ func _on_close_button_pressed() -> void:
 
 func _on_miners_buttons_pressed(button_index: int) -> void:
     _selected_miners = button_index + 1
-    miners_counter.text = "Adding %s of %s miners" % [_selected_miners, miners_buttons.size()]
+    miners_counter.text = "Adding %s of %s miners" % [_selected_miners, miners_buttons.size() - _current_miners_count]
 
     for btn in miners_buttons:
         btn.modulate = Color(0, 0, 0, 0.5)
@@ -74,5 +89,18 @@ func _on_miners_buttons_pressed(button_index: int) -> void:
     for i in range(_selected_miners):
         miners_buttons[i].modulate = Color(0, 0, 0, 1)
 
-    var miner_batch_price := game_state.get_miner_batch_price_fiat() * _selected_miners
-    miner_confirm_button.text = "%s EVA" % str(miner_batch_price)
+    _miner_batch_price = game_state.get_miner_batch_price_fiat() * _selected_miners
+    miner_confirm_button.text = "%s EVA" % str(_miner_batch_price)
+
+    var player_index = game_state.current_player_index
+    var player_balance_fiat = game_state.get_player_fiat_balance(player_index)
+    var is_affordable = _miner_batch_price < player_balance_fiat
+    miner_confirm_button.disabled = not is_affordable
+
+func _on_miner_confirm_button():
+    var player_index = game_state.current_player_index
+    var order: Dictionary
+    order[_current_tile_index] = _selected_miners
+    game_state.set_pending_miner_order(player_index, order, false)
+    game_state.apply_all_pending_miner_orders()
+    close_dialog()
