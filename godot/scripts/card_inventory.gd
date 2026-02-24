@@ -100,12 +100,6 @@ func _layout_cards() -> void:
         card.position = base_pos + offset - card.pivot_offset
         card.set_initial_position()
 
-
-func _reset_cards():
-    var n := _cards.size()
-    for i in range(n):
-        _cards[i].hide_card()
-
 func _on_turn_started(player_index: int, _tile_index: int):
     _populate_cards(player_index)
 
@@ -121,6 +115,10 @@ func _populate_cards(player_index: int):
     clear_cards()
     var owned_tiles: Array[int] = game_state.get_owned_property_indices(player_index)
     var owned_tiles_size = owned_tiles.size()
+
+    if owned_tiles_size < 1:
+        return
+
     spawn_cards(owned_tiles_size)
 
     for i in range(owned_tiles_size):

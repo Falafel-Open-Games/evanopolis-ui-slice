@@ -144,6 +144,41 @@ func _on_turn_started(player_index: int, tile_index: int):
     player_balance.text = "%s EVA | %s BTC" % [fiat_balance, bitcoin_balance]
     player_color.color = game_state.get_player_accent_color(player_index)
 
+    # Set button colors
+    var base_color := player_color.color
+    var hover_color := base_color * 1.1
+    var pressed_color := base_color * 0.8
+
+    set_button_colors(roll_dice_button,
+        base_color,
+        hover_color,
+        pressed_color
+    )
+
+    set_button_colors(buy_property_button,
+        base_color,
+        hover_color,
+        pressed_color
+    )
+
+    set_button_colors(pass_property_button,
+        base_color,
+        hover_color,
+        pressed_color
+    )
+
+    set_button_colors(pay_toll_button,
+        base_color,
+        hover_color,
+        pressed_color
+    )
+
+    set_button_colors(end_turn_button,
+        base_color,
+        hover_color,
+        pressed_color
+    )
+
     turn_indicator_label.text = "%s IS UP" % game_state.get_player_username(player_index).to_upper()
     turn_indicator_player_color.color = game_state.get_player_accent_color(player_index)
     turn_indicator_panel.visible = true
@@ -329,3 +364,42 @@ func _on_card_selected(tile_index: int) -> void:
 
     if is_property:
         card_dialog.open_dialog(tile_info.city, tile_info.tile_type, toll_amount, tile_info.miner_batches, owner_name)
+
+func set_button_colors(button: Button, normal_color: Color, hover_color: Color, pressed_color: Color) -> void:
+    # Font colors
+    button.add_theme_color_override("font_color", Color.BLACK)
+    button.add_theme_color_override("font_hover_color", Color.BLACK)
+    button.add_theme_color_override("font_pressed_color", Color.BLACK)
+
+    # Normal state
+    var style_normal := button.get_theme_stylebox("normal") as StyleBoxFlat
+    if style_normal == null:
+        style_normal = StyleBoxFlat.new()
+    style_normal.bg_color = normal_color
+    button.add_theme_stylebox_override("normal", style_normal)
+
+    # Hover state (lighter)
+    var style_hover := button.get_theme_stylebox("hover") as StyleBoxFlat
+    if style_hover == null:
+        style_hover = StyleBoxFlat.new()
+    style_hover.bg_color = hover_color
+    button.add_theme_stylebox_override("hover", style_hover)
+
+    # Pressed state (darker)
+    var style_pressed := button.get_theme_stylebox("pressed") as StyleBoxFlat
+    if style_pressed == null:
+        style_pressed = StyleBoxFlat.new()
+    style_pressed.bg_color = pressed_color
+    button.add_theme_stylebox_override("pressed", style_pressed)
+
+    # Optional: Focused (outline), Disabled
+    var style_focus := button.get_theme_stylebox("focus") as StyleBoxFlat
+    if style_focus:
+        style_focus.bg_color = Color.TRANSPARENT
+        button.add_theme_stylebox_override("focus", style_focus)
+
+    var style_disabled := button.get_theme_stylebox("disabled") as StyleBoxFlat
+    if style_disabled == null:
+        style_disabled = StyleBoxFlat.new()
+    style_disabled.bg_color = normal_color * 0.5
+    button.add_theme_stylebox_override("disabled", style_disabled)
