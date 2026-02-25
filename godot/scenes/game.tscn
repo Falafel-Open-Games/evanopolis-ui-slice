@@ -1,4 +1,4 @@
-[gd_scene load_steps=17 format=3 uid="uid://cqmxik86m7jfl"]
+[gd_scene load_steps=18 format=3 uid="uid://cqmxik86m7jfl"]
 
 [ext_resource type="PackedScene" uid="uid://q6cux836c2th" path="res://scenes/tile.tscn" id="1_tile"]
 [ext_resource type="PackedScene" uid="uid://belar34400qbw" path="res://scenes/side_strip.tscn" id="2_s0k7h"]
@@ -10,6 +10,7 @@
 [ext_resource type="Script" uid="uid://e1pe74jhpbxc" path="res://scripts/game_controller.gd" id="5_77h6y"]
 [ext_resource type="PackedScene" uid="uid://ckbnfxtwa4po5" path="res://scenes/turn_actions.tscn" id="6_p57ef"]
 [ext_resource type="Script" uid="uid://c6s7q4d0p7qrx" path="res://scripts/game_state.gd" id="7_h6e2v"]
+[ext_resource type="PackedScene" uid="uid://bq4767bbrdlve" path="res://scenes/hud.tscn" id="11_kvpfn"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_8cj0n"]
 albedo_color = Color(0.05857501, 0.15, 0.0465, 1)
@@ -43,17 +44,18 @@ script = ExtResource("7_h6e2v")
 unique_name_in_owner = true
 script = ExtResource("3_tfrx2")
 
-[node name="GameController" type="Node" parent="." node_paths=PackedStringArray("turn_actions", "left_sidebar_list", "pawns_root")]
+[node name="GameController" type="Node" parent="." node_paths=PackedStringArray("left_sidebar_list", "pawns_root", "ui_controller")]
 unique_name_in_owner = true
 script = ExtResource("5_77h6y")
-turn_actions = NodePath("../Control/MarginContainer/BoxContainer/TurnActions")
 left_sidebar_list = NodePath("../Control/MarginContainer/BoxContainer/PlayersList/VBoxContainer")
 pawns_root = NodePath("../Pawns")
 pawn_movement_peak = Vector2(0.1, 0.1)
 pawn_jump_height = 0.02
 pawn_wait_time_per_tile = 0.2
+ui_controller = NodePath("../Hud")
 
 [node name="Table" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.1348363)
 mesh = SubResource("PlaneMesh_8cj0n")
 
 [node name="Environment" type="Node3D" parent="."]
@@ -145,6 +147,7 @@ base_color = Color(0.627451, 0.23921569, 0.75686276, 1)
 accent_color = Color(0.95686275, 0.5529412, 1, 1)
 
 [node name="Control" type="Control" parent="."]
+visible = false
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -201,7 +204,6 @@ player_index = 3
 layout_mode = 2
 player_index = 4
 
-
 [node name="Player  Summary 6" parent="Control/MarginContainer/BoxContainer/PlayersList/VBoxContainer" instance=ExtResource("2_yqjtg")]
 layout_mode = 2
 player_index = 5
@@ -222,3 +224,7 @@ size_flags_horizontal = 8
 size_flags_vertical = 8
 text = " Build ID:"
 horizontal_alignment = 2
+
+[node name="Hud" parent="." node_paths=PackedStringArray("game_controller", "game_state") instance=ExtResource("11_kvpfn")]
+game_controller = NodePath("../GameController")
+game_state = NodePath("../GameState")

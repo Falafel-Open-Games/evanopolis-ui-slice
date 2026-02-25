@@ -17,6 +17,9 @@ enum FollowYMode {
 @export var look_at_on_snap: bool = true
 @export var follow_rotation_speed: float = 6.0
 @export var pose_flip_yaw_180: bool = true
+@export var top_down_height: float = 2.0
+@export var top_down_fov: float = 20.0
+@export var top_down_transition_duration: float = 1.0
 
 var _base_basis: Basis = Basis.IDENTITY
 var _base_origin: Vector3 = Vector3.ZERO
@@ -31,6 +34,11 @@ var _zoom_in_relative: Transform3D = Transform3D.IDENTITY
 var _dice_camera_timer: SceneTreeTimer = null
 var _dice_camera_token: int = 0
 var _follow_base_y: float = 0.0
+var _is_top_down: bool = false
+var _top_down_blend: float = 0.0
+var _top_down_tween: Tween = null
+var _was_following: bool = false
+var _stored_follow_target: Node3D = null
 @export var follow_y_mode: int = FollowYMode.TABLE
 
 func _ready() -> void:
@@ -86,21 +94,40 @@ func stop_follow() -> void:
 	_follow_target = null
 
 func _apply_composed_transform() -> void:
-	var base_transform: Transform3D = Transform3D(_base_basis, _base_origin)
-	global_transform = base_transform * _get_zoom_adjust()
+	var base_transform := Transform3D(_base_basis, _base_origin)
+	var rig_transform := base_transform * _get_zoom_adjust()
+
+	var top_down_origin := _base_origin
+	top_down_origin.y = top_down_height
+	var top_down_basis := Basis(Vector3(1, 0, 0), Vector3(0, 0, -1), Vector3(0, 1, 0))
+	var top_down_transform := Transform3D(top_down_basis, top_down_origin)
+
+	if _top_down_blend <= 0.001:
+		global_transform = rig_transform
+	elif _top_down_blend >= 0.999:
+		global_transform = top_down_transform
+	else:
+		global_transform = rig_transform.interpolate_with(top_down_transform, _top_down_blend).orthonormalized()
 
 func _process(_delta: float) -> void:
+	if _is_top_down:
+		return
+
 	if not _follow_enabled:
 		return
 	if not is_instance_valid(_follow_target):
 		_follow_enabled = false
 		_follow_target = null
 		return
+
 	var target_pos: Vector3 = _get_follow_target_position()
 	var target_basis: Basis = global_transform.looking_at(target_pos, Vector3.UP).basis
 	var blend: float = min(1.0, follow_rotation_speed * _delta)
 	var blended_basis: Basis = global_transform.basis.slerp(target_basis, blend)
+
 	global_transform = Transform3D(blended_basis, global_transform.origin)
+	_base_basis = blended_basis
+	_base_origin = target_pos
 
 func _look_at_current_player() -> void:
 	assert(game_controller)
@@ -142,14 +169,16 @@ func _get_follow_target_position() -> Vector3:
 	return target_pos
 
 func _bind_game_controller() -> void:
-	if not game_controller.dice_roll_started.is_connected(_on_dice_roll_started):
-		game_controller.dice_roll_started.connect(_on_dice_roll_started)
+	if not game_controller.pawn_move_started.is_connected(_on_pawn_move_started):
+		game_controller.pawn_move_started.connect(_on_pawn_move_started)
 	if not game_controller.turn_ended.is_connected(_on_turn_ended):
 		game_controller.turn_ended.connect(_on_turn_ended)
 	if not game_controller.turn_started.is_connected(_on_turn_started):
 		game_controller.turn_started.connect(_on_turn_started)
+	if not game_controller.map_overview_button_pressed.is_connected(set_top_down):
+		game_controller.map_overview_button_pressed.connect(set_top_down)
 
-func _on_dice_roll_started(start_tile_index: int, end_tile_index: int, player_index: int) -> void:
+func _on_pawn_move_started(start_tile_index: int, end_tile_index: int, player_index: int) -> void:
 	_cancel_dice_camera_sequence()
 	var pawn: Node3D = _get_pawn(player_index)
 	start_follow(pawn)
@@ -237,3 +266,57 @@ func _cancel_dice_camera_sequence() -> void:
 	if _fov_tween:
 		_fov_tween.kill()
 		_fov_tween = null
+
+func set_top_down(enabled: bool) -> void:
+	_is_top_down = enabled
+
+	if _top_down_tween:
+		_top_down_tween.kill()
+	_top_down_tween = create_tween()
+	_top_down_tween.set_ease(Tween.EASE_IN_OUT)
+	_top_down_tween.set_trans(Tween.TRANS_CUBIC)
+	_top_down_tween.set_parallel(true)
+
+	if enabled:
+		if _follow_enabled:
+			_was_following = true
+			_stored_follow_target = _follow_target
+			_follow_enabled = false # Stop following immediately
+
+		var center_pos: Vector3 = Vector3.ZERO
+		if board_layout and board_layout.has_method("get_board_tiles"):
+			var tiles: Array = board_layout.get_board_tiles()
+			if not tiles.is_empty():
+				center_pos = tiles[0].global_position
+
+		var target_pos := center_pos
+		target_pos.y = top_down_height
+		target_pos.z = 0.20 # Fix cam position
+
+		# Hardcoded Down Rotation (North Up)
+		var target_basis := Basis(Vector3(1, 0, 0), Vector3(0, 0, -1), Vector3(0, 1, 0))
+		var target_transform := Transform3D(target_basis, target_pos)
+		_top_down_tween.tween_property(self, "global_transform", target_transform, top_down_transition_duration)
+		_top_down_tween.tween_property(self, "fov", top_down_fov, top_down_transition_duration)
+
+	else:
+		# RESTORE Normal View
+		if _was_following and is_instance_valid(_stored_follow_target):
+			_follow_enabled = true
+			_follow_target = _stored_follow_target
+			# var target_dest: Vector3 = _get_follow_target_position()
+			var snap_transform := _calculate_snap_transform(_stored_follow_target)
+			_top_down_tween.tween_property(self, "global_transform", snap_transform, top_down_transition_duration)
+		else:
+			var snap_transform := Transform3D(_base_basis, _base_origin) * _get_zoom_adjust()
+			_top_down_tween.tween_property(self, "global_transform", snap_transform, top_down_transition_duration)
+
+		var restore_fov := _zoom_in_fov if _zoom_blend > 0.5 else _zoom_out_fov
+		_top_down_tween.tween_property(self, "fov", restore_fov, top_down_transition_duration)
+		_was_following = false
+		_stored_follow_target = null
+
+func _calculate_snap_transform(target: Node3D) -> Transform3D:
+	var target_pos := target.global_position
+	var base_transform := Transform3D(_base_basis, target_pos) # Use target pos as origin
+	return base_transform * _get_zoom_adjust()

@@ -1,0 +1,135 @@
+[gd_scene load_steps=5 format=3 uid="uid://dyuw0t0ual1uo"]
+
+[ext_resource type="Script" uid="uid://cyo4nro23c03e" path="res://scripts/card_ui.gd" id="1_6u4wf"]
+[ext_resource type="Texture2D" uid="uid://bgugtamtwrjyy" path="res://textures/card-assuncion-with-mining.jpg" id="2_ktuci"]
+[ext_resource type="Texture2D" uid="uid://bsdsirftpihua" path="res://textures/miner_icon.png" id="3_ktuci"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_ahhtf"]
+bg_color = Color(0.1375669, 0.14706111, 0.15290019, 1)
+border_width_left = 4
+border_width_top = 4
+border_width_right = 4
+border_width_bottom = 4
+border_color = Color(0.8559041, 0.6280724, 0.40211555, 1)
+corner_radius_top_left = 24
+corner_radius_top_right = 24
+corner_radius_bottom_right = 24
+corner_radius_bottom_left = 24
+
+[node name="Card" type="Panel" node_paths=PackedStringArray("title_label", "card_type_label", "price_title", "price_label", "owner_label", "miners_textures", "card_image")]
+custom_minimum_size = Vector2(300, 500)
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -400.0
+offset_top = 150.0
+offset_right = -100.0
+offset_bottom = 650.0
+grow_horizontal = 0
+size_flags_horizontal = 0
+size_flags_vertical = 4
+theme_override_styles/panel = SubResource("StyleBoxFlat_ahhtf")
+script = ExtResource("1_6u4wf")
+title_label = NodePath("MarginContainer/Top/CardTitle")
+card_type_label = NodePath("MarginContainer/Top/CardType")
+price_title = NodePath("MarginContainer/Bottom/Prices/PriceTitle")
+price_label = NodePath("MarginContainer/Bottom/Prices/PriceValue")
+owner_label = NodePath("MarginContainer/Bottom/Owner")
+miners_textures = [NodePath("MarginContainer/Bottom/Miners/Miner1"), NodePath("MarginContainer/Bottom/Miners/Miner2"), NodePath("MarginContainer/Bottom/Miners/Miner3"), NodePath("MarginContainer/Bottom/Miners/Miner4")]
+card_image = NodePath("MarginContainer/CardImage")
+
+[node name="MarginContainer" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 24
+theme_override_constants/margin_top = 24
+theme_override_constants/margin_right = 24
+theme_override_constants/margin_bottom = 24
+
+[node name="Top" type="VBoxContainer" parent="MarginContainer"]
+layout_mode = 2
+size_flags_vertical = 0
+
+[node name="CardTitle" type="Label" parent="MarginContainer/Top"]
+layout_mode = 2
+size_flags_vertical = 0
+theme_override_font_sizes/font_size = 24
+text = "CITY_NAME"
+horizontal_alignment = 1
+
+[node name="CardType" type="Label" parent="MarginContainer/Top"]
+layout_mode = 2
+size_flags_vertical = 0
+theme_override_font_sizes/font_size = 16
+text = "card_type"
+horizontal_alignment = 1
+
+[node name="CardImage" type="TextureRect" parent="MarginContainer"]
+custom_minimum_size = Vector2(0, 250)
+layout_mode = 2
+size_flags_vertical = 4
+texture = ExtResource("2_ktuci")
+expand_mode = 1
+stretch_mode = 4
+
+[node name="Bottom" type="VBoxContainer" parent="MarginContainer"]
+layout_mode = 2
+size_flags_vertical = 8
+theme_override_constants/separation = 8
+alignment = 2
+
+[node name="Miners" type="HBoxContainer" parent="MarginContainer/Bottom"]
+layout_mode = 2
+theme_override_constants/separation = 16
+alignment = 1
+
+[node name="Miner1" type="TextureRect" parent="MarginContainer/Bottom/Miners"]
+custom_minimum_size = Vector2(36, 40)
+layout_mode = 2
+texture = ExtResource("3_ktuci")
+expand_mode = 1
+stretch_mode = 4
+
+[node name="Miner2" type="TextureRect" parent="MarginContainer/Bottom/Miners"]
+custom_minimum_size = Vector2(36, 40)
+layout_mode = 2
+texture = ExtResource("3_ktuci")
+expand_mode = 1
+stretch_mode = 4
+
+[node name="Miner3" type="TextureRect" parent="MarginContainer/Bottom/Miners"]
+custom_minimum_size = Vector2(36, 40)
+layout_mode = 2
+texture = ExtResource("3_ktuci")
+expand_mode = 1
+stretch_mode = 4
+
+[node name="Miner4" type="TextureRect" parent="MarginContainer/Bottom/Miners"]
+custom_minimum_size = Vector2(36, 40)
+layout_mode = 2
+texture = ExtResource("3_ktuci")
+expand_mode = 1
+stretch_mode = 4
+
+[node name="Prices" type="HBoxContainer" parent="MarginContainer/Bottom"]
+layout_mode = 2
+
+[node name="PriceTitle" type="Label" parent="MarginContainer/Bottom/Prices"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "PRICE"
+
+[node name="PriceValue" type="Label" parent="MarginContainer/Bottom/Prices"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 20
+text = "00000"
+horizontal_alignment = 2
+
+[node name="Owner" type="Label" parent="MarginContainer/Bottom"]
+layout_mode = 2
+text = "IS AVAILABLE"

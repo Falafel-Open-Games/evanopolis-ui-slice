@@ -1,0 +1,429 @@
+[gd_scene load_steps=15 format=3 uid="uid://bq4767bbrdlve"]
+
+[ext_resource type="Script" uid="uid://braklbiosnmm3" path="res://scripts/ui_controller.gd" id="1_ahhtf"]
+[ext_resource type="Texture2D" uid="uid://c517xfjbdurgf" path="res://textures/dices.png" id="2_6fi6k"]
+[ext_resource type="PackedScene" uid="uid://dyuw0t0ual1uo" path="res://scenes/card.tscn" id="3_5ysmq"]
+[ext_resource type="Texture2D" uid="uid://b4b2qsvsc6jqc" path="res://textures/icon_map.png" id="3_hd3ao"]
+[ext_resource type="Texture2D" uid="uid://bp6o7w85lpnng" path="res://textures/icon_inventory.png" id="4_0i1j5"]
+[ext_resource type="Script" path="res://scripts/card_dialog.gd" id="4_6fi6k"]
+[ext_resource type="Script" path="res://scripts/card_inventory.gd" id="4_uo2fv"]
+[ext_resource type="Texture2D" uid="uid://bsdsirftpihua" path="res://textures/miner_icon.png" id="5_047uy"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_6fi6k"]
+atlas = ExtResource("2_6fi6k")
+region = Rect2(0, 0, 200, 200)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_uo2fv"]
+atlas = ExtResource("2_6fi6k")
+region = Rect2(0, 0, 200, 200)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_5ysmq"]
+bg_color = Color(0.6462312, 0.1687957, 0.1939081, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_047uy"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_6fi6k"]
+bg_color = Color(0.22670749, 0.22670752, 0.2267074, 1)
+corner_radius_top_left = 16
+corner_radius_bottom_left = 16
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_uo2fv"]
+corner_radius_top_left = 40
+corner_radius_top_right = 40
+corner_radius_bottom_right = 40
+corner_radius_bottom_left = 40
+
+[node name="Hud" type="Control" node_paths=PackedStringArray("timer_label", "player_name", "player_balance", "player_color", "dice_1_texture_rect", "dice_2_texture_rect", "end_turn_button", "roll_dice_button", "buy_property_button", "pass_property_button", "pay_toll_button", "map_overview_button", "inventory_button", "card_ui", "balance_variation_panel", "balance_variation_label", "turn_indicator_panel", "turn_indicator_label", "turn_indicator_player_color", "inventory", "card_dialog")]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_ahhtf")
+timer_label = NodePath("MarginContainer/VBoxContainer/Timer")
+player_name = NodePath("MarginContainer/VBoxContainer/VBoxContainer/HBoxContainer/PlayerName")
+player_balance = NodePath("MarginContainer/VBoxContainer/VBoxContainer/HBoxContainer2/PlayerBalance")
+player_color = NodePath("MarginContainer/VBoxContainer/VBoxContainer/HBoxContainer/PlayerColor")
+dice_1_texture_rect = NodePath("MarginContainer/VBoxContainer/HBoxContainer/Dice_1")
+dice_2_texture_rect = NodePath("MarginContainer/VBoxContainer/HBoxContainer/Dice_2")
+end_turn_button = NodePath("MarginContainer/MarginContainer/HBoxContainer/EndTurnBtn")
+roll_dice_button = NodePath("MarginContainer/MarginContainer/HBoxContainer/RollDicesBtn")
+buy_property_button = NodePath("MarginContainer/MarginContainer/HBoxContainer/BuyPropertyBtn")
+pass_property_button = NodePath("MarginContainer/MarginContainer/HBoxContainer/PassPropertyBtn")
+pay_toll_button = NodePath("MarginContainer/MarginContainer/HBoxContainer/PayToll")
+map_overview_button = NodePath("MarginContainer/VBoxContainer/VBoxContainer/HBoxContainer3/MapOverviewBtn")
+inventory_button = NodePath("MarginContainer/VBoxContainer/VBoxContainer/HBoxContainer3/InventoryBtn")
+card_ui = NodePath("Card")
+balance_variation_panel = NodePath("MarginContainer/VBoxContainer/VBoxContainer/HBoxContainer2/BalanceVariationPanel")
+balance_variation_label = NodePath("MarginContainer/VBoxContainer/VBoxContainer/HBoxContainer2/BalanceVariationPanel/MarginContainer/BalanceVariationValue")
+balance_variation_spend_color = Color(0.64705884, 0.16862746, 0.19215687, 1)
+balance_variation_receive_color = Color(0.13949195, 0.6035106, 0.39961886, 1)
+turn_indicator_panel = NodePath("TurnIndicator")
+turn_indicator_label = NodePath("TurnIndicator/MarginContainer/HBoxContainer/TurnIndicatorLabel")
+turn_indicator_player_color = NodePath("TurnIndicator/MarginContainer/HBoxContainer/TurnIndicatorPlayerColor")
+inventory = NodePath("Inventory")
+card_dialog = NodePath("CardDialog")
+
+[node name="MarginContainer" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 40
+theme_override_constants/margin_top = 40
+theme_override_constants/margin_right = 40
+theme_override_constants/margin_bottom = 40
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer"]
+layout_mode = 2
+
+[node name="Timer" type="Label" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 1
+text = "MM:SS"
+horizontal_alignment = 1
+
+[node name="HBoxContainer" type="HBoxContainer" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 40
+alignment = 1
+
+[node name="Dice_1" type="TextureRect" parent="MarginContainer/VBoxContainer/HBoxContainer"]
+custom_minimum_size = Vector2(120, 120)
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 4
+texture = SubResource("AtlasTexture_6fi6k")
+expand_mode = 1
+stretch_mode = 4
+
+[node name="Dice_2" type="TextureRect" parent="MarginContainer/VBoxContainer/HBoxContainer"]
+custom_minimum_size = Vector2(120, 120)
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 4
+texture = SubResource("AtlasTexture_uo2fv")
+expand_mode = 1
+stretch_mode = 4
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="HBoxContainer3" type="HBoxContainer" parent="MarginContainer/VBoxContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_constants/separation = 16
+alignment = 2
+
+[node name="MapOverviewBtn" type="TextureButton" parent="MarginContainer/VBoxContainer/VBoxContainer/HBoxContainer3"]
+custom_minimum_size = Vector2(40, 40)
+layout_mode = 2
+texture_normal = ExtResource("3_hd3ao")
+ignore_texture_size = true
+stretch_mode = 4
+
+[node name="InventoryBtn" type="TextureButton" parent="MarginContainer/VBoxContainer/VBoxContainer/HBoxContainer3"]
+custom_minimum_size = Vector2(28, 28)
+layout_mode = 2
+texture_normal = ExtResource("4_0i1j5")
+ignore_texture_size = true
+stretch_mode = 4
+
+[node name="HBoxContainer" type="HBoxContainer" parent="MarginContainer/VBoxContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_constants/separation = 16
+alignment = 2
+
+[node name="PlayerColor" type="ColorRect" parent="MarginContainer/VBoxContainer/VBoxContainer/HBoxContainer"]
+custom_minimum_size = Vector2(24, 24)
+layout_mode = 2
+size_flags_horizontal = 8
+size_flags_vertical = 4
+color = Color(0.05882353, 0.89411765, 0.40784314, 1)
+
+[node name="PlayerName" type="Label" parent="MarginContainer/VBoxContainer/VBoxContainer/HBoxContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "Player 1"
+horizontal_alignment = 2
+
+[node name="HBoxContainer2" type="HBoxContainer" parent="MarginContainer/VBoxContainer/VBoxContainer"]
+custom_minimum_size = Vector2(0, 48)
+layout_mode = 2
+theme_override_constants/separation = 24
+alignment = 2
+
+[node name="BalanceVariationPanel" type="PanelContainer" parent="MarginContainer/VBoxContainer/VBoxContainer/HBoxContainer2"]
+custom_minimum_size = Vector2(100, 40)
+layout_mode = 2
+size_flags_horizontal = 8
+size_flags_vertical = 4
+theme_override_styles/panel = SubResource("StyleBoxFlat_5ysmq")
+
+[node name="MarginContainer" type="MarginContainer" parent="MarginContainer/VBoxContainer/VBoxContainer/HBoxContainer2/BalanceVariationPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 8
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 8
+theme_override_constants/margin_bottom = 8
+
+[node name="BalanceVariationValue" type="Label" parent="MarginContainer/VBoxContainer/VBoxContainer/HBoxContainer2/BalanceVariationPanel/MarginContainer"]
+layout_mode = 2
+text = "- 5 EVA"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="PlayerBalance" type="Label" parent="MarginContainer/VBoxContainer/VBoxContainer/HBoxContainer2"]
+layout_mode = 2
+text = "25 EVA | 2 BTC"
+horizontal_alignment = 2
+
+[node name="MarginContainer" type="MarginContainer" parent="MarginContainer"]
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 8
+theme_override_constants/margin_bottom = 80
+
+[node name="HBoxContainer" type="HBoxContainer" parent="MarginContainer/MarginContainer"]
+layout_mode = 2
+theme_override_constants/separation = 40
+
+[node name="RollDicesBtn" type="Button" parent="MarginContainer/MarginContainer/HBoxContainer"]
+custom_minimum_size = Vector2(200, 80)
+layout_mode = 2
+theme_override_styles/normal = SubResource("StyleBoxFlat_047uy")
+text = "ROLL DICES"
+
+[node name="EndTurnBtn" type="Button" parent="MarginContainer/MarginContainer/HBoxContainer"]
+custom_minimum_size = Vector2(200, 80)
+layout_mode = 2
+text = "END TURN"
+
+[node name="BuyPropertyBtn" type="Button" parent="MarginContainer/MarginContainer/HBoxContainer"]
+custom_minimum_size = Vector2(200, 80)
+layout_mode = 2
+text = "BUY"
+
+[node name="PassPropertyBtn" type="Button" parent="MarginContainer/MarginContainer/HBoxContainer"]
+custom_minimum_size = Vector2(200, 80)
+layout_mode = 2
+text = "PASS"
+
+[node name="PayToll" type="Button" parent="MarginContainer/MarginContainer/HBoxContainer"]
+custom_minimum_size = Vector2(200, 80)
+layout_mode = 2
+text = "PAY"
+
+[node name="Card" parent="." instance=ExtResource("3_5ysmq")]
+layout_mode = 1
+offset_left = -395.0
+offset_top = 151.0
+offset_right = -95.0
+offset_bottom = 651.0
+mouse_filter = 2
+
+[node name="TurnIndicator" type="PanelContainer" parent="."]
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -187.0
+offset_top = 50.0
+offset_bottom = 90.0
+grow_horizontal = 0
+theme_override_styles/panel = SubResource("StyleBoxFlat_6fi6k")
+
+[node name="MarginContainer" type="MarginContainer" parent="TurnIndicator"]
+layout_mode = 2
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 16
+theme_override_constants/margin_bottom = 8
+
+[node name="HBoxContainer" type="HBoxContainer" parent="TurnIndicator/MarginContainer"]
+layout_mode = 2
+theme_override_constants/separation = 16
+alignment = 2
+
+[node name="TurnIndicatorPlayerColor" type="ColorRect" parent="TurnIndicator/MarginContainer/HBoxContainer"]
+custom_minimum_size = Vector2(24, 24)
+layout_mode = 2
+size_flags_horizontal = 8
+size_flags_vertical = 4
+color = Color(0.05882353, 0.89411765, 0.40784314, 1)
+
+[node name="TurnIndicatorLabel" type="Label" parent="TurnIndicator/MarginContainer/HBoxContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+text = "PLAYER 1 IS UP"
+horizontal_alignment = 2
+
+[node name="CardDialog" type="CanvasLayer" parent="." node_paths=PackedStringArray("card", "trade_button", "miners_button", "mortgage_button", "close_button", "miner_confirm_button", "miners_buttons", "page_default", "page_miner", "miners_counter")]
+visible = false
+script = ExtResource("4_6fi6k")
+card = NodePath("PanelContainer/MarginContainer/HBoxContainer/Card")
+trade_button = NodePath("PanelContainer/MarginContainer/HBoxContainer/Page1/TradeBtn")
+miners_button = NodePath("PanelContainer/MarginContainer/HBoxContainer/Page1/MinersBtn")
+mortgage_button = NodePath("PanelContainer/MarginContainer/HBoxContainer/Page1/MortgageBtn")
+close_button = NodePath("PanelContainer/CloseBtn")
+miner_confirm_button = NodePath("PanelContainer/MarginContainer/HBoxContainer/Page2/MinersPayBtn")
+miners_buttons = [NodePath("PanelContainer/MarginContainer/HBoxContainer/Page2/HBoxContainer/TextureButton"), NodePath("PanelContainer/MarginContainer/HBoxContainer/Page2/HBoxContainer/TextureButton2"), NodePath("PanelContainer/MarginContainer/HBoxContainer/Page2/HBoxContainer/TextureButton3"), NodePath("PanelContainer/MarginContainer/HBoxContainer/Page2/HBoxContainer/TextureButton4")]
+page_default = NodePath("PanelContainer/MarginContainer/HBoxContainer/Page1")
+page_miner = NodePath("PanelContainer/MarginContainer/HBoxContainer/Page2")
+miners_counter = NodePath("PanelContainer/MarginContainer/HBoxContainer/Page2/Counter")
+
+[node name="ColorRect" type="ColorRect" parent="CardDialog"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 0.5019608)
+
+[node name="PanelContainer" type="PanelContainer" parent="CardDialog"]
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -400.0
+offset_top = -290.0
+offset_right = 400.0
+offset_bottom = 290.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_uo2fv")
+
+[node name="MarginContainer" type="MarginContainer" parent="CardDialog/PanelContainer"]
+layout_mode = 2
+theme_override_constants/margin_left = 40
+theme_override_constants/margin_top = 40
+theme_override_constants/margin_right = 40
+theme_override_constants/margin_bottom = 40
+
+[node name="HBoxContainer" type="HBoxContainer" parent="CardDialog/PanelContainer/MarginContainer"]
+layout_mode = 2
+theme_override_constants/separation = 40
+alignment = 1
+
+[node name="Card" parent="CardDialog/PanelContainer/MarginContainer/HBoxContainer" instance=ExtResource("3_5ysmq")]
+layout_mode = 2
+mouse_filter = 2
+
+[node name="Page1" type="VBoxContainer" parent="CardDialog/PanelContainer/MarginContainer/HBoxContainer"]
+visible = false
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 24
+alignment = 1
+
+[node name="MinersBtn" type="Button" parent="CardDialog/PanelContainer/MarginContainer/HBoxContainer/Page1"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 40
+text = "MINERS"
+
+[node name="TradeBtn" type="Button" parent="CardDialog/PanelContainer/MarginContainer/HBoxContainer/Page1"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 40
+disabled = true
+text = "TRADE"
+
+[node name="MortgageBtn" type="Button" parent="CardDialog/PanelContainer/MarginContainer/HBoxContainer/Page1"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 40
+disabled = true
+text = "MORTGAGE"
+
+[node name="Page2" type="VBoxContainer" parent="CardDialog/PanelContainer/MarginContainer/HBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 24
+
+[node name="Title" type="Label" parent="CardDialog/PanelContainer/MarginContainer/HBoxContainer/Page2"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_font_sizes/font_size = 40
+text = "MINERS"
+
+[node name="HBoxContainer" type="HBoxContainer" parent="CardDialog/PanelContainer/MarginContainer/HBoxContainer/Page2"]
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 4
+theme_override_constants/separation = 24
+
+[node name="TextureButton" type="TextureButton" parent="CardDialog/PanelContainer/MarginContainer/HBoxContainer/Page2/HBoxContainer"]
+custom_minimum_size = Vector2(72, 80)
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 4
+texture_normal = ExtResource("5_047uy")
+ignore_texture_size = true
+stretch_mode = 4
+
+[node name="TextureButton2" type="TextureButton" parent="CardDialog/PanelContainer/MarginContainer/HBoxContainer/Page2/HBoxContainer"]
+custom_minimum_size = Vector2(72, 80)
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 4
+texture_normal = ExtResource("5_047uy")
+ignore_texture_size = true
+stretch_mode = 4
+
+[node name="TextureButton3" type="TextureButton" parent="CardDialog/PanelContainer/MarginContainer/HBoxContainer/Page2/HBoxContainer"]
+custom_minimum_size = Vector2(72, 80)
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 4
+texture_normal = ExtResource("5_047uy")
+ignore_texture_size = true
+stretch_mode = 4
+
+[node name="TextureButton4" type="TextureButton" parent="CardDialog/PanelContainer/MarginContainer/HBoxContainer/Page2/HBoxContainer"]
+custom_minimum_size = Vector2(72, 80)
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 4
+texture_normal = ExtResource("5_047uy")
+ignore_texture_size = true
+stretch_mode = 4
+
+[node name="Counter" type="Label" parent="CardDialog/PanelContainer/MarginContainer/HBoxContainer/Page2"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_font_sizes/font_size = 24
+text = "Adding 1 of 4 miners"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="MinersPayBtn" type="Button" parent="CardDialog/PanelContainer/MarginContainer/HBoxContainer/Page2"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 40
+text = "20 EVA"
+
+[node name="CloseBtn" type="Button" parent="CardDialog/PanelContainer"]
+layout_mode = 2
+size_flags_horizontal = 8
+size_flags_vertical = 0
+theme_override_font_sizes/font_size = 24
+text = "CLOSE"
+
+[node name="Inventory" type="Control" parent="."]
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 0
+mouse_filter = 2
+script = ExtResource("4_uo2fv")
+card_scene = ExtResource("3_5ysmq")
+vertical_offset = 500.0
