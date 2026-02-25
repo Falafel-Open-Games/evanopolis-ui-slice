@@ -1,4 +1,4 @@
-[gd_scene load_steps=18 format=3 uid="uid://cqmxik86m7jfl"]
+[gd_scene load_steps=20 format=3 uid="uid://cqmxik86m7jfl"]
 
 [ext_resource type="PackedScene" uid="uid://q6cux836c2th" path="res://scenes/tile.tscn" id="1_tile"]
 [ext_resource type="PackedScene" uid="uid://belar34400qbw" path="res://scenes/side_strip.tscn" id="2_s0k7h"]
@@ -7,29 +7,31 @@
 [ext_resource type="Script" uid="uid://csigfifodnx75" path="res://scripts/board_layout.gd" id="3_tfrx2"]
 [ext_resource type="Script" uid="uid://dd5liisaf625" path="res://scripts/camera_tile_rig.gd" id="4_0tnpc"]
 [ext_resource type="Script" uid="uid://b4b2jj7a5a3fy" path="res://scripts/pawns_start.gd" id="4_3k9qj"]
+[ext_resource type="Texture2D" uid="uid://k7syhjgjqoc" path="res://textures/sky_29_2k.png" id="4_dinhu"]
+[ext_resource type="Texture2D" uid="uid://6g72sqywcghk" path="res://textures/wood-natural-texture.jpg" id="4_kvuet"]
 [ext_resource type="Script" uid="uid://e1pe74jhpbxc" path="res://scripts/game_controller.gd" id="5_77h6y"]
 [ext_resource type="PackedScene" uid="uid://ckbnfxtwa4po5" path="res://scenes/turn_actions.tscn" id="6_p57ef"]
 [ext_resource type="Script" uid="uid://c6s7q4d0p7qrx" path="res://scripts/game_state.gd" id="7_h6e2v"]
 [ext_resource type="PackedScene" uid="uid://bq4767bbrdlve" path="res://scenes/hud.tscn" id="11_kvpfn"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_8cj0n"]
-albedo_color = Color(0.05857501, 0.15, 0.0465, 1)
+albedo_color = Color(0.47137535, 0.4713753, 0.4713753, 1)
+albedo_texture = ExtResource("4_kvuet")
 
 [sub_resource type="PlaneMesh" id="PlaneMesh_8cj0n"]
 material = SubResource("StandardMaterial3D_8cj0n")
 size = Vector2(1, 1)
 
-[sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_8cj0n"]
-sky_horizon_color = Color(0.66224277, 0.6717428, 0.6867428, 1)
-ground_horizon_color = Color(0.66224277, 0.6717428, 0.6867428, 1)
+[sub_resource type="PanoramaSkyMaterial" id="PanoramaSkyMaterial_kvuet"]
+panorama = ExtResource("4_dinhu")
 
 [sub_resource type="Sky" id="Sky_uwrxv"]
-sky_material = SubResource("ProceduralSkyMaterial_8cj0n")
+sky_material = SubResource("PanoramaSkyMaterial_kvuet")
 
 [sub_resource type="Environment" id="Environment_yqjtg"]
 background_mode = 2
 sky = SubResource("Sky_uwrxv")
-tonemap_mode = 2
+fog_density = 0.2851
 
 [sub_resource type="BoxMesh" id="BoxMesh_0tnpc"]
 size = Vector3(0.01, 0.02, 1.23)
@@ -65,6 +67,7 @@ environment = SubResource("Environment_yqjtg")
 
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="Environment"]
 transform = Transform3D(-0.8660254, -0.43301278, 0.25, 0, 0.49999997, 0.86602545, -0.50000006, 0.75, -0.43301266, 0, 0, 0)
+light_energy = 0.7
 shadow_enabled = true
 
 [node name="Camera3D" type="Camera3D" parent="Environment" node_paths=PackedStringArray("board_layout", "pose_rig", "pose_tile_ref", "pose_camera_zoom_out", "pose_camera_zoom_in", "game_controller")]
