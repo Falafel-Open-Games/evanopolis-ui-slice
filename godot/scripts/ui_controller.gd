@@ -227,6 +227,9 @@ func _on_dices_rolled(dice_1: int, dice_2: int, total: int) -> void:
     var atlas_2 = dice_2_texture_rect.texture as AtlasTexture
     atlas_2.region = dice_texture_regions[dice_2 - 1]
 
+    map_overview_button.visible = false
+    inventory_button.visible = false
+
     await get_tree().create_timer(TIMER_APPLY_DICES_RESULT).timeout
 
     dice_1_texture_rect.visible = false
