@@ -15,6 +15,7 @@ var pending_action_type: String = ""
 var pending_action_tile_index: int = -1
 var pending_action_owner_index: int = -1
 var pending_action_amount: float = 0.0
+var pending_action_buy_price: float = 0.0
 var match_has_started: bool = false
 var board_state: Dictionary = { }
 var pending_game_started: bool = false
@@ -126,13 +127,26 @@ func _handle_tile_landed(
         city: String,
         owner_index: int,
         toll_due: float,
+        buy_price: float,
         action_required: String,
 ) -> void:
-    _queue_event(seq, "_apply_tile_landed", [tile_index, tile_type, city, owner_index, toll_due, action_required])
+    _queue_event(seq, "_apply_tile_landed", [tile_index, tile_type, city, owner_index, toll_due, buy_price, action_required])
+
+
+func _handle_incident_drawn(seq: int, tile_index: int, incident_kind: String, card_id: String, card_text: String) -> void:
+    _queue_event(seq, "_apply_incident_drawn", [tile_index, incident_kind, card_id, card_text])
+
+
+func _handle_player_balance_changed(seq: int, player_index_value: int, fiat_delta: float, btc_delta: float, reason: String) -> void:
+    _queue_event(seq, "_apply_player_balance_changed", [player_index_value, fiat_delta, btc_delta, reason])
 
 
 func _handle_cycle_started(seq: int, cycle: int, inflation_active: bool) -> void:
     _queue_event(seq, "_apply_cycle_started", [cycle, inflation_active])
+
+
+func _handle_incident_type_changed(seq: int, tile_index: int, incident_kind: String) -> void:
+    _queue_event(seq, "_apply_incident_type_changed", [tile_index, incident_kind])
 
 
 func _handle_property_acquired(seq: int, owner_player_index: int, tile_index: int, price: float) -> void:
@@ -141,6 +155,14 @@ func _handle_property_acquired(seq: int, owner_player_index: int, tile_index: in
 
 func _handle_toll_paid(seq: int, payer_index: int, owner_index: int, amount: float) -> void:
     _queue_event(seq, "_apply_toll_paid", [payer_index, owner_index, amount])
+
+
+func _handle_player_sent_to_inspection(seq: int, player_index_value: int, reason: String) -> void:
+    _queue_event(seq, "_apply_player_sent_to_inspection", [player_index_value, reason])
+
+
+func _handle_inspection_voucher_granted(seq: int, player_index_value: int, amount: int, reason: String) -> void:
+    _queue_event(seq, "_apply_inspection_voucher_granted", [player_index_value, amount, reason])
 
 
 func _handle_state_snapshot(seq: int, snapshot: Dictionary) -> void:
@@ -228,6 +250,7 @@ func _apply_turn_started(player_index_value: int, turn_number: int, cycle: int) 
     pending_action_tile_index = -1
     pending_action_owner_index = -1
     pending_action_amount = 0.0
+    pending_action_buy_price = 0.0
     _log_server("turn started: player=%d, turn=%d, cycle=%d" % [player_index_value, turn_number, cycle])
     if player_index_value != player_index:
         return
@@ -252,38 +275,56 @@ func _apply_tile_landed(
         city: String,
         owner_index: int,
         toll_due: float,
+        buy_price: float,
         action_required: String,
 ) -> void:
     pending_action_type = action_required
     pending_action_tile_index = tile_index
     pending_action_owner_index = owner_index
     pending_action_amount = toll_due
+    pending_action_buy_price = buy_price
     if city.is_empty():
         _log_server(
-            "tile landed: index=%d, tile_type=%s, owner_index=%d, toll_due=%.2f, action_required=%s" % [
+            "tile landed: index=%d, tile_type=%s, owner_index=%d, toll_due=%.2f, buy_price=%.2f, action_required=%s" % [
                 tile_index,
                 tile_type,
                 owner_index,
                 toll_due,
+                buy_price,
                 action_required,
             ],
         )
         return
     _log_server(
-        "tile landed: index=%d, tile_type=%s, city=%s, owner_index=%d, toll_due=%.2f, action_required=%s" % [
+        "tile landed: index=%d, tile_type=%s, city=%s, owner_index=%d, toll_due=%.2f, buy_price=%.2f, action_required=%s" % [
             tile_index,
             tile_type,
             city,
             owner_index,
             toll_due,
+            buy_price,
             action_required,
         ],
     )
     if player_index == current_player_index and action_required == "buy_or_end_turn":
-        await _start_buy_or_end_turn_prompt(tile_index, city)
+        await _start_buy_or_end_turn_prompt(tile_index, city, buy_price)
         return
     if player_index == current_player_index and action_required == "pay_toll":
         await _start_pay_toll_prompt(tile_index, city, owner_index, toll_due)
+
+
+func _apply_incident_drawn(tile_index: int, incident_kind: String, card_id: String, card_text: String) -> void:
+    _log_server(
+        "incident drawn: tile=%d kind=%s card_id=%s card_text=%s"
+        % [tile_index, incident_kind, card_id, card_text],
+    )
+
+
+func _apply_player_balance_changed(player_index_value: int, fiat_delta: float, btc_delta: float, reason: String) -> void:
+    _log_server(
+        "player balance changed: player=%d fiat_delta=%.2f btc_delta=%.8f reason=%s"
+        % [player_index_value, fiat_delta, btc_delta, reason],
+    )
 
 
 func _tile_info_from_index(tile_index: int) -> Dictionary:
@@ -299,6 +340,13 @@ func _apply_cycle_started(cycle: int, inflation_active: bool) -> void:
     _log_server("cycle started: cycle=%d, inflation_active=%s" % [cycle, inflation_active])
 
 
+func _apply_incident_type_changed(tile_index: int, incident_kind: String) -> void:
+    var tile: Dictionary = _tile_info_from_index(tile_index)
+    if not tile.is_empty():
+        tile["incident_kind"] = incident_kind
+    _log_server("incident type changed: tile=%d incident_kind=%s" % [tile_index, incident_kind])
+
+
 func _apply_property_acquired(owner_player_index: int, tile_index: int, price: float) -> void:
     var tile: Dictionary = _tile_info_from_index(tile_index)
     if not tile.is_empty():
@@ -307,6 +355,7 @@ func _apply_property_acquired(owner_player_index: int, tile_index: int, price: f
     pending_action_tile_index = -1
     pending_action_owner_index = -1
     pending_action_amount = 0.0
+    pending_action_buy_price = 0.0
     _log_server("property acquired: player=%d tile=%d price=%.2f" % [owner_player_index, tile_index, price])
 
 
@@ -315,7 +364,16 @@ func _apply_toll_paid(payer_index: int, owner_index: int, amount: float) -> void
     pending_action_tile_index = -1
     pending_action_owner_index = -1
     pending_action_amount = 0.0
+    pending_action_buy_price = 0.0
     _log_server("toll paid: payer=%d owner=%d amount=%.2f" % [payer_index, owner_index, amount])
+
+
+func _apply_player_sent_to_inspection(player_index_value: int, reason: String) -> void:
+    _log_server("player sent to inspection: player=%d reason=%s" % [player_index_value, reason])
+
+
+func _apply_inspection_voucher_granted(player_index_value: int, amount: int, reason: String) -> void:
+    _log_server("inspection voucher granted: player=%d amount=%d reason=%s" % [player_index_value, amount, reason])
 
 
 func _apply_state_snapshot(snapshot: Dictionary) -> void:
@@ -327,6 +385,7 @@ func _apply_state_snapshot(snapshot: Dictionary) -> void:
     pending_action_tile_index = int(pending_action.get("tile_index", -1))
     pending_action_owner_index = int(pending_action.get("owner_index", -1))
     pending_action_amount = float(pending_action.get("amount", 0.0))
+    pending_action_buy_price = float(pending_action.get("buy_price", 0.0))
     board_state = snapshot.get("board_state", { })
     pending_game_started = false
     var cycle: int = int(snapshot.get("current_cycle", 0))
@@ -334,7 +393,7 @@ func _apply_state_snapshot(snapshot: Dictionary) -> void:
     var board_size: int = int(board_state.get("size", 0))
     var players: Array = snapshot.get("players", [])
     _log_server(
-        "state snapshot: game_id=%s turn=%d cycle=%d current_player=%d players=%d board_size=%d started=%s pending_action=%s pending_tile=%d pending_owner=%d pending_amount=%.2f"
+        "state snapshot: game_id=%s turn=%d cycle=%d current_player=%d players=%d board_size=%d started=%s pending_action=%s pending_tile=%d pending_owner=%d pending_amount=%.2f pending_buy_price=%.2f"
         % [
             game_id,
             current_turn_number,
@@ -347,19 +406,21 @@ func _apply_state_snapshot(snapshot: Dictionary) -> void:
             pending_action_tile_index,
             pending_action_owner_index,
             pending_action_amount,
+            pending_action_buy_price,
         ],
     )
     var player_summaries: Array[String] = []
     for player_variant in players:
         var player: Dictionary = player_variant
         player_summaries.append(
-            "p%d(pos=%d laps=%d fiat=%.2f btc=%.8f inspection=%s)" % [
+            "p%d(pos=%d laps=%d fiat=%.2f btc=%.8f inspection=%s free_exits=%d)" % [
                 int(player.get("player_index", -1)),
                 int(player.get("position", -1)),
                 int(player.get("laps", 0)),
                 float(player.get("fiat_balance", 0.0)),
                 float(player.get("bitcoin_balance", 0.0)),
                 bool(player.get("in_inspection", false)),
+                int(player.get("inspection_free_exits", 0)),
             ],
         )
     if not player_summaries.is_empty():
@@ -442,8 +503,11 @@ func _resume_after_sync_from_snapshot() -> void:
         if pending_action_tile_index >= 0:
             var tile: Dictionary = _tile_info_from_index(pending_action_tile_index)
             city = str(tile.get("city", ""))
-        _log_server("sync resume: pending buy_or_end_turn tile=%d city=%s" % [pending_action_tile_index, city])
-        await _start_buy_or_end_turn_prompt(pending_action_tile_index, city)
+        _log_server(
+            "sync resume: pending buy_or_end_turn tile=%d city=%s buy_price=%.2f"
+            % [pending_action_tile_index, city, pending_action_buy_price],
+        )
+        await _start_buy_or_end_turn_prompt(pending_action_tile_index, city, pending_action_buy_price)
         return
     if pending_action_type == "pay_toll":
         var pay_toll_city: String = ""
@@ -469,11 +533,14 @@ func _resume_after_sync_from_snapshot() -> void:
     await _start_turn_prompt()
 
 
-func _start_buy_or_end_turn_prompt(tile_index: int, city: String) -> void:
+func _start_buy_or_end_turn_prompt(tile_index: int, city: String, buy_price: float) -> void:
     var label_city: String = city
     if label_city.is_empty():
         label_city = "unknown"
-    _log_prompt("buy property on tile=%d city=%s? [y/n]" % [tile_index, label_city])
+    if buy_price > 0.0:
+        _log_prompt("buy property on tile=%d city=%s price=%.2f? [y/n]" % [tile_index, label_city, buy_price])
+    else:
+        _log_prompt("buy property on tile=%d city=%s? [y/n]" % [tile_index, label_city])
     var buy_property: bool = _wait_for_buy_choice()
     if buy_property:
         _request_buy_property(tile_index)

@@ -40,12 +40,23 @@ class NullClient:
             _city: String,
             _owner_index: int,
             _toll_due: float,
+            _buy_price: float,
             _action_required: String,
     ) -> void:
         pass
 
+    func rpc_incident_drawn(_seq: int, _tile_index: int, _incident_kind: String, _card_id: String, _card_text: String) -> void:
+        pass
+
+
+    func rpc_player_balance_changed(_seq: int, _player_index: int, _fiat_delta: float, _btc_delta: float, _reason: String) -> void:
+        pass
+
 
     func rpc_cycle_started(_seq: int, _cycle: int, _inflation_active: bool) -> void:
+        pass
+
+    func rpc_incident_type_changed(_seq: int, _tile_index: int, _incident_kind: String) -> void:
         pass
 
 
@@ -54,6 +65,13 @@ class NullClient:
 
 
     func rpc_toll_paid(_seq: int, _payer_index: int, _owner_index: int, _amount: float) -> void:
+        pass
+
+    func rpc_player_sent_to_inspection(_seq: int, _player_index: int, _reason: String) -> void:
+        pass
+
+
+    func rpc_inspection_voucher_granted(_seq: int, _player_index: int, _amount: int, _reason: String) -> void:
         pass
 
 

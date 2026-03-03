@@ -9,6 +9,7 @@
 ## Inspection Rules
 
 - Inspection blocks mining payouts from the player's properties until cleared.
+- Enforce inspection turn gating in `godot2`: landing on inspection (or inspection incident) must set player inspection status, and turn start/roll flow must require inspection resolution (pay, doubles, or free-exit card) before normal movement.
 
 ## Reconnection Test Roadmap
 
@@ -53,6 +54,8 @@
 - players should be able to profit more from energy tolls
 - miners should be easier to construct, but limit to the number of cards in the same city
 - players should be able to sell properties?
+- Align `godot2` economy constants with canonical `docs/game-rules.md` (initial balances and property prices).
+- Add regression test + fix for unowned-property buy path when player has insufficient fiat (`insufficient_fiat` must not stall turn progression in text-only flow).
 
 
 

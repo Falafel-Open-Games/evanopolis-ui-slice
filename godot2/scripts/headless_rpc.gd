@@ -89,14 +89,30 @@ func rpc_tile_landed(
         city: String,
         owner_index: int,
         toll_due: float,
+        buy_price: float,
         action_required: String,
 ) -> void:
-    _handle_tile_landed(seq, tile_index, tile_type, city, owner_index, toll_due, action_required)
+    _handle_tile_landed(seq, tile_index, tile_type, city, owner_index, toll_due, buy_price, action_required)
+
+
+@rpc("authority")
+func rpc_incident_drawn(seq: int, tile_index: int, incident_kind: String, card_id: String, card_text: String) -> void:
+    _handle_incident_drawn(seq, tile_index, incident_kind, card_id, card_text)
+
+
+@rpc("authority")
+func rpc_player_balance_changed(seq: int, player_index: int, fiat_delta: float, btc_delta: float, reason: String) -> void:
+    _handle_player_balance_changed(seq, player_index, fiat_delta, btc_delta, reason)
 
 
 @rpc("authority")
 func rpc_cycle_started(seq: int, cycle: int, inflation_active: bool) -> void:
     _handle_cycle_started(seq, cycle, inflation_active)
+
+
+@rpc("authority")
+func rpc_incident_type_changed(seq: int, tile_index: int, incident_kind: String) -> void:
+    _handle_incident_type_changed(seq, tile_index, incident_kind)
 
 
 @rpc("authority")
@@ -107,6 +123,16 @@ func rpc_property_acquired(seq: int, player_index: int, tile_index: int, price: 
 @rpc("authority")
 func rpc_toll_paid(seq: int, payer_index: int, owner_index: int, amount: float) -> void:
     _handle_toll_paid(seq, payer_index, owner_index, amount)
+
+
+@rpc("authority")
+func rpc_player_sent_to_inspection(seq: int, player_index: int, reason: String) -> void:
+    _handle_player_sent_to_inspection(seq, player_index, reason)
+
+
+@rpc("authority")
+func rpc_inspection_voucher_granted(seq: int, player_index: int, amount: int, reason: String) -> void:
+    _handle_inspection_voucher_granted(seq, player_index, amount, reason)
 
 
 @rpc("authority")
@@ -195,12 +221,25 @@ func _handle_tile_landed(
         city: String,
         owner_index: int,
         toll_due: float,
+        buy_price: float,
         action_required: String,
 ) -> void:
     pass
 
 
+func _handle_incident_drawn(seq: int, tile_index: int, incident_kind: String, card_id: String, card_text: String) -> void:
+    pass
+
+
+func _handle_player_balance_changed(seq: int, player_index: int, fiat_delta: float, btc_delta: float, reason: String) -> void:
+    pass
+
+
 func _handle_cycle_started(seq: int, cycle: int, inflation_active: bool) -> void:
+    pass
+
+
+func _handle_incident_type_changed(seq: int, tile_index: int, incident_kind: String) -> void:
     pass
 
 
@@ -209,6 +248,14 @@ func _handle_property_acquired(seq: int, player_index: int, tile_index: int, pri
 
 
 func _handle_toll_paid(seq: int, payer_index: int, owner_index: int, amount: float) -> void:
+    pass
+
+
+func _handle_player_sent_to_inspection(seq: int, player_index: int, reason: String) -> void:
+    pass
+
+
+func _handle_inspection_voucher_granted(seq: int, player_index: int, amount: int, reason: String) -> void:
     pass
 
 

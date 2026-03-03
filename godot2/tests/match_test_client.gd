@@ -79,6 +79,7 @@ func rpc_tile_landed(
         city: String,
         owner_index: int,
         toll_due: float,
+        buy_price: float,
         action_required: String,
 ) -> void:
     events.append(
@@ -90,7 +91,34 @@ func rpc_tile_landed(
             "city": city,
             "owner_index": owner_index,
             "toll_due": toll_due,
+            "buy_price": buy_price,
             "action_required": action_required,
+        },
+    )
+
+
+func rpc_incident_drawn(seq: int, tile_index: int, incident_kind: String, card_id: String, card_text: String) -> void:
+    events.append(
+        {
+            "method": "rpc_incident_drawn",
+            "seq": seq,
+            "tile_index": tile_index,
+            "incident_kind": incident_kind,
+            "card_id": card_id,
+            "card_text": card_text,
+        },
+    )
+
+
+func rpc_player_balance_changed(seq: int, player_index: int, fiat_delta: float, btc_delta: float, reason: String) -> void:
+    events.append(
+        {
+            "method": "rpc_player_balance_changed",
+            "seq": seq,
+            "player_index": player_index,
+            "fiat_delta": fiat_delta,
+            "btc_delta": btc_delta,
+            "reason": reason,
         },
     )
 
@@ -102,6 +130,17 @@ func rpc_cycle_started(seq: int, cycle: int, inflation_active: bool) -> void:
             "seq": seq,
             "cycle": cycle,
             "inflation_active": inflation_active,
+        },
+    )
+
+
+func rpc_incident_type_changed(seq: int, tile_index: int, incident_kind: String) -> void:
+    events.append(
+        {
+            "method": "rpc_incident_type_changed",
+            "seq": seq,
+            "tile_index": tile_index,
+            "incident_kind": incident_kind,
         },
     )
 
@@ -126,6 +165,29 @@ func rpc_toll_paid(seq: int, payer_index: int, owner_index: int, amount: float) 
             "payer_index": payer_index,
             "owner_index": owner_index,
             "amount": amount,
+        },
+    )
+
+
+func rpc_player_sent_to_inspection(seq: int, player_index: int, reason: String) -> void:
+    events.append(
+        {
+            "method": "rpc_player_sent_to_inspection",
+            "seq": seq,
+            "player_index": player_index,
+            "reason": reason,
+        },
+    )
+
+
+func rpc_inspection_voucher_granted(seq: int, player_index: int, amount: int, reason: String) -> void:
+    events.append(
+        {
+            "method": "rpc_inspection_voucher_granted",
+            "seq": seq,
+            "player_index": player_index,
+            "amount": amount,
+            "reason": reason,
         },
     )
 

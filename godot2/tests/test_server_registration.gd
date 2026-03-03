@@ -127,6 +127,40 @@ func test_sync_snapshot_reflects_moved_pawn_state() -> void:
     assert_true(int(player_zero.get("position", 0)) > 0, "snapshot position reflects moved pawn")
 
 
+func test_reconnect_sync_includes_incident_mutated_player_balances() -> void:
+    var config: Config = Config.new("res://configs/demo_002.toml")
+    var server: HeadlessServer = HeadlessServer.new()
+    var game_match = server.create_match(config)
+    server.authorize_peer(11, "alice")
+    server.authorize_peer(12, "bob")
+    assert_eq(str(server.register_remote_client("demo_002", "alice", 11, null).get("reason", "")), "", "alice joins")
+    assert_eq(str(server.register_remote_client("demo_002", "bob", 12, null).get("reason", "")), "", "bob joins")
+
+    # Simulate bob going offline before alice triggers an incident effect.
+    server.handle_peer_disconnected(12)
+    assert_false(server.peer_slots.has(12), "bob peer slot removed on disconnect")
+
+    # Alice lands on first bear incident card: -2 fiat.
+    game_match._server_move_pawn(4)
+    assert_true(is_equal_approx(game_match.state.players[0].fiat_balance, 18.0), "incident effect applied to alice while bob offline")
+
+    # Bob reconnects with a new peer and requests sync snapshot.
+    server.authorize_peer(22, "bob")
+    var reconnect_result: Dictionary = server.register_remote_client("demo_002", "bob", 22, null)
+    assert_eq(str(reconnect_result.get("reason", "")), "", "bob reconnect succeeds")
+    assert_eq(int(reconnect_result.get("player_index", -1)), 1, "bob reconnect keeps player slot")
+
+    var sync_result: Dictionary = server.rpc_sync_request("demo_002", "bob", 22)
+    assert_eq(str(sync_result.get("reason", "")), "", "sync succeeds after reconnect")
+    var snapshot: Dictionary = sync_result.get("snapshot", { })
+    var players: Array = snapshot.get("players", [])
+    assert_eq(players.size(), 2, "snapshot includes two players")
+    if players.size() == 2:
+        var alice: Dictionary = players[0]
+        assert_true(is_equal_approx(float(alice.get("fiat_balance", 0.0)), 18.0), "reconnected player sees alice updated fiat balance")
+        assert_true(is_equal_approx(float(alice.get("bitcoin_balance", 0.0)), 0.0), "reconnected player sees alice updated btc balance")
+
+
 func test_peer_disconnect_detaches_match_client_slot() -> void:
     var config: Config = Config.new("res://configs/demo_002.toml")
     var server: HeadlessServer = HeadlessServer.new()
@@ -279,6 +313,7 @@ func test_sync_snapshot_includes_pending_action() -> void:
     var pending_action: Dictionary = snapshot.get("pending_action", { })
     assert_eq(str(pending_action.get("type", "")), "buy_or_end_turn", "snapshot includes pending action type")
     assert_eq(int(pending_action.get("tile_index", -1)), 6, "snapshot includes pending tile index")
+    assert_true(is_equal_approx(float(pending_action.get("buy_price", 0.0)), 4.0), "snapshot includes buy price for buy_or_end_turn")
 
 
 func test_sync_snapshot_includes_pay_toll_pending_action_metadata() -> void:
@@ -305,4 +340,4 @@ func test_sync_snapshot_includes_pay_toll_pending_action_metadata() -> void:
     assert_eq(str(pending_action.get("type", "")), "pay_toll", "snapshot includes pay_toll pending action type")
     assert_eq(int(pending_action.get("tile_index", -1)), 6, "snapshot includes pay_toll tile index")
     assert_eq(int(pending_action.get("owner_index", -1)), 1, "snapshot includes pay_toll owner index")
-    assert_true(is_equal_approx(float(pending_action.get("amount", 0.0)), 7500.0), "snapshot includes pay_toll amount")
+    assert_true(is_equal_approx(float(pending_action.get("amount", 0.0)), 0.6), "snapshot includes pay_toll amount")

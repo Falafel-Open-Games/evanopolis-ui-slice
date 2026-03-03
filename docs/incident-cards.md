@@ -1,27 +1,44 @@
-# Incident Cards (Draft)
+# Incident Cards
 
-Reference: `docs/bitcoin-mining-game-design.md` for rules context.
+Reference:
+- Canonical rules: `docs/game-rules.md`
 
-## Bull (Good) Cards
-1. Subsidy Spike: Gain +1 BTC.
-2. Energy Discount: Pay no energy tolls this cycle.
-3. Hardware Windfall: Gain 1 miner batch at 50% fiat cost.
-4. Hosting Demand: Collect +20k fiat from each other player.
-5. Bulk Import: Buy next miner batch at -20% fiat cost.
-6. Local Grant: Gain +40k fiat.
-7. Hashrate Upgrade: One property gains +1 miner batch capacity this cycle.
-8. Market Hype: Gain +0.5 BTC.
-9. Logistics Win: Place 1 miner batch instantly (no delivery delay).
-10. Whale Buyer: Sell 1 BTC for +120k fiat.
+## v0 Baseline (Implement First)
 
-## Bear (Bad) Cards
-1. Energy Shock: Pay +10k fiat immediately.
-2. Equipment Failure: Lose 1 miner batch on a property.
-3. Customs Delay: Skip your next turn (no payouts).
-4. Tax Audit: Pay 10% of your fiat balance.
-5. Theft Incident: Lose 0.5 BTC.
-6. Cooling Leak: Pay 30k fiat or remove 1 miner batch.
-7. Network Congestion: Payouts from your properties are halved this cycle.
-8. Insurance Denied: Pay 20k fiat.
-9. Emergency Shutdown: One property produces no BTC payouts this cycle.
-10. Forced Sale: Sell one property for 50% of its fiat price.
+These are the only incident effects required for v0 full-game validation.
+All are immediate effects (no delayed or multi-turn state).
+
+### Bear (self-impact)
+1. `bear_fine_eva_2`: current player pays `2 EVA`.
+2. `bear_lost_btc_0_5`: current player loses `0.5 BTC`.
+3. `bear_legal_inspection`: current player is sent to inspection.
+
+### Bull (self-impact)
+1. `bull_gain_eva_2`: current player gains `2 EVA`.
+2. `bull_gain_btc_0_2`: current player gains `0.2 BTC`.
+3. `bull_free_inspection_exit`: current player gains `1` free inspection exit.
+
+## Post-v0 Backlog
+
+These ideas are valid, but deferred until after v0.
+
+### Deferred Bear ideas
+- `bear_equipment_failure`: lose 1 miner batch on a property.
+- `bear_tax_audit_percent`: pay 10% of fiat balance.
+- `bear_cooling_leak_choice`: pay fiat or remove 1 miner batch.
+- `bear_network_congestion_cycle`: payouts from properties halved this cycle.
+- `bear_emergency_shutdown_cycle`: one property produces no BTC this cycle.
+- `bear_forced_sale`: sell one property for 50% fiat price.
+- `bear_customs_delay`: skip next turn. *(Not for v0)*
+
+### Deferred Bull ideas
+- `bull_energy_discount_cycle`: pay no energy tolls this cycle.
+- `bull_hardware_windfall_discount`: gain 1 miner batch at discount.
+- `bull_hosting_demand_collect_all`: collect fiat from each other player. *(Not for v0)*
+- `bull_bulk_import_discount`: next miner batch has reduced fiat cost.
+- `bull_local_grant`: gain fixed fiat amount.
+- `bull_hashrate_upgrade_cycle`: one property gains temporary miner capacity.
+- `bull_logistics_win_instant`: place 1 miner batch instantly.
+- `bull_whale_buyer_trade`: sell 1 BTC for fixed fiat.
+- `bull_market_hype_btc`: gain +0.5 BTC.
+- `bull_gain_miner_1`: current player gains 1 miner batch. *(Not for v0)*

@@ -2,6 +2,7 @@ class_name GameState
 extends RefCounted
 
 const PlayerState = preload("res://scripts/state/player_state.gd")
+const EconomyV0 = preload("res://scripts/rules/economy_v0.gd")
 
 var game_id: String
 var turn_number: int
@@ -19,5 +20,5 @@ func _init(config: Config) -> void:
     players.resize(config.player_count)
     for index in range(config.player_count):
         var player: PlayerState = PlayerState.new(index)
-        player.fiat_balance = 1000000.0
+        player.fiat_balance = EconomyV0.INITIAL_FIAT_BALANCE
         players[index] = player
