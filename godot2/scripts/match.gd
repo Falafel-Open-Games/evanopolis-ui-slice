@@ -5,6 +5,9 @@ const GameState = preload("res://scripts/state/game_state.gd")
 const PlayerState = preload("res://scripts/state/player_state.gd")
 const Client = preload("res://scripts/client.gd")
 const Config = preload("res://scripts/config.gd")
+const BearV0Deck = preload("res://scripts/incidents/bear_v0_deck.gd")
+const BullV0Deck = preload("res://scripts/incidents/bull_v0_deck.gd")
+const EconomyV0 = preload("res://scripts/rules/economy_v0.gd")
 
 var config: Config
 var clients: Array[Client]
@@ -15,6 +18,8 @@ var player_ids: Array[String]
 var next_event_seq: int = 1
 var board_state: Dictionary = { }
 var pending_action: Dictionary = { }
+var bear_card_cursor: int = 0
+var bull_card_cursor: int = 0
 
 
 func _init(config_node: Config, client_nodes: Array[Client]) -> void:
@@ -140,12 +145,19 @@ func _server_move_pawn(steps: int) -> void:
             str(landing_context.get("city", "")),
             int(landing_context.get("owner_index", -1)),
             float(landing_context.get("toll_due", 0.0)),
+            float(landing_context.get("buy_price", 0.0)),
             str(landing_context.get("action_required", "")),
         ],
     )
     var action_required: String = str(landing_context.get("action_required", ""))
     if action_required == "buy_or_end_turn":
-        _set_pending_action("buy_or_end_turn", to_tile)
+        _set_pending_action(
+            "buy_or_end_turn",
+            to_tile,
+            {
+                "buy_price": float(landing_context.get("buy_price", 0.0)),
+            },
+        )
         return
     if action_required == "pay_toll":
         _set_pending_action(
@@ -160,6 +172,9 @@ func _server_move_pawn(steps: int) -> void:
     if action_required == "end_turn":
         _set_pending_action("end_turn", to_tile)
         _advance_turn()
+        return
+    if action_required == "resolve_incident":
+        _resolve_incident(to_tile)
         return
     _set_pending_action(action_required, to_tile)
 
@@ -282,6 +297,9 @@ func _build_landing_context(tile_index: int, landing_player_index: int) -> Dicti
     var owner_index: int = int(tile.get("owner_index", -1))
     var miner_batches: int = int(tile.get("miner_batches", 0))
     var toll_due: float = 0.0
+    var buy_price: float = 0.0
+    if _is_property_tile(tile_type) and owner_index < 0:
+        buy_price = _compute_property_price(city)
     if _is_property_tile(tile_type) and owner_index >= 0 and owner_index != landing_player_index:
         toll_due = _compute_toll(city, miner_batches)
     return {
@@ -289,6 +307,7 @@ func _build_landing_context(tile_index: int, landing_player_index: int) -> Dicti
         "city": city,
         "owner_index": owner_index,
         "toll_due": toll_due,
+        "buy_price": buy_price,
         "action_required": _action_required_for_tile(tile_type, owner_index, landing_player_index),
     }
 
@@ -328,20 +347,7 @@ func _compute_property_price(city: String) -> float:
 
 
 func _base_property_price(city: String) -> float:
-    if city == "caracas":
-        return 20000.0
-    if city == "assuncion":
-        return 50000.0
-    if city == "ciudad_del_este":
-        return 80000.0
-    if city == "minsk":
-        return 110000.0
-    if city == "irkutsk":
-        return 150000.0
-    if city == "rockdale":
-        return 200000.0
-    assert(false)
-    return 0.0
+    return EconomyV0.base_property_price(city)
 
 
 func _build_board_state(board_size: int) -> Dictionary:
@@ -421,6 +427,72 @@ func _append_incident_tile(tiles: Array[Dictionary], start_index: int, kind: Str
     return start_index + 1
 
 
+func _resolve_incident(tile_index: int) -> void:
+    _set_pending_action("resolve_incident", tile_index)
+    var tile: Dictionary = _tile_from_index(tile_index)
+    var incident_kind: String = str(tile.get("incident_kind", ""))
+    assert(not incident_kind.is_empty())
+    var card: Dictionary = _draw_incident_card(incident_kind)
+    var card_id: String = str(card.get("card_id", ""))
+    var card_text: String = str(card.get("card_text", ""))
+    _broadcast("rpc_incident_drawn", [tile_index, incident_kind, card_id, card_text])
+    _apply_incident_effect(card, state.current_player_index)
+    var next_incident_kind: String = _flip_incident_kind(incident_kind)
+    tile["incident_kind"] = next_incident_kind
+    var tiles: Array = board_state.get("tiles", [])
+    tiles[tile_index] = tile
+    board_state["tiles"] = tiles
+    _broadcast("rpc_incident_type_changed", [tile_index, next_incident_kind])
+    _advance_turn()
+
+
+func _draw_incident_card(incident_kind: String) -> Dictionary:
+    var bear_cards: Array[Dictionary] = BearV0Deck.CARDS
+    var bull_cards: Array[Dictionary] = BullV0Deck.CARDS
+    if incident_kind == "bear":
+        assert(not bear_cards.is_empty())
+        var bear_index: int = bear_card_cursor % bear_cards.size()
+        bear_card_cursor += 1
+        return bear_cards[bear_index]
+    assert(incident_kind == "bull")
+    assert(not bull_cards.is_empty())
+    var bull_index: int = bull_card_cursor % bull_cards.size()
+    bull_card_cursor += 1
+    return bull_cards[bull_index]
+
+
+func _apply_incident_effect(card: Dictionary, player_index: int) -> void:
+    assert(player_index >= 0 and player_index < state.players.size())
+    var effect: String = str(card.get("effect", ""))
+    var card_id: String = str(card.get("card_id", ""))
+    var player: PlayerState = state.players[player_index]
+    if effect == "balance_delta":
+        var fiat_delta: float = float(card.get("fiat_delta", 0.0))
+        var btc_delta: float = float(card.get("btc_delta", 0.0))
+        player.fiat_balance += fiat_delta
+        player.bitcoin_balance += btc_delta
+        _broadcast("rpc_player_balance_changed", [player_index, fiat_delta, btc_delta, card_id])
+        return
+    if effect == "send_to_inspection":
+        player.in_inspection = true
+        _broadcast("rpc_player_sent_to_inspection", [player_index, card_id])
+        return
+    if effect == "grant_inspection_voucher":
+        player.inspection_free_exits += 1
+        _broadcast("rpc_inspection_voucher_granted", [player_index, 1, card_id])
+        return
+    assert(false)
+
+
+func _flip_incident_kind(incident_kind: String) -> String:
+    if incident_kind == "bear":
+        return "bull"
+    if incident_kind == "bull":
+        return "bear"
+    assert(false)
+    return ""
+
+
 func next_sequence() -> int:
     var seq: int = next_event_seq
     next_event_seq += 1
@@ -442,6 +514,7 @@ func build_state_snapshot() -> Dictionary:
                 "position": player.position,
                 "laps": player.laps,
                 "in_inspection": player.in_inspection,
+                "inspection_free_exits": player.inspection_free_exits,
             },
         )
     return {

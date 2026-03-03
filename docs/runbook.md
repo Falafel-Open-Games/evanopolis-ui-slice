@@ -2,17 +2,22 @@
 
 ## Goal
 
-Quickly validate movement flow, tile feedback, and buy/skip choice UX.
+Use `godot2` as the primary development and validation path for gameplay/server behavior, and use `godot/` offline demo runs for UI validation/approval.
 
 ## Prereqs
 
 - Godot 4.5.1 in PATH.
 
-## Run
+## Get JWTs From `tabletop-auth` Demo (2 Players)
 
-1. From `evanopolis-ui-slice/`, run `just dev`.
-2. On the boot screen, choose player count (2-6).
-3. Optional: set `game_id` to reproduce a prior session.
+1. In a separate terminal, go to the sibling repo: `cd ../tabletop-auth`.
+2. Start auth API + demo: `just dev`.
+3. Open `http://localhost:8000/token-only.html` in browser profile/account A, sign in, and copy JWT A.
+4. Open the same URL in browser profile/account B, sign in, and copy JWT B.
+5. (Optional verify) run:
+   - `curl http://localhost:3000/whoami -H "authorization: Bearer <JWT_A>"`
+   - `curl http://localhost:3000/whoami -H "authorization: Bearer <JWT_B>"`
+6. Back in this repo, set `AUTH_BASE_URL=http://127.0.0.1:3000` before starting `just text-only-server`.
 
 ## Headless Server + Text-Only Clients (godot2)
 
@@ -25,11 +30,11 @@ Quickly validate movement flow, tile feedback, and buy/skip choice UX.
 
 ### Terminal 2: Client 1
 
-1. Run `just text-only-client --game-id demo_002 --auth-token <jwt>`.
+1. Run `just text-only-client --game-id demo_002 --auth-token <JWT_A>`.
 
 ### Terminal 3: Client 2
 
-1. Run `just text-only-client --game-id demo_002 --auth-token <jwt>`.
+1. Run `just text-only-client --game-id demo_002 --auth-token <JWT_B>`.
 
 ### Notes
 
@@ -37,6 +42,12 @@ Quickly validate movement flow, tile feedback, and buy/skip choice UX.
 - `--auth-token` is required; `player_id` is derived from the JWT `sub`.
 - Optional server args: `--port`, `--config-dir`, `--config`, `--auth-base-url`, `--auth-verify-path`.
 - Optional client args: `--host`, `--port`.
+
+## Offline UI Validation Demo (godot)
+
+1. From `evanopolis-ui-slice/`, run `just dev`.
+2. On the boot screen, choose player count (2-6).
+3. Optional: set `game_id` to reproduce a prior session.
 
 ## Playtest Checklist
 

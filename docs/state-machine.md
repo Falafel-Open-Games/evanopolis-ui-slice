@@ -21,9 +21,16 @@ stateDiagram-v2
     PendingActionSet --> AwaitingPendingAction: prompt current player
     AwaitingPendingAction --> ResolvingBuy: rpc_buy_property
     AwaitingPendingAction --> ResolvingPayToll: rpc_pay_toll
+    AwaitingPendingAction --> ResolvingIncident: resolve_incident (server-driven)
     AwaitingPendingAction --> ResolvingEndTurn: rpc_end_turn
     ResolvingBuy --> TurnAdvanced: rpc_property_acquired + rpc_turn_started
     ResolvingPayToll --> TurnAdvanced: rpc_toll_paid + rpc_turn_started
+    ResolvingIncident --> ApplyingIncidentEffects: rpc_incident_drawn
+    ApplyingIncidentEffects --> ApplyingIncidentEffects: rpc_player_balance_changed (0..N)
+    ApplyingIncidentEffects --> ApplyingIncidentEffects: rpc_player_sent_to_inspection (0..1)
+    ApplyingIncidentEffects --> ApplyingIncidentEffects: rpc_inspection_voucher_granted (0..1)
+    ApplyingIncidentEffects --> IncidentTileFlipped: rpc_incident_type_changed
+    IncidentTileFlipped --> TurnAdvanced: rpc_turn_started
     ResolvingEndTurn --> TurnAdvanced: rpc_turn_started
     TurnAdvanced --> TurnStarted: next player
 
@@ -46,7 +53,8 @@ stateDiagram-v2
 
 Notes:
 - "Pending action" is authoritative server state and gates which action RPCs are valid.
-- v0 action set is `buy_or_end_turn`, `pay_toll`, and `end_turn`; incident/inspection branches are added later.
+- v0 action set is `buy_or_end_turn`, `pay_toll`, `resolve_incident`, and `end_turn`.
+- Incident resolution is server-driven and may emit multiple mutation events before tile flip + turn advance.
 - Outside-turn actions are recorded as deferred intents and never mutate the currently resolving turn.
 - Deferred intents activate only at a deterministic boundary (`effective_from_turn` / equivalent rule).
 - Timeout behavior and penalties should be defined in `godot2/DESIGN.md`.

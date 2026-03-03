@@ -104,6 +104,7 @@ func test_roll_emits_landing_context_for_property_tile() -> void:
     assert_eq(str(event.get("city", "")), "assuncion", "landing city name")
     assert_eq(int(event.get("owner_index", -99)), -1, "unowned property")
     assert_eq(float(event.get("toll_due", -1.0)), 0.0, "no toll on unowned property")
+    assert_true(is_equal_approx(float(event.get("buy_price", -1.0)), 4.0), "buy price provided for unowned property")
     assert_eq(str(event.get("action_required", "")), "buy_or_end_turn", "expected action for unowned property")
 
 
@@ -127,7 +128,42 @@ func test_landing_context_for_non_property_tile() -> void:
     assert_eq(str(event.get("city", "")), "", "non-property has no city")
     assert_eq(int(event.get("owner_index", -99)), -1, "non-property has no owner")
     assert_eq(float(event.get("toll_due", -1.0)), 0.0, "non-property has no toll")
+    assert_eq(float(event.get("buy_price", -1.0)), 0.0, "non-property has no buy price")
     assert_eq(str(event.get("action_required", "")), "resolve_incident", "incident requires incident resolution")
+
+
+func test_incident_resolution_emits_events_flips_tile_and_advances_turn() -> void:
+    var config: Config = Config.new("res://configs/demo_002.toml")
+    var game_match: GameMatch = GameMatch.new(config, [])
+    var client_a: MatchTestClient = MatchTestClient.new()
+    var client_b: MatchTestClient = MatchTestClient.new()
+    assert_eq(str(game_match.assign_client("alice", client_a).get("reason", "")), "", "first client should register")
+    assert_eq(str(game_match.assign_client("bob", client_b).get("reason", "")), "", "second client should register")
+
+    game_match._server_move_pawn(4)
+
+    var incident_drawn: Array[Dictionary] = _filter_events(client_a, "rpc_incident_drawn")
+    assert_eq(incident_drawn.size(), 1, "incident draw event emitted once")
+    var incident_flip: Array[Dictionary] = _filter_events(client_a, "rpc_incident_type_changed")
+    assert_eq(incident_flip.size(), 1, "incident tile flip event emitted once")
+    if incident_flip.size() == 1:
+        assert_eq(str(incident_flip[0].get("incident_kind", "")), "bull", "incident tile flips from bear to bull")
+
+    var mutation_count: int = 0
+    mutation_count += _filter_events(client_a, "rpc_player_balance_changed").size()
+    mutation_count += _filter_events(client_a, "rpc_player_sent_to_inspection").size()
+    mutation_count += _filter_events(client_a, "rpc_inspection_voucher_granted").size()
+    assert_true(mutation_count >= 1, "incident resolution emits at least one mutation event")
+
+    var turns: Array[Dictionary] = _filter_events(client_a, "rpc_turn_started")
+    assert_eq(turns.size(), 2, "next turn starts after incident resolution")
+    assert_eq(int(turns[1].get("player_index", -1)), 1, "turn advanced to next player")
+    assert_true(game_match.pending_action.is_empty(), "pending action cleared after incident resolution")
+
+    if incident_flip.size() == 1 and turns.size() == 2:
+        var flip_seq: int = int(incident_flip[0].get("seq", -1))
+        var next_turn_seq: int = int(turns[1].get("seq", -1))
+        assert_true(flip_seq < next_turn_seq, "incident flip emitted before next turn started")
 
 
 func test_landing_context_for_owned_property_by_other_player() -> void:
@@ -156,7 +192,8 @@ func test_landing_context_for_owned_property_by_other_player() -> void:
     assert_eq(str(event.get("tile_type", "")), "property", "property tile type")
     assert_eq(str(event.get("city", "")), "assuncion", "property city")
     assert_eq(int(event.get("owner_index", -99)), 1, "owner is other player")
-    assert_true(is_equal_approx(float(event.get("toll_due", -1.0)), 7500.0), "assuncion toll with 2 miner batches at cycle 1")
+    assert_true(is_equal_approx(float(event.get("toll_due", -1.0)), 0.6), "assuncion toll with 2 miner batches at cycle 1")
+    assert_eq(float(event.get("buy_price", -1.0)), 0.0, "owned property has no buy price")
     assert_eq(str(event.get("action_required", "")), "pay_toll", "owned by other requires pay_toll")
 
 
@@ -184,6 +221,7 @@ func test_landing_context_for_owned_property_by_self() -> void:
     var event: Dictionary = landed[0]
     assert_eq(int(event.get("owner_index", -99)), 0, "owner is landing player")
     assert_eq(float(event.get("toll_due", -1.0)), 0.0, "self-owned property has no toll")
+    assert_eq(float(event.get("buy_price", -1.0)), 0.0, "self-owned property has no buy price")
     assert_eq(str(event.get("action_required", "")), "end_turn", "self-owned property ends turn")
 
 
@@ -205,7 +243,7 @@ func test_buy_property_resolves_pending_action_and_advances_turn() -> void:
 
     var tile: Dictionary = game_match._tile_from_index(6)
     assert_eq(int(tile.get("owner_index", -1)), 0, "tile ownership transferred to buyer")
-    assert_true(is_equal_approx(game_match.state.players[0].fiat_balance, 950000.0), "buyer fiat balance reduced by property price")
+    assert_true(is_equal_approx(game_match.state.players[0].fiat_balance, 16.0), "buyer fiat balance reduced by property price")
 
     var acquired: Array[Dictionary] = _filter_events(client_a, "rpc_property_acquired")
     assert_eq(acquired.size(), 1, "property acquired event emitted once")
@@ -257,8 +295,8 @@ func test_pay_toll_resolves_pending_action_and_advances_turn() -> void:
     var pay_reason: String = game_match.rpc_pay_toll("demo_002", "alice")
     assert_eq(pay_reason, "", "pay toll should succeed")
     assert_true(game_match.pending_action.is_empty(), "pending action cleared after pay toll")
-    assert_true(is_equal_approx(game_match.state.players[0].fiat_balance, 992500.0), "payer fiat reduced by toll")
-    assert_true(is_equal_approx(game_match.state.players[1].fiat_balance, 1007500.0), "owner fiat increased by toll")
+    assert_true(is_equal_approx(game_match.state.players[0].fiat_balance, 19.4), "payer fiat reduced by toll")
+    assert_true(is_equal_approx(game_match.state.players[1].fiat_balance, 20.6), "owner fiat increased by toll")
 
     var toll_paid: Array[Dictionary] = _filter_events(client_a, "rpc_toll_paid")
     assert_eq(toll_paid.size(), 1, "toll paid event emitted once")
@@ -311,7 +349,7 @@ func test_pay_toll_rejected_for_insufficient_fiat() -> void:
     game_match.board_state["tiles"] = tiles
 
     game_match.rpc_roll_dice("demo_002", "alice")
-    game_match.state.players[0].fiat_balance = 10.0
+    game_match.state.players[0].fiat_balance = 0.1
     var reason: String = game_match.rpc_pay_toll("demo_002", "alice")
     assert_eq(reason, "insufficient_fiat", "pay toll rejects when payer cannot afford toll")
 
@@ -505,6 +543,98 @@ func test_turn_number_increments_after_last_player_ends_turn() -> void:
 
     assert_eq(game_match.state.current_player_index, 0, "turn wraps to first player")
     assert_eq(game_match.state.turn_number, 2, "turn number increments after last player resolves turn")
+
+
+func test_incident_event_order_is_strict() -> void:
+    var config: Config = Config.new("res://configs/demo_002.toml")
+    var game_match: GameMatch = GameMatch.new(config, [])
+    var client_a: MatchTestClient = MatchTestClient.new()
+    var client_b: MatchTestClient = MatchTestClient.new()
+    assert_eq(str(game_match.assign_client("alice", client_a).get("reason", "")), "", "first client should register")
+    assert_eq(str(game_match.assign_client("bob", client_b).get("reason", "")), "", "second client should register")
+
+    game_match._server_move_pawn(4)
+
+    var landed: Array[Dictionary] = _filter_events(client_a, "rpc_tile_landed")
+    var drawn: Array[Dictionary] = _filter_events(client_a, "rpc_incident_drawn")
+    var balance_changed: Array[Dictionary] = _filter_events(client_a, "rpc_player_balance_changed")
+    var incident_flip: Array[Dictionary] = _filter_events(client_a, "rpc_incident_type_changed")
+    var turns: Array[Dictionary] = _filter_events(client_a, "rpc_turn_started")
+
+    assert_eq(landed.size(), 1, "one tile landed event")
+    assert_eq(drawn.size(), 1, "one incident drawn event")
+    assert_eq(balance_changed.size(), 1, "one balance mutation event for first bear card")
+    assert_eq(incident_flip.size(), 1, "one incident flip event")
+    assert_true(turns.size() >= 2, "at least two turn started events in stream")
+    if landed.size() == 1 and drawn.size() == 1 and balance_changed.size() == 1 and incident_flip.size() == 1 and turns.size() >= 2:
+        var tile_landed_seq: int = int(landed[0].get("seq", -1))
+        var drawn_seq: int = int(drawn[0].get("seq", -1))
+        var balance_seq: int = int(balance_changed[0].get("seq", -1))
+        var flip_seq: int = int(incident_flip[0].get("seq", -1))
+        var next_turn_seq: int = int(turns[turns.size() - 1].get("seq", -1))
+        assert_true(tile_landed_seq < drawn_seq, "tile landed emitted before incident draw")
+        assert_true(drawn_seq < balance_seq, "incident draw emitted before balance mutation")
+        assert_true(balance_seq < flip_seq, "balance mutation emitted before tile flip")
+        assert_true(flip_seq < next_turn_seq, "tile flip emitted before next turn started")
+
+
+func test_incident_tile_flips_back_to_bear_on_second_landing() -> void:
+    var config: Config = Config.new("res://configs/demo_002.toml")
+    var game_match: GameMatch = GameMatch.new(config, [])
+    var client_a: MatchTestClient = MatchTestClient.new()
+    var client_b: MatchTestClient = MatchTestClient.new()
+    assert_eq(str(game_match.assign_client("alice", client_a).get("reason", "")), "", "first client should register")
+    assert_eq(str(game_match.assign_client("bob", client_b).get("reason", "")), "", "second client should register")
+
+    game_match._server_move_pawn(4)
+    game_match._server_move_pawn(4)
+
+    var incident_flip: Array[Dictionary] = _filter_events(client_a, "rpc_incident_type_changed")
+    assert_eq(incident_flip.size(), 2, "two incident flips emitted across two landings")
+    if incident_flip.size() == 2:
+        assert_eq(str(incident_flip[0].get("incident_kind", "")), "bull", "first landing flips bear->bull")
+        assert_eq(str(incident_flip[1].get("incident_kind", "")), "bear", "second landing flips bull->bear")
+    var tile: Dictionary = game_match._tile_from_index(4)
+    assert_eq(str(tile.get("incident_kind", "")), "bear", "tile state returns to bear after second landing")
+
+
+func test_bear_deck_cycles_deterministically() -> void:
+    var config: Config = Config.new("res://configs/demo_002.toml")
+    var game_match: GameMatch = GameMatch.new(config, [])
+
+    var card_1: Dictionary = game_match._draw_incident_card("bear")
+    var card_2: Dictionary = game_match._draw_incident_card("bear")
+    var card_3: Dictionary = game_match._draw_incident_card("bear")
+    var card_4: Dictionary = game_match._draw_incident_card("bear")
+
+    assert_eq(str(card_1.get("card_id", "")), "bear_fine_eva_2", "first bear card")
+    assert_eq(str(card_2.get("card_id", "")), "bear_lost_btc_0_2", "second bear card")
+    assert_eq(str(card_3.get("card_id", "")), "bear_legal_inspection", "third bear card")
+    assert_eq(str(card_4.get("card_id", "")), "bear_fine_eva_2", "bear deck wraps to first card")
+
+
+func test_snapshot_reflects_inspection_status_after_bear_inspection_card() -> void:
+    var config: Config = Config.new("res://configs/demo_002.toml")
+    var game_match: GameMatch = GameMatch.new(config, [])
+    var client_a: MatchTestClient = MatchTestClient.new()
+    var client_b: MatchTestClient = MatchTestClient.new()
+    assert_eq(str(game_match.assign_client("alice", client_a).get("reason", "")), "", "first client should register")
+    assert_eq(str(game_match.assign_client("bob", client_b).get("reason", "")), "", "second client should register")
+
+    game_match.bear_card_cursor = 2
+    game_match._server_move_pawn(4)
+
+    assert_true(game_match.state.players[0].in_inspection, "current player set to inspection after bear inspection card")
+    var snapshot: Dictionary = game_match.build_state_snapshot()
+    var players: Array = snapshot.get("players", [])
+    assert_eq(players.size(), 2, "snapshot keeps two players")
+    if players.size() == 2:
+        var player_0: Dictionary = players[0]
+        assert_true(bool(player_0.get("in_inspection", false)), "snapshot includes inspection=true for player 0")
+    var sent_to_inspection: Array[Dictionary] = _filter_events(client_a, "rpc_player_sent_to_inspection")
+    assert_eq(sent_to_inspection.size(), 1, "inspection mutation event emitted")
+    if sent_to_inspection.size() == 1:
+        assert_eq(str(sent_to_inspection[0].get("reason", "")), "bear_legal_inspection", "reason is inspection card id")
 
 
 func _filter_events(client: MatchTestClient, method: String) -> Array[Dictionary]:

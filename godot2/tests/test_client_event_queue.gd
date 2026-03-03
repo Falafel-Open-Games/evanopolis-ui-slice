@@ -7,6 +7,7 @@ class ClientMainDouble:
     extends "res://scripts/client_main.gd"
 
     var server_calls: Array[Dictionary] = []
+    var prompt_messages: Array[String] = []
     var next_buy_choice: bool = false
     var turn_prompt_count: int = 0
     var buy_prompt_count: int = 0
@@ -26,8 +27,9 @@ class ClientMainDouble:
         turn_prompt_count += 1
 
 
-    func _start_buy_or_end_turn_prompt(tile_index: int, city: String) -> void:
+    func _start_buy_or_end_turn_prompt(tile_index: int, city: String, buy_price: float) -> void:
         buy_prompt_count += 1
+        _log_prompt("buy property on tile=%d city=%s price=%.2f? [y/n]" % [tile_index, city, buy_price])
         if next_buy_choice:
             _request_buy_property(tile_index)
             return
@@ -41,6 +43,10 @@ class ClientMainDouble:
 
     func _wait_for_buy_choice() -> bool:
         return next_buy_choice
+
+
+    func _log_prompt(message: String) -> void:
+        prompt_messages.append(message)
 
 
 func test_join_requests_snapshot_sync_and_drops_pre_sync_events() -> void:
@@ -153,7 +159,7 @@ func test_state_snapshot_logs_with_players_present() -> void:
                     "player_index": 0,
                     "position": 6,
                     "laps": 0,
-                    "fiat_balance": 1000000.0,
+                    "fiat_balance": 20.0,
                     "bitcoin_balance": 0.5,
                     "in_inspection": false,
                 },
@@ -161,7 +167,7 @@ func test_state_snapshot_logs_with_players_present() -> void:
                     "player_index": 1,
                     "position": 3,
                     "laps": 1,
-                    "fiat_balance": 950000.0,
+                    "fiat_balance": 16.0,
                     "bitcoin_balance": 0.25,
                     "in_inspection": true,
                 },
@@ -203,7 +209,7 @@ func test_tile_landed_uses_board_state_details() -> void:
     }
 
     client._apply_board_state(board)
-    client._apply_tile_landed(1, "property", "caracas", -1, 0.0, "buy_or_end_turn")
+    client._apply_tile_landed(1, "property", "caracas", -1, 0.0, 3.0, "buy_or_end_turn")
     var tile_info: Dictionary = client._tile_info_from_index(1)
 
     assert_eq(int(client.board_state.get("size", 0)), 24, "board state should be applied")
@@ -220,10 +226,12 @@ func test_tile_landed_buy_prompt_submits_buy_property() -> void:
     client.current_player_index = 0
     client.next_buy_choice = true
 
-    client._apply_tile_landed(6, "property", "assuncion", -1, 0.0, "buy_or_end_turn")
+    client._apply_tile_landed(6, "property", "assuncion", -1, 0.0, 4.0, "buy_or_end_turn")
 
     assert_eq(client.server_calls.size(), 1, "buy prompt sends one rpc")
     assert_eq(str(client.server_calls[0].get("method", "")), "rpc_buy_property", "buy path sends buy_property rpc")
+    assert_eq(client.prompt_messages.size(), 1, "buy prompt logged once")
+    assert_eq(client.prompt_messages[0], "buy property on tile=6 city=assuncion price=4.00? [y/n]", "buy prompt includes buy price")
     var args: Array = client.server_calls[0].get("args", [])
     assert_eq(int(args[2]), 6, "tile index is forwarded for buy")
     client.free()
@@ -235,7 +243,7 @@ func test_tile_landed_buy_prompt_submits_end_turn() -> void:
     client.current_player_index = 0
     client.next_buy_choice = false
 
-    client._apply_tile_landed(6, "property", "assuncion", -1, 0.0, "buy_or_end_turn")
+    client._apply_tile_landed(6, "property", "assuncion", -1, 0.0, 4.0, "buy_or_end_turn")
 
     assert_eq(client.server_calls.size(), 1, "decline buy sends one rpc")
     assert_eq(str(client.server_calls[0].get("method", "")), "rpc_end_turn", "decline path sends end_turn rpc")
@@ -247,7 +255,7 @@ func test_tile_landed_pay_toll_prompt_submits_pay_toll() -> void:
     client.player_index = 0
     client.current_player_index = 0
 
-    client._apply_tile_landed(13, "property", "minsk", 1, 11000.0, "pay_toll")
+    client._apply_tile_landed(13, "property", "minsk", 1, 0.6, 0.0, "pay_toll")
 
     assert_eq(client.server_calls.size(), 1, "pay toll prompt sends one rpc")
     assert_eq(str(client.server_calls[0].get("method", "")), "rpc_pay_toll", "pay toll path sends pay_toll rpc")
@@ -259,7 +267,7 @@ func test_tile_landed_pay_toll_for_other_player_does_not_prompt() -> void:
     client.player_index = 1
     client.current_player_index = 0
 
-    client._apply_tile_landed(13, "property", "minsk", 1, 11000.0, "pay_toll")
+    client._apply_tile_landed(13, "property", "minsk", 1, 0.6, 0.0, "pay_toll")
 
     assert_eq(client.server_calls.size(), 0, "no rpc sent when pay_toll is for another player")
     assert_eq(client.pay_toll_prompt_count, 0, "no pay toll prompt for another player")
@@ -351,7 +359,7 @@ func test_sync_complete_resumes_pay_toll_prompt_from_snapshot_pending_action() -
                 "type": "pay_toll",
                 "tile_index": 13,
                 "owner_index": 0,
-                "amount": 11000.0,
+                "amount": 0.6,
             },
             "board_state": {
                 "size": 24,
@@ -393,7 +401,7 @@ func test_sync_complete_does_not_resume_pay_toll_for_other_player() -> void:
                 "type": "pay_toll",
                 "tile_index": 13,
                 "owner_index": 1,
-                "amount": 11000.0,
+                "amount": 0.6,
             },
             "board_state": {
                 "size": 24,

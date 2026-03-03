@@ -134,12 +134,21 @@ All calls are Godot Multiplayer RPCs (not REST). Define which side owns each RPC
 - Do not resend the full board map each turn; treat it as baseline state.
 - If board metadata changes after start (ownership, miners, incident face), send delta events (`rpc_property_acquired`, `rpc_miner_batches_added`, `rpc_incident_type_changed`) so clients stay aligned.
 
+### Incident Tile Initial State (Decision)
+- All `incident` tiles are market-state tiles with two faces: `bear` and `bull`.
+- Initial game state sets every incident tile to `incident_kind = "bear"`.
+- On each incident resolution, server flips only the landed incident tile:
+- `bear -> bull`
+- `bull -> bear`
+- Clients must treat `rpc_incident_type_changed` as authoritative for the next landing on that tile.
+
 ### Landing Action Semantics
 - `action_required` in `rpc_tile_landed` is server-authored and should be interpreted as:
 - `buy_or_end_turn` for unowned property/special_property.
 - `pay_toll` for property/special_property owned by another player.
 - `resolve_incident` for `incident` tiles.
 - `end_turn` for tiles with no immediate decision/action in this milestone.
+- `buy_price` in `rpc_tile_landed` is populated only for `buy_or_end_turn`; otherwise `0.0`.
 
 ### Turn Resolution Contract (v0 Decision)
 This section defines the server-authoritative flow needed to complete a full first-player turn after landing, while keeping deterministic ordering for actions submitted outside the active turn.
@@ -150,6 +159,7 @@ This section defines the server-authoritative flow needed to complete a full fir
 - `type` for v0:
 - `buy_or_end_turn` (unowned property/special_property)
 - `pay_toll` (property/special_property owned by another player, when `toll_due > 0`)
+- `resolve_incident` (incident tile draw/apply/flip, server-driven)
 - `end_turn` (all other immediate no-choice landings in this milestone)
 - Only one pending action is active per match at a time.
 - Pending action is cleared only when resolved (buy success, toll paid, or end turn success).
@@ -184,6 +194,13 @@ This section defines the server-authoritative flow needed to complete a full fir
 - server uses pending action snapshot values (`amount`, `owner_index`) captured at landing time
 - player must have sufficient fiat balance for `amount`
 - on success: debit payer, credit owner, emit toll event, clear pending action, advance turn
+- `resolve_incident`:
+- no client action RPC for v0; server resolves immediately after landing
+- server determines the card from current tile face (`incident_kind`)
+- server emits incident payload including display text for text-only clients
+- server emits explicit effect-mutation events that update authoritative state (balances, inspection, voucher), when applicable
+- server flips the landed tile face and emits `rpc_incident_type_changed`
+- server clears pending action and advances turn (unless future incident effects explicitly create another pending action)
 - Deferred intents do not run in the middle of the current player's landing resolution.
 - Auto-advance is server-driven for v0: after buy/skip/toll resolution, server immediately emits next `rpc_turn_started` without waiting for an additional confirmation RPC.
 
@@ -194,6 +211,13 @@ This section defines the server-authoritative flow needed to complete a full fir
 - Toll path:
 - `rpc_toll_paid`
 - `rpc_turn_started` (next player)
+- Incident path:
+- `rpc_incident_drawn`
+- `rpc_player_balance_changed` (0..N, only when card changes EVA/BTC balances)
+- `rpc_player_sent_to_inspection` (0..1, only when card sends player to inspection)
+- `rpc_inspection_voucher_granted` (0..1, only when card grants free inspection exit)
+- `rpc_incident_type_changed`
+- `rpc_turn_started` (next player, unless incident effect creates another pending action)
 - End-turn path:
 - `rpc_turn_started` (next player)
 - `turn_number` increments after control passes from the last seat to seat 0; otherwise only `current_player_index` advances.
@@ -211,13 +235,18 @@ This section defines the server-authoritative flow needed to complete a full fir
 ### Text-Only Client Prompt Contract (v0)
 - Prompt source of truth is `action_required` from `rpc_tile_landed` or pending action from snapshot on reconnect.
 - `buy_or_end_turn` prompt:
-- `prompt: buy property on tile=<tile> city=<city>? [y/n]`
+- `prompt: buy property on tile=<tile> city=<city> price=<buy_price>? [y/n]`
 - `y` sends `rpc_buy_property`; `n` or empty sends `rpc_end_turn`.
 - `pay_toll` prompt:
 - `prompt: pay toll amount=<amount> owner=<owner_index> tile=<tile> city=<city> [enter]`
 - pressing enter sends `rpc_pay_toll` (no skip option in v0).
 - `end_turn` prompt:
 - no user choice required; client can send `rpc_end_turn` immediately.
+- `resolve_incident` handling:
+- no user input in v0
+- client logs incident details from server event payload (`incident_kind`, `card_id`, `card_text`)
+- client applies mutation events in `seq` order (`rpc_player_balance_changed`, `rpc_player_sent_to_inspection`, `rpc_inspection_voucher_granted`)
+- client updates local incident face from `rpc_incident_type_changed`
 - On reconnect sync:
 - if snapshot pending action is `buy_or_end_turn`, show buy prompt again.
 - if snapshot pending action is `pay_toll`, show toll prompt again.
@@ -228,7 +257,21 @@ This section defines the server-authoritative flow needed to complete a full fir
 ### Incident Draw Authority (Decision)
 - Incident card draw is server-triggered as part of landing resolution, not a client-request action.
 - Clients must not call an RPC to request/roll/draw an incident card.
-- After `rpc_tile_landed(... action_required=\"resolve_incident\")`, server emits an incident result event to all clients.
+- After `rpc_tile_landed(... action_required=\"resolve_incident\")`, server emits:
+- `rpc_incident_drawn(seq, tile_index, incident_kind, card_id, card_text)`
+- `rpc_player_balance_changed(seq, player_index, fiat_delta, btc_delta, reason)` when balances change
+- `rpc_player_sent_to_inspection(seq, player_index, reason)` when inspection is applied
+- `rpc_inspection_voucher_granted(seq, player_index, amount, reason)` when free-exit vouchers are granted
+- `rpc_incident_type_changed(seq, tile_index, incident_kind)` for the flipped face.
+
+### Incident Effect Mutation Events (v0)
+- `rpc_player_balance_changed` is an additive delta event:
+- `fiat_delta` and `btc_delta` can be positive or negative.
+- `reason` should include a stable card/effect id for log readability and testing.
+- `rpc_player_sent_to_inspection` means:
+- server has already updated player inspection state before broadcasting.
+- `rpc_inspection_voucher_granted` means:
+- server has already incremented the player's inspection free-exit voucher count.
 
 ### Why this split
 - Startup snapshot gives deterministic local lookups (`tile_type`, `city`) with no per-turn duplication.
@@ -254,14 +297,16 @@ This section defines the server-authoritative flow needed to complete a full fir
 - `rpc_player_joined(seq: int, player_id: String, player_index: int)`
 - `rpc_dice_rolled(seq: int, die1: int, die2: int, total: int)`
 - `rpc_pawn_moved(seq: int, from: int, to: int, passed_tiles: Array[int])`
-- `rpc_tile_landed(seq: int, tile_index: int, tile_type: TileType, city: String, owner_index: int, toll_due: float, action_required: String)`
-- `rpc_incident_drawn(seq: int, tile_index: int, incident_kind: IncidentKind, card_id: String)`
+- `rpc_tile_landed(seq: int, tile_index: int, tile_type: TileType, city: String, owner_index: int, toll_due: float, buy_price: float, action_required: String)`
+- `rpc_incident_drawn(seq: int, tile_index: int, incident_kind: IncidentKind, card_id: String, card_text: String)`
+- `rpc_player_balance_changed(seq: int, player_index: int, fiat_delta: float, btc_delta: float, reason: String)`
 - `rpc_cycle_started(seq: int, cycle: int, inflation_active: bool)`
 - `rpc_incident_type_changed(seq: int, tile_index: int, incident_kind: IncidentKind)`
 - `rpc_property_acquired(seq: int, player_index: int, tile_index: int, price: float)`
 - `rpc_miner_batches_added(seq: int, player_index: int, tile_index: int, count: int)`
 - `rpc_toll_paid(seq: int, payer_index: int, owner_index: int, amount: float)`
 - `rpc_player_sent_to_inspection(seq: int, player_index: int, reason: String)`
+- `rpc_inspection_voucher_granted(seq: int, player_index: int, amount: int, reason: String)`
 - `rpc_state_snapshot(seq: int, snapshot: GameState)`
 - `rpc_sync_complete(seq: int, final_seq: int)`
 - `rpc_action_rejected(seq: int, reason: String)`
@@ -296,6 +341,7 @@ This section defines the server-authoritative flow needed to complete a full fir
 - `position: int`
 - `laps: int`
 - `in_inspection: bool`
+- `inspection_free_exits: int`
 
 ### PendingAction
 - `type: PendingActionType`

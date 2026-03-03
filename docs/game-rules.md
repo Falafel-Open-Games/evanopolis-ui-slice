@@ -129,34 +129,26 @@ Durante esse período:
 São dois decks separados em cima da mesa. Uma carta é retirada do deck respectivo ao cair num tile bear / bull.
 Cada tile tem duas faces e deverá ser virado após retirar uma carta do deck, afetando o próximo a cair no tile.
 
-### Bear
-Cartas bear afetam o próprio jogador
+Para manter o escopo executável no v0, usaremos um conjunto reduzido de cartas com efeitos imediatos.
+O catálogo de cartas e evolução pós-v0 fica em `docs/incident-cards.md`.
 
-Positivas:
-- Hoje é seu aniversário: receba 2 EVA
-- Restituição de imposto: receba 1 EVA
-- Você achou uma carteira de BTCs perdida na gaveta. Receba 0.5 BTC
-- Receba 1 mineradora gratuitamente.
+### Bear (v0)
+Cartas bear afetam o próprio jogador:
+- `bear_fine_eva_2`: pague 2 EVA.
+- `bear_lost_btc_0_5`: perca 0.5 BTC.
+- `bear_legal_inspection`: vá para inspeção.
 
-Negativas:
-- Inspeção Legal Rigorosa. Vá preso por irregularidades.
-- Imposto de renda: pague 2 EVA
-- Super aquecimento! Perca uma de suas mineradoras.
+### Bull (v0)
+Cartas bull afetam apenas o próprio jogador:
+- `bull_gain_eva_2`: receba 2 EVA.
+- `bull_gain_btc_0_2`: receba 0.2 BTC.
+- `bull_free_inspection_exit`: ganhe 1 saída livre da inspeção.
 
-### Bull
-Cartas bear afetam os demais jogadores
-
-Positivas:
-- Pizza day. Você pagou pela pizza e precisa receber. Todos os jogadores te pagam 1 EVA.
-- Airdrop. Todos os jogadores recebem 0.2 BTC
-
-Negativas:
-- Contribuição energética. Pague a conta de energia do jogador à sua esquerda referente à propriedade com mais mineradoras.
-- Sua carteira foi hackeada pelo jogador à direita. Transfira 0.4 BTC para ele
-
-Neutras:
-- Alta do BTC. Role um dado para mover a régua da cotação para a direita
-- Baixa do BTC. Role um dado para mover a régua da cotação para a esquerda
+### Fora do v0
+- Efeitos de pular turno.
+- Efeitos com duração por ciclo.
+- Alterações da régua de cotação por carta.
+- Efeitos que exigem escolhas complexas (ex.: escolher propriedade/mineradora alvo).
 
 ## Condições de fim do jogo
 O criador da sala pode configurar as condições de vitória, porém com valores pré-estabelecidos:
