@@ -1,5 +1,5 @@
 ## Objetivo
-- Coletar mais BTCs ao longo de 4 turnos.
+- Coletar mais BTCs ao longo de 4 turnos ou fim do tempo máximo de partida
 - Os jogadores ganham BTCs construindo mineradoras e recebem dividendos.
 - Caso um jogador obtenha 20 BTCs antes de 4 turnos, o jogo se encerra.
 
@@ -9,6 +9,7 @@
 - As bordas do hexágono são peças especiais, enquanto que as arestas são propriedades
 - O movimento dos jogadores é dado pela soma de dois dados d6
 - Há dois decks de eventos (Bear and Bull) sobre a mesa
+- Tempo ideal de partida: 30 minutos
 
 ## Tabuleiro
 - A partir do tile inicial, formam-se as linhas de cada cidade, sempre intercaladas com um tile de incidente. Sendo `n` a quantidade de tiles iguais, temos:
@@ -44,7 +45,6 @@ Caso seja necessário injetar dinheiro na economia do jogo, podemos adicionar a 
 - Adquirir usando EVAs
 - Adicionar mineradoras à sua propriedade
 - Hipotecar
-- Trocar com outro jogador
 ### Gerais
 - Checar inventário
 - Observar o mapa
@@ -62,6 +62,8 @@ Caso seja necessário injetar dinheiro na economia do jogo, podemos adicionar a 
 - Demais ações descritas abaixo podem ser executadas antes do fim do turno
 
 ## Valores
+Os valores do jogo são proporcionais ao ticket da sala. Como referência, uma sala com o ticket de 20 EVA terá os valores a seguir.
+Caso 1 EVA seja um valor muito elevado (US$ 29,00 / R$ 153,00 em 03/2026), podemos trabalhar com mili EVA
 ### Propriedades
 - Caracas = 3 EVA
 - Asuncion = 4 EVA
@@ -84,7 +86,7 @@ Caso seja necessário injetar dinheiro na economia do jogo, podemos adicionar a 
 Caso esteja vazia, a propriedade pode ser adquirida pelo seu preço em EVAs.
 - Se o jogador tiver o dinheiro disponível, pode efetuar a compra
 - Se não tiver, ele tem a opção de vender BTCs na cotação atual e fazer a aquisição
-- Caso não tenha interesse, pode apenas ignorar a ação. Num momento futuro podemos implementar o leilão da carta (auction).
+- Caso não tenha interesse, pode apenas ignorar a ação
 
 ## Caindo numa propriedade adquirida
 Ao cair numa propriedade que foi comprada, o jogador deve pagar uma taxa de energia elétrica em EVAs. Essa taxa segue uma tabela progressiva de mineradoras instaladas:
@@ -102,12 +104,6 @@ A régua da cotação pode se mover em algumas condições:
 - Algum tile específico de alteração do mercado
 - Alteração a cada rodada completa
 Podem ser escolhidas uma ou mais condições de alteração da cotação, acrescidas de uma rolagem de dado para ver quanto sobe ou desce o valor do BTC.
-
-## Trade
-A qualquer momento um jogador pode selecionar uma carta sua ou de outro jogador e fazer uma oferta, que pode incluir valores em EVA e / ou cartas de propriedade.
-No caso de uma ou mais cartas de sua posse, ele clica em uma carta, seleciona a opção trade e monta a sua oferta. Outros jogadores podem aceitar ou propor uma contraproposta.
-Caso seja uma carta de outro jogador, ele clica no inventário do jogador, seleciona a carta desejada e monta sua oferta. O outro jogador pode aceitar, declinar ou fazer uma contraproposta.
-Se nenhum jogador aceitar a proposta, o jogador tem a opção de vender a sua carta para o banco pelo valor original. Se houver uma ou mais mineradoras, cada uma é vendida pelo preço de aquisição.
 
 ## Hipoteca
 A qualquer momento é possível selecionar uma carta de seu inventário e clicar na opção de hipoteca. O valor recebido é 80% do valor da carta e a reversão da hipoteca é 120%. Caso seja fora de seu turno, essa ação é concretizada no fim do turno.
@@ -192,6 +188,17 @@ Caso um jogador se desconecte durante a partida, o servidor irá tentar reconect
 
 ## Postergados / Retirados
 - Inflação dos preços EVA
+- Trade com outros jogadores
 - Bonificação do jogador ao passar pelo ponto inicial
 - Leilão das cartas não adquiridas (auction)
 - Ações entre turno (jogadores precisam esperar sua vez para realizar qualquer ação)
+
+## Ideias
+### Chat
+- Reações com emotes
+- Mensagens prontas
+
+### Evento para aumentar o ticket inical
+- Para injetar mais dinheiro na economia do jogo, um evento poderia acontecer pedindo um depósito de um valor X em EVAs.
+- Todos os jogadores precisariam concordar
+- A premiação final seria maior
