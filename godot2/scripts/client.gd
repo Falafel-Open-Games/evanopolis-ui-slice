@@ -31,6 +31,7 @@ extends RefCounted
         action_required: String,
 ) -> void
 
+
 @abstract func rpc_incident_drawn(seq: int, tile_index: int, incident_kind: String, card_id: String, card_text: String) -> void
 
 
@@ -39,15 +40,18 @@ extends RefCounted
 
 @abstract func rpc_cycle_started(seq: int, cycle: int, inflation_active: bool) -> void
 
+
 @abstract func rpc_incident_type_changed(seq: int, tile_index: int, incident_kind: String) -> void
 
 
 @abstract func rpc_property_acquired(seq: int, player_index: int, tile_index: int, price: float) -> void
 
+
 @abstract func rpc_miner_batches_added(seq: int, player_index: int, tile_index: int, count: int) -> void
 
 
 @abstract func rpc_toll_paid(seq: int, payer_index: int, owner_index: int, amount: float) -> void
+
 
 @abstract func rpc_player_sent_to_inspection(seq: int, player_index: int, reason: String) -> void
 

@@ -9,7 +9,7 @@ These are the only incident effects required for v0 full-game validation.
 All are immediate effects (no delayed or multi-turn state).
 
 ### Bear (self-impact)
-1. `bear_fine_eva_2`: current player pays `2 EVA`.
+1. `bear_fine_eva_2`: current player pays `1 EVA`.
 2. `bear_lost_btc_0_5`: current player loses `0.5 BTC`.
 3. `bear_legal_inspection`: current player is sent to inspection.
 

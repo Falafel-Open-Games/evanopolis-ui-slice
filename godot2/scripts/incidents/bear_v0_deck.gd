@@ -4,16 +4,16 @@ extends RefCounted
 const CARDS: Array[Dictionary] = [
     {
         "card_id": "bear_fine_eva_2",
-        "card_text": "Pague 2 EVA.",
+        "card_text": "Pague 1 EVA.",
         "effect": "balance_delta",
-        "fiat_delta": -2.0,
+        "fiat_delta": -1.0,
         "btc_delta": 0.0,
     },
     {
         "card_id": "bear_fine_eva_3",
-        "card_text": "Pague 3 EVA.",
+        "card_text": "Pague 1.5 EVA.",
         "effect": "balance_delta",
-        "fiat_delta": -3.0,
+        "fiat_delta": -1.5,
         "btc_delta": 0.0,
     },
     {

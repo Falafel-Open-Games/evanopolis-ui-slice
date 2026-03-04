@@ -4,6 +4,7 @@ const Config = preload("res://scripts/config.gd")
 const GameMatch = preload("res://scripts/match.gd")
 const MatchTestClient = preload("res://tests/match_test_client.gd")
 
+
 func test_landing_context_for_non_property_tile() -> void:
     var config: Config = Config.new("res://configs/demo_002.toml")
     var game_match: GameMatch = GameMatch.new(config, [])
@@ -26,8 +27,6 @@ func test_landing_context_for_non_property_tile() -> void:
     assert_eq(float(event.get("toll_due", -1.0)), 0.0, "non-property has no toll")
     assert_eq(float(event.get("buy_price", -1.0)), 0.0, "non-property has no buy price")
     assert_eq(str(event.get("action_required", "")), "resolve_incident", "incident requires incident resolution")
-
-
 
 
 func test_incident_resolution_emits_events_flips_tile_and_advances_turn() -> void:
@@ -64,8 +63,6 @@ func test_incident_resolution_emits_events_flips_tile_and_advances_turn() -> voi
         assert_true(flip_seq < next_turn_seq, "incident flip emitted before next turn started")
 
 
-
-
 func test_incident_event_order_is_strict() -> void:
     var config: Config = Config.new("res://configs/demo_002.toml")
     var game_match: GameMatch = GameMatch.new(config, [])
@@ -99,8 +96,6 @@ func test_incident_event_order_is_strict() -> void:
         assert_true(flip_seq < next_turn_seq, "tile flip emitted before next turn started")
 
 
-
-
 func test_incident_tile_flips_back_to_bear_on_second_landing() -> void:
     var config: Config = Config.new("res://configs/demo_002.toml")
     var game_match: GameMatch = GameMatch.new(config, [])
@@ -121,6 +116,26 @@ func test_incident_tile_flips_back_to_bear_on_second_landing() -> void:
     assert_eq(str(tile.get("incident_kind", "")), "bear", "tile state returns to bear after second landing")
 
 
+func test_incident_fiat_debit_insufficient_sends_player_to_inspection() -> void:
+    var config: Config = Config.new("res://configs/demo_002.toml")
+    var game_match: GameMatch = GameMatch.new(config, [])
+    var client_a: MatchTestClient = MatchTestClient.new()
+    var client_b: MatchTestClient = MatchTestClient.new()
+    assert_eq(str(game_match.assign_client("alice", client_a).get("reason", "")), "", "first client should register")
+    assert_eq(str(game_match.assign_client("bob", client_b).get("reason", "")), "", "second client should register")
+
+    game_match.state.players[0].fiat_balance = 0.1
+    game_match._server_move_pawn(4)
+
+    assert_true(is_equal_approx(game_match.state.players[0].fiat_balance, 0.1), "incident debit is not applied when fiat is insufficient")
+    assert_true(game_match.state.players[0].in_inspection, "player is sent to inspection on insufficient incident fiat")
+
+    var balance_changed: Array[Dictionary] = _filter_events(client_a, "rpc_player_balance_changed")
+    assert_eq(balance_changed.size(), 0, "no balance mutation event emitted when fiat is insufficient")
+    var inspection_events: Array[Dictionary] = _filter_events(client_a, "rpc_player_sent_to_inspection")
+    assert_eq(inspection_events.size(), 1, "inspection event emitted on insufficient incident fiat")
+    if inspection_events.size() == 1:
+        assert_eq(str(inspection_events[0].get("reason", "")), "insufficient_fiat_incident", "inspection reason is insufficient incident fiat")
 
 
 func test_bear_deck_cycles_deterministically() -> void:
@@ -138,13 +153,9 @@ func test_bear_deck_cycles_deterministically() -> void:
     assert_eq(str(card_4.get("card_id", "")), "bear_fine_eva_2", "bear deck wraps to first card")
 
 
-
-
 func _filter_events(client: MatchTestClient, method: String) -> Array[Dictionary]:
     var results: Array[Dictionary] = []
     for event in client.events:
         if str(event.get("method", "")) == method:
             results.append(event)
     return results
-
-

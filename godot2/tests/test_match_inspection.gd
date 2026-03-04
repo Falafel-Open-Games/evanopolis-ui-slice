@@ -4,6 +4,7 @@ const Config = preload("res://scripts/config.gd")
 const GameMatch = preload("res://scripts/match.gd")
 const MatchTestClient = preload("res://tests/match_test_client.gd")
 
+
 func test_landing_on_inspection_marks_player_and_emits_event() -> void:
     var config: Config = Config.new("res://configs/demo_002.toml")
     var game_match: GameMatch = GameMatch.new(config, [])
@@ -19,8 +20,6 @@ func test_landing_on_inspection_marks_player_and_emits_event() -> void:
     assert_eq(sent_to_inspection.size(), 1, "inspection landing should emit one inspection mutation event")
     if sent_to_inspection.size() == 1:
         assert_eq(str(sent_to_inspection[0].get("reason", "")), "tile_inspection", "inspection reason")
-
-
 
 
 func test_inspection_player_cannot_roll_until_resolved() -> void:
@@ -40,8 +39,6 @@ func test_inspection_player_cannot_roll_until_resolved() -> void:
         assert_eq(str(rejected[0].get("reason", "")), "inspection_resolution_required", "inspection rejection reason")
 
 
-
-
 func test_pay_inspection_fee_clears_inspection_and_allows_roll() -> void:
     var config: Config = Config.new("res://configs/demo_002.toml")
     var game_match: GameMatch = GameMatch.new(config, [])
@@ -54,19 +51,17 @@ func test_pay_inspection_fee_clears_inspection_and_allows_roll() -> void:
     var pay_reason: String = game_match.rpc_pay_inspection_fee("demo_002", "alice")
     assert_eq(pay_reason, "", "pay inspection fee should succeed")
     assert_eq(game_match.state.players[0].in_inspection, false, "inspection should be cleared")
-    assert_true(is_equal_approx(game_match.state.players[0].fiat_balance, 15.0), "inspection fee deducted from fiat")
+    assert_true(is_equal_approx(game_match.state.players[0].fiat_balance, 198.0), "inspection fee deducted from fiat")
 
     var balance_changed: Array[Dictionary] = _filter_events(client_a, "rpc_player_balance_changed")
     assert_eq(balance_changed.size(), 1, "paying inspection fee emits one balance change")
     if balance_changed.size() == 1:
-        assert_true(is_equal_approx(float(balance_changed[0].get("fiat_delta", 0.0)), -5.0), "inspection fee fiat delta")
+        assert_true(is_equal_approx(float(balance_changed[0].get("fiat_delta", 0.0)), -2.0), "inspection fee fiat delta")
         assert_eq(str(balance_changed[0].get("reason", "")), "inspection_fee_paid", "inspection fee reason")
 
     game_match.rpc_roll_dice("demo_002", "alice")
     var rolls: Array[Dictionary] = _filter_events(client_a, "rpc_dice_rolled")
     assert_eq(rolls.size(), 1, "player can roll after paying inspection fee")
-
-
 
 
 func test_pay_inspection_fee_rejected_when_not_in_inspection() -> void:
@@ -79,8 +74,6 @@ func test_pay_inspection_fee_rejected_when_not_in_inspection() -> void:
 
     var pay_reason: String = game_match.rpc_pay_inspection_fee("demo_002", "alice")
     assert_eq(pay_reason, "not_in_inspection", "cannot pay inspection fee when not in inspection")
-
-
 
 
 func test_use_inspection_voucher_clears_inspection_and_allows_roll() -> void:
@@ -110,8 +103,6 @@ func test_use_inspection_voucher_clears_inspection_and_allows_roll() -> void:
     assert_eq(rolls.size(), 1, "player can roll after using inspection voucher")
 
 
-
-
 func test_use_inspection_voucher_rejected_without_vouchers() -> void:
     var config: Config = Config.new("res://configs/demo_002.toml")
     var game_match: GameMatch = GameMatch.new(config, [])
@@ -124,8 +115,6 @@ func test_use_inspection_voucher_rejected_without_vouchers() -> void:
     game_match.state.players[0].inspection_free_exits = 0
     var voucher_reason: String = game_match.rpc_use_inspection_voucher("demo_002", "alice")
     assert_eq(voucher_reason, "no_inspection_voucher", "using inspection voucher requires available vouchers")
-
-
 
 
 func test_roll_inspection_exit_with_doubles_clears_and_moves() -> void:
@@ -152,8 +141,6 @@ func test_roll_inspection_exit_with_doubles_clears_and_moves() -> void:
         assert_eq(str(released[0].get("reason", "")), "inspection_exit_doubles", "release reason on doubles")
 
 
-
-
 func test_roll_inspection_exit_without_doubles_advances_turn_and_stays_inspected() -> void:
     var config: Config = Config.new("res://configs/demo_002.toml")
     var game_match: GameMatch = GameMatch.new(config, [])
@@ -176,8 +163,6 @@ func test_roll_inspection_exit_without_doubles_advances_turn_and_stays_inspected
     assert_eq(turns.size(), 2, "failed inspection exit advances to next player")
     if turns.size() == 2:
         assert_eq(int(turns[1].get("player_index", -1)), 1, "turn advances after failed inspection exit")
-
-
 
 
 func test_snapshot_reflects_inspection_status_after_bear_inspection_card() -> void:
@@ -204,16 +189,12 @@ func test_snapshot_reflects_inspection_status_after_bear_inspection_card() -> vo
         assert_eq(str(sent_to_inspection[0].get("reason", "")), "bear_legal_inspection", "reason is inspection card id")
 
 
-
-
 func _filter_events(client: MatchTestClient, method: String) -> Array[Dictionary]:
     var results: Array[Dictionary] = []
     for event in client.events:
         if str(event.get("method", "")) == method:
             results.append(event)
     return results
-
-
 
 
 func _find_seed_for_doubles(expect_doubles: bool) -> int:

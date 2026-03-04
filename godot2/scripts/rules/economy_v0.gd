@@ -1,8 +1,8 @@
 class_name EconomyV0
 extends RefCounted
 
-const INITIAL_FIAT_BALANCE: float = 20.0
-const INSPECTION_FEE: float = 5.0
+const INITIAL_FIAT_BALANCE: float = 200.0
+const INSPECTION_FEE: float = 2.0
 const MINER_BATCH_PRICE: float = 8.0
 const MAX_MINER_BATCHES_PER_PROPERTY: int = 4
 

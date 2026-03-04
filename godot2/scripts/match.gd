@@ -307,7 +307,9 @@ func rpc_pay_toll(game_id: String, player_id: String) -> String:
         return "invalid_toll_amount"
     var payer: PlayerState = state.players[resolved_index]
     if payer.fiat_balance < amount:
-        return "insufficient_fiat"
+        _apply_inspection_to_player(resolved_index, "insufficient_fiat_toll")
+        _advance_turn()
+        return ""
     var owner: PlayerState = state.players[owner_index]
     payer.fiat_balance -= amount
     owner.fiat_balance += amount
@@ -587,6 +589,9 @@ func _apply_incident_effect(card: Dictionary, player_index: int) -> void:
     if effect == "balance_delta":
         var fiat_delta: float = float(card.get("fiat_delta", 0.0))
         var btc_delta: float = float(card.get("btc_delta", 0.0))
+        if fiat_delta < 0.0 and player.fiat_balance < abs(fiat_delta):
+            _apply_inspection_to_player(player_index, "insufficient_fiat_incident")
+            return
         player.fiat_balance += fiat_delta
         player.bitcoin_balance += btc_delta
         _broadcast("rpc_player_balance_changed", [player_index, fiat_delta, btc_delta, card_id])

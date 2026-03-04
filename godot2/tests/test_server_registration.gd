@@ -140,9 +140,9 @@ func test_reconnect_sync_includes_incident_mutated_player_balances() -> void:
     server.handle_peer_disconnected(12)
     assert_false(server.peer_slots.has(12), "bob peer slot removed on disconnect")
 
-    # Alice lands on first bear incident card: -2 fiat.
+    # Alice lands on first bear incident card: -1 fiat.
     game_match._server_move_pawn(4)
-    assert_true(is_equal_approx(game_match.state.players[0].fiat_balance, 18.0), "incident effect applied to alice while bob offline")
+    assert_true(is_equal_approx(game_match.state.players[0].fiat_balance, 199.0), "incident effect applied to alice while bob offline")
 
     # Bob reconnects with a new peer and requests sync snapshot.
     server.authorize_peer(22, "bob")
@@ -157,7 +157,7 @@ func test_reconnect_sync_includes_incident_mutated_player_balances() -> void:
     assert_eq(players.size(), 2, "snapshot includes two players")
     if players.size() == 2:
         var alice: Dictionary = players[0]
-        assert_true(is_equal_approx(float(alice.get("fiat_balance", 0.0)), 18.0), "reconnected player sees alice updated fiat balance")
+        assert_true(is_equal_approx(float(alice.get("fiat_balance", 0.0)), 199.0), "reconnected player sees alice updated fiat balance")
         assert_true(is_equal_approx(float(alice.get("bitcoin_balance", 0.0)), 0.0), "reconnected player sees alice updated btc balance")
 
 
