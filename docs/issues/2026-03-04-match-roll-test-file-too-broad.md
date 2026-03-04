@@ -1,6 +1,7 @@
 # Match Roll Test File Too Broad (2026-03-04)
 
 Issue: `ISS-005`
+Status: `Fixed` on `2026-03-04`
 
 ## Summary
 `godot2/tests/test_match_roll.gd` currently mixes multiple domains in a single large file, which increases review and maintenance cost.
@@ -34,3 +35,13 @@ Split `test_match_roll.gd` into focused files:
 - No behavioral test changes; only file organization/refactor.
 - Existing assertions remain equivalent after split.
 - `just test-godot2` remains green.
+
+## Resolution Implemented (2026-03-04)
+- Split `godot2/tests/test_match_roll.gd` into focused files:
+- `godot2/tests/test_match_roll_validation.gd`
+- `godot2/tests/test_match_turn_actions.gd`
+- `godot2/tests/test_match_incidents.gd`
+- `godot2/tests/test_match_inspection.gd`
+- Removed the original monolithic `godot2/tests/test_match_roll.gd`.
+- Kept test logic/assertions equivalent (function bodies moved verbatim).
+- Verified with `just test-godot2`: `104/104` passing.
