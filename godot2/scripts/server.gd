@@ -64,6 +64,10 @@ class NullClient:
         pass
 
 
+    func rpc_miner_batches_added(_seq: int, _player_index: int, _tile_index: int, _count: int) -> void:
+        pass
+
+
     func rpc_toll_paid(_seq: int, _payer_index: int, _owner_index: int, _amount: float) -> void:
         pass
 
@@ -203,6 +207,24 @@ func rpc_buy_property(game_id: String, player_id: String, tile_index: int, sende
         if str(slot.get("player_id", "")) != player_id:
             return { "reason": "peer_player_mismatch", "seq": 0 }
     var reason: String = game_match.rpc_buy_property(game_id, player_id, tile_index)
+    if not reason.is_empty():
+        return { "reason": reason, "seq": 0 }
+    return { "reason": "", "seq": 0 }
+
+
+func rpc_buy_miner_batch(game_id: String, player_id: String, tile_index: int, sender_peer_id: int = -1) -> Dictionary:
+    var game_match: GameMatch = matches.get(game_id, null)
+    if game_match == null:
+        return { "reason": "invalid_game_id", "seq": 0 }
+    if sender_peer_id >= 0:
+        var slot: Dictionary = peer_slots.get(sender_peer_id, { })
+        if slot.is_empty():
+            return { "reason": "unregistered_peer", "seq": 0 }
+        if str(slot.get("game_id", "")) != game_id:
+            return { "reason": "peer_game_id_mismatch", "seq": 0 }
+        if str(slot.get("player_id", "")) != player_id:
+            return { "reason": "peer_player_mismatch", "seq": 0 }
+    var reason: String = game_match.rpc_buy_miner_batch(game_id, player_id, tile_index)
     if not reason.is_empty():
         return { "reason": reason, "seq": 0 }
     return { "reason": "", "seq": 0 }

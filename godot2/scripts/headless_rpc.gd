@@ -27,6 +27,11 @@ func rpc_buy_property(game_id: String, player_id: String, tile_index: int) -> vo
 
 
 @rpc("any_peer")
+func rpc_buy_miner_batch(game_id: String, player_id: String, tile_index: int) -> void:
+    _handle_buy_miner_batch(game_id, player_id, tile_index)
+
+
+@rpc("any_peer")
 func rpc_pay_toll(game_id: String, player_id: String) -> void:
     _handle_pay_toll(game_id, player_id)
 
@@ -136,6 +141,11 @@ func rpc_property_acquired(seq: int, player_index: int, tile_index: int, price: 
 
 
 @rpc("authority")
+func rpc_miner_batches_added(seq: int, player_index: int, tile_index: int, count: int) -> void:
+    _handle_miner_batches_added(seq, player_index, tile_index, count)
+
+
+@rpc("authority")
 func rpc_toll_paid(seq: int, payer_index: int, owner_index: int, amount: float) -> void:
     _handle_toll_paid(seq, payer_index, owner_index, amount)
 
@@ -182,6 +192,10 @@ func _handle_end_turn(game_id: String, player_id: String) -> void:
 
 
 func _handle_buy_property(game_id: String, player_id: String, tile_index: int) -> void:
+    pass
+
+
+func _handle_buy_miner_batch(game_id: String, player_id: String, tile_index: int) -> void:
     pass
 
 
@@ -271,6 +285,10 @@ func _handle_incident_type_changed(seq: int, tile_index: int, incident_kind: Str
 
 
 func _handle_property_acquired(seq: int, player_index: int, tile_index: int, price: float) -> void:
+    pass
+
+
+func _handle_miner_batches_added(seq: int, player_index: int, tile_index: int, count: int) -> void:
     pass
 
 

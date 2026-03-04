@@ -427,6 +427,184 @@ func test_turn_number_increments_after_last_player_ends_turn() -> void:
     assert_eq(game_match.state.turn_number, 2, "turn number increments after last player resolves turn")
 
 
+func test_buy_miner_batch_updates_balance_and_tile_state() -> void:
+    var config: Config = Config.new("res://configs/demo_002.toml")
+    var game_match: GameMatch = GameMatch.new(config, [])
+    var client_a: MatchTestClient = MatchTestClient.new()
+    var client_b: MatchTestClient = MatchTestClient.new()
+    assert_eq(str(game_match.assign_client("alice", client_a).get("reason", "")), "", "first client should register")
+    assert_eq(str(game_match.assign_client("bob", client_b).get("reason", "")), "", "second client should register")
+
+    # Alice owns tile 6.
+    game_match.rpc_roll_dice("demo_002", "alice")
+    assert_eq(game_match.rpc_buy_property("demo_002", "alice", 6), "", "buy succeeds")
+    # Bob ends quickly.
+    game_match.rpc_roll_dice("demo_002", "bob")
+    assert_eq(game_match.rpc_end_turn("demo_002", "bob"), "", "bob ends turn")
+
+    # Alice buys one miner batch on owned tile.
+    var reason: String = game_match.rpc_buy_miner_batch("demo_002", "alice", 6)
+    assert_eq(reason, "", "buy miner batch should succeed")
+
+    var tile: Dictionary = game_match._tile_from_index(6)
+    assert_eq(int(tile.get("miner_batches", -1)), 1, "tile miner batches incremented")
+    assert_true(is_equal_approx(game_match.state.players[0].fiat_balance, 4.0), "fiat reduced by miner batch price")
+
+    var balance_events: Array[Dictionary] = _filter_events(client_a, "rpc_player_balance_changed")
+    assert_true(balance_events.size() >= 1, "balance change emitted")
+    if balance_events.size() >= 1:
+        var latest_balance: Dictionary = balance_events[balance_events.size() - 1]
+        assert_true(is_equal_approx(float(latest_balance.get("fiat_delta", 0.0)), -12.0), "miner purchase delta")
+        assert_eq(str(latest_balance.get("reason", "")), "miner_batch_purchased", "miner purchase reason")
+    var miner_events: Array[Dictionary] = _filter_events(client_a, "rpc_miner_batches_added")
+    assert_eq(miner_events.size(), 1, "miner batch added event emitted")
+    if miner_events.size() == 1:
+        assert_eq(int(miner_events[0].get("tile_index", -1)), 6, "miner event tile")
+        assert_eq(int(miner_events[0].get("count", -1)), 1, "miner event count")
+
+
+func test_buy_miner_batch_rejected_for_non_owner_tile() -> void:
+    var config: Config = Config.new("res://configs/demo_002.toml")
+    var game_match: GameMatch = GameMatch.new(config, [])
+    var client_a: MatchTestClient = MatchTestClient.new()
+    var client_b: MatchTestClient = MatchTestClient.new()
+    assert_eq(str(game_match.assign_client("alice", client_a).get("reason", "")), "", "first client should register")
+    assert_eq(str(game_match.assign_client("bob", client_b).get("reason", "")), "", "second client should register")
+
+    var reason: String = game_match.rpc_buy_miner_batch("demo_002", "alice", 6)
+    assert_eq(reason, "not_property_owner", "cannot place miner on unowned property")
+
+
+func test_buy_miner_batch_rejected_for_insufficient_fiat() -> void:
+    var config: Config = Config.new("res://configs/demo_002.toml")
+    var game_match: GameMatch = GameMatch.new(config, [])
+    var client_a: MatchTestClient = MatchTestClient.new()
+    var client_b: MatchTestClient = MatchTestClient.new()
+    assert_eq(str(game_match.assign_client("alice", client_a).get("reason", "")), "", "first client should register")
+    assert_eq(str(game_match.assign_client("bob", client_b).get("reason", "")), "", "second client should register")
+
+    # Alice owns tile 6.
+    game_match.rpc_roll_dice("demo_002", "alice")
+    assert_eq(game_match.rpc_buy_property("demo_002", "alice", 6), "", "buy succeeds")
+    # Bob ends quickly.
+    game_match.rpc_roll_dice("demo_002", "bob")
+    assert_eq(game_match.rpc_end_turn("demo_002", "bob"), "", "bob ends turn")
+
+    game_match.state.players[0].fiat_balance = 11.0
+    var reason: String = game_match.rpc_buy_miner_batch("demo_002", "alice", 6)
+    assert_eq(reason, "insufficient_fiat", "miner purchase requires sufficient fiat")
+
+
+func test_buy_miner_batch_rejected_for_max_miner_batches_reached() -> void:
+    var config: Config = Config.new("res://configs/demo_002.toml")
+    var game_match: GameMatch = GameMatch.new(config, [])
+    var client_a: MatchTestClient = MatchTestClient.new()
+    var client_b: MatchTestClient = MatchTestClient.new()
+    assert_eq(str(game_match.assign_client("alice", client_a).get("reason", "")), "", "first client should register")
+    assert_eq(str(game_match.assign_client("bob", client_b).get("reason", "")), "", "second client should register")
+
+    game_match.rpc_roll_dice("demo_002", "alice")
+    assert_eq(game_match.rpc_buy_property("demo_002", "alice", 6), "", "buy succeeds")
+    game_match.rpc_roll_dice("demo_002", "bob")
+    assert_eq(game_match.rpc_end_turn("demo_002", "bob"), "", "bob ends turn")
+
+    var tiles: Array = game_match.board_state.get("tiles", [])
+    var tile: Dictionary = tiles[6]
+    tile["miner_batches"] = 4
+    tiles[6] = tile
+    game_match.board_state["tiles"] = tiles
+
+    var reason: String = game_match.rpc_buy_miner_batch("demo_002", "alice", 6)
+    assert_eq(reason, "max_miner_batches_reached", "cannot exceed miner capacity")
+
+
+func test_buy_miner_batch_rejected_for_non_property_tile() -> void:
+    var config: Config = Config.new("res://configs/demo_002.toml")
+    var game_match: GameMatch = GameMatch.new(config, [])
+    var client_a: MatchTestClient = MatchTestClient.new()
+    var client_b: MatchTestClient = MatchTestClient.new()
+    assert_eq(str(game_match.assign_client("alice", client_a).get("reason", "")), "", "first client should register")
+    assert_eq(str(game_match.assign_client("bob", client_b).get("reason", "")), "", "second client should register")
+
+    var reason: String = game_match.rpc_buy_miner_batch("demo_002", "alice", 0)
+    assert_eq(reason, "tile_not_mineable", "non-property tiles are not mineable")
+
+
+func test_buy_miner_batch_rejected_while_pending_action_exists() -> void:
+    var config: Config = Config.new("res://configs/demo_002.toml")
+    var game_match: GameMatch = GameMatch.new(config, [])
+    var client_a: MatchTestClient = MatchTestClient.new()
+    var client_b: MatchTestClient = MatchTestClient.new()
+    assert_eq(str(game_match.assign_client("alice", client_a).get("reason", "")), "", "first client should register")
+    assert_eq(str(game_match.assign_client("bob", client_b).get("reason", "")), "", "second client should register")
+
+    game_match.rpc_roll_dice("demo_002", "alice")
+    var reason: String = game_match.rpc_buy_miner_batch("demo_002", "alice", 6)
+    assert_eq(reason, "pending_action_required", "miner purchase blocked while pending action exists")
+
+
+func test_buy_miner_batch_rejected_while_in_inspection() -> void:
+    var config: Config = Config.new("res://configs/demo_002.toml")
+    var game_match: GameMatch = GameMatch.new(config, [])
+    var client_a: MatchTestClient = MatchTestClient.new()
+    var client_b: MatchTestClient = MatchTestClient.new()
+    assert_eq(str(game_match.assign_client("alice", client_a).get("reason", "")), "", "first client should register")
+    assert_eq(str(game_match.assign_client("bob", client_b).get("reason", "")), "", "second client should register")
+
+    game_match.state.players[0].in_inspection = true
+    var reason: String = game_match.rpc_buy_miner_batch("demo_002", "alice", 6)
+    assert_eq(reason, "inspection_resolution_required", "miner purchase blocked while in inspection")
+
+
+func test_buy_miner_batch_rejected_for_non_current_player() -> void:
+    var config: Config = Config.new("res://configs/demo_002.toml")
+    var game_match: GameMatch = GameMatch.new(config, [])
+    var client_a: MatchTestClient = MatchTestClient.new()
+    var client_b: MatchTestClient = MatchTestClient.new()
+    assert_eq(str(game_match.assign_client("alice", client_a).get("reason", "")), "", "first client should register")
+    assert_eq(str(game_match.assign_client("bob", client_b).get("reason", "")), "", "second client should register")
+
+    var reason: String = game_match.rpc_buy_miner_batch("demo_002", "bob", 6)
+    assert_eq(reason, "not_current_player", "only current player can buy miners")
+
+
+func test_buy_miner_batch_rejected_for_invalid_tile_index() -> void:
+    var config: Config = Config.new("res://configs/demo_002.toml")
+    var game_match: GameMatch = GameMatch.new(config, [])
+    var client_a: MatchTestClient = MatchTestClient.new()
+    var client_b: MatchTestClient = MatchTestClient.new()
+    assert_eq(str(game_match.assign_client("alice", client_a).get("reason", "")), "", "first client should register")
+    assert_eq(str(game_match.assign_client("bob", client_b).get("reason", "")), "", "second client should register")
+
+    var reason: String = game_match.rpc_buy_miner_batch("demo_002", "alice", -1)
+    assert_eq(reason, "invalid_tile_index", "tile index must be in board range")
+
+
+func test_buy_miner_batch_emits_balance_change_before_miner_added() -> void:
+    var config: Config = Config.new("res://configs/demo_002.toml")
+    var game_match: GameMatch = GameMatch.new(config, [])
+    var client_a: MatchTestClient = MatchTestClient.new()
+    var client_b: MatchTestClient = MatchTestClient.new()
+    assert_eq(str(game_match.assign_client("alice", client_a).get("reason", "")), "", "first client should register")
+    assert_eq(str(game_match.assign_client("bob", client_b).get("reason", "")), "", "second client should register")
+
+    game_match.rpc_roll_dice("demo_002", "alice")
+    assert_eq(game_match.rpc_buy_property("demo_002", "alice", 6), "", "buy succeeds")
+    game_match.rpc_roll_dice("demo_002", "bob")
+    assert_eq(game_match.rpc_end_turn("demo_002", "bob"), "", "bob ends turn")
+
+    assert_eq(game_match.rpc_buy_miner_batch("demo_002", "alice", 6), "", "miner purchase succeeds")
+    var balance_events: Array[Dictionary] = _filter_events(client_a, "rpc_player_balance_changed")
+    var miner_events: Array[Dictionary] = _filter_events(client_a, "rpc_miner_batches_added")
+    assert_true(balance_events.size() >= 1, "balance event emitted")
+    assert_eq(miner_events.size(), 1, "miner event emitted")
+    if balance_events.size() >= 1 and miner_events.size() == 1:
+        var latest_balance: Dictionary = balance_events[balance_events.size() - 1]
+        assert_true(
+            int(latest_balance.get("seq", -1)) < int(miner_events[0].get("seq", -1)),
+            "balance change should be emitted before miner added event",
+        )
+
 
 
 func _filter_events(client: MatchTestClient, method: String) -> Array[Dictionary]:
@@ -435,5 +613,3 @@ func _filter_events(client: MatchTestClient, method: String) -> Array[Dictionary
         if str(event.get("method", "")) == method:
             results.append(event)
     return results
-
-

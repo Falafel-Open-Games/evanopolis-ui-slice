@@ -297,6 +297,46 @@ func test_pay_toll_rejects_peer_player_mismatch() -> void:
     assert_eq(str(result.get("reason", "")), "peer_player_mismatch", "pay toll rejects peer player mismatch")
 
 
+func test_buy_miner_batch_rejects_invalid_game_id() -> void:
+    var server: HeadlessServer = HeadlessServer.new()
+    var result: Dictionary = server.rpc_buy_miner_batch("missing_game", "alice", 6, 1)
+    assert_eq(str(result.get("reason", "")), "invalid_game_id", "buy miner rejects invalid game id")
+
+
+func test_buy_miner_batch_rejects_unregistered_peer() -> void:
+    var config: Config = Config.new("res://configs/demo_002.toml")
+    var server: HeadlessServer = HeadlessServer.new()
+    server.create_match(config)
+    var result: Dictionary = server.rpc_buy_miner_batch("demo_002", "alice", 6, 1)
+    assert_eq(str(result.get("reason", "")), "unregistered_peer", "buy miner rejects unknown peer")
+
+
+func test_buy_miner_batch_rejects_peer_game_id_mismatch() -> void:
+    var config: Config = Config.new("res://configs/demo_002.toml")
+    var server: HeadlessServer = HeadlessServer.new()
+    server.create_match(config)
+    server.peer_slots[1] = {
+        "game_id": "demo_003",
+        "player_id": "alice",
+        "player_index": 0,
+    }
+    var result: Dictionary = server.rpc_buy_miner_batch("demo_002", "alice", 6, 1)
+    assert_eq(str(result.get("reason", "")), "peer_game_id_mismatch", "buy miner rejects peer game mismatch")
+
+
+func test_buy_miner_batch_rejects_peer_player_mismatch() -> void:
+    var config: Config = Config.new("res://configs/demo_002.toml")
+    var server: HeadlessServer = HeadlessServer.new()
+    server.create_match(config)
+    server.peer_slots[1] = {
+        "game_id": "demo_002",
+        "player_id": "alice",
+        "player_index": 0,
+    }
+    var result: Dictionary = server.rpc_buy_miner_batch("demo_002", "bob", 6, 1)
+    assert_eq(str(result.get("reason", "")), "peer_player_mismatch", "buy miner rejects peer player mismatch")
+
+
 func test_sync_snapshot_includes_pending_action() -> void:
     var config: Config = Config.new("res://configs/demo_002.toml")
     var server: HeadlessServer = HeadlessServer.new()

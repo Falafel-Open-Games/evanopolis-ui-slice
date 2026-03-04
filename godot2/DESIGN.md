@@ -165,11 +165,12 @@ This section defines the server-authoritative flow needed to complete a full fir
 - Pending action is cleared only when resolved (buy success, toll paid, or end turn success).
 
 #### Deferred Intents (No Extra Resolution Phase in v0)
-- Actions submitted outside the active turn that could affect board economics (example: miner placement intent) are accepted as intents, not immediate state mutations.
+- Actions submitted outside the active turn that could affect board economics are accepted as intents, not immediate state mutations.
 - Each intent records an explicit deterministic activation boundary:
 - `effective_from_turn` (default: `current_turn + 1`) or a stricter boundary defined per action family.
 - Intents must never mutate the in-progress turn state retroactively.
 - v0 keeps turn flow simple (`resolve action -> next turn`) and applies deferred intents only at deterministic boundaries.
+- Current miner implementation in v0 is not deferred-intent based: miner batch purchase is a current-player pre-roll action.
 
 #### Action RPC Validation (v0)
 - All client action RPCs must validate, in order:
@@ -177,8 +178,9 @@ This section defines the server-authoritative flow needed to complete a full fir
 - peer is registered and authorized for `player_id`
 - `player_id` maps to `current_player_index`
 - if player is in inspection, only inspection-resolution RPCs are allowed
+- if action is `rpc_buy_miner_batch`, require: no pending action, owned property tile, miner capacity, and sufficient fiat
 - otherwise, a compatible pending action exists
-- target tile/action arguments match pending action
+- for pending-action RPCs, target tile/action arguments must match pending action
 - On validation failure: `rpc_action_rejected(seq=0, reason)` to requesting peer.
 
 #### Resolution Rules
@@ -195,6 +197,12 @@ This section defines the server-authoritative flow needed to complete a full fir
 - server uses pending action snapshot values (`amount`, `owner_index`) captured at landing time
 - player must have sufficient fiat balance for `amount`
 - on success: debit payer, credit owner, emit toll event, clear pending action, advance turn
+- `rpc_buy_miner_batch(game_id, player_id, tile_index)`:
+- allowed only for current player, with no pending action and while not in inspection
+- target tile must be owned by player and still below per-property miner cap
+- player must have sufficient fiat for miner batch price
+- on success: deduct fiat, increment tile miner count, emit `rpc_player_balance_changed(... reason=\"miner_batch_purchased\")` and `rpc_miner_batches_added`
+- on success or rejection, turn remains with same player until they roll or resolve a landing pending action
 - `resolve_incident`:
 - no client action RPC for v0; server resolves immediately after landing
 - server determines the card from current tile face (`incident_kind`)
@@ -233,6 +241,10 @@ This section defines the server-authoritative flow needed to complete a full fir
 - `rpc_turn_started` (next player, unless incident effect creates another pending action)
 - End-turn path:
 - `rpc_turn_started` (next player)
+- Miner purchase path (pre-roll, same player):
+- `rpc_player_balance_changed` (`reason=miner_batch_purchased`)
+- `rpc_miner_batches_added`
+- no turn advance; player may buy additional batches (subject to rules) or proceed to roll
 - Inspection fee path:
 - `rpc_player_balance_changed` (`reason=inspection_fee_paid`)
 - same player continues turn (roll prompt)
@@ -261,6 +273,10 @@ This section defines the server-authoritative flow needed to complete a full fir
 
 ### Text-Only Client Prompt Contract (v0)
 - Prompt source of truth is `action_required` from `rpc_tile_landed` or pending action from snapshot on reconnect.
+- Pre-roll economy prompt (current player, no pending action, not in inspection):
+- optional miner purchase prompt before roll
+- input is an owned tile index; empty input skips miner purchase and proceeds to roll prompt
+- repeated purchases are allowed while funds/cap permit, then player rolls normally
 - Inspection gate prompt (current player with `in_inspection = true`):
 - if vouchers available, prompt for voucher use
 - if not using voucher, prompt to attempt doubles roll
@@ -312,7 +328,9 @@ This section defines the server-authoritative flow needed to complete a full fir
 
 ### Client -> Server RPCs
 - `rpc_join(game_id: String, player_id: String)`
+- `rpc_auth(token: String)`
 - `rpc_roll_dice(match_id: String, player_id: String)`
+- `rpc_buy_miner_batch(match_id: String, player_id: String, tile_index: int)`
 - `rpc_pay_inspection_fee(match_id: String, player_id: String)`
 - `rpc_use_inspection_voucher(match_id: String, player_id: String)`
 - `rpc_roll_inspection_exit(match_id: String, player_id: String)`
@@ -322,11 +340,13 @@ This section defines the server-authoritative flow needed to complete a full fir
 - `rpc_sync_request(game_id: String, player_id: String, last_applied_seq: int)`
 
 ### Client -> Server RPCs (Planned)
-- `rpc_place_miner_order(match_id: String, player_id: String, orders_by_tile: Dictionary)`
+- `rpc_exchange_fiat_btc(match_id: String, player_id: String, side: String, amount: float)` (not implemented)
 
 ### Server -> Client RPCs (Events)
 - `rpc_game_started(seq: int, game_id: String)`
 - `rpc_board_state(seq: int, board: BoardState)`
+- `rpc_auth_ok(player_id: String, exp: int)`
+- `rpc_auth_error(reason: String)`
 - `rpc_join_accepted(seq: int, player_id: String, player_index: int, last_seq: int)`
 - `rpc_turn_started(seq: int, player_index: int, turn_number: int, cycle: int)`
 - `rpc_player_joined(seq: int, player_id: String, player_index: int)`
