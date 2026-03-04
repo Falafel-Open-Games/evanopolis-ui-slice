@@ -381,3 +381,30 @@ func test_sync_snapshot_includes_pay_toll_pending_action_metadata() -> void:
     assert_eq(int(pending_action.get("tile_index", -1)), 6, "snapshot includes pay_toll tile index")
     assert_eq(int(pending_action.get("owner_index", -1)), 1, "snapshot includes pay_toll owner index")
     assert_true(is_equal_approx(float(pending_action.get("amount", 0.0)), 0.6), "snapshot includes pay_toll amount")
+
+
+func test_sync_snapshot_includes_finished_match_metadata() -> void:
+    var config: Config = Config.new("res://configs/demo_002.toml")
+    var server: HeadlessServer = HeadlessServer.new()
+    var game_match = server.create_match(config)
+    server.authorize_peer(11, "alice")
+    server.authorize_peer(12, "bob")
+    assert_eq(str(server.register_remote_client("demo_002", "alice", 11, null).get("reason", "")), "", "alice joins")
+    assert_eq(str(server.register_remote_client("demo_002", "bob", 12, null).get("reason", "")), "", "bob joins")
+
+    var tiles: Array = game_match.board_state.get("tiles", [])
+    var tile: Dictionary = tiles[6]
+    tile["owner_index"] = 1
+    tile["miner_batches"] = 1
+    tiles[6] = tile
+    game_match.board_state["tiles"] = tiles
+    game_match.state.players[1].bitcoin_balance = 19.0
+
+    assert_eq(str(server.rpc_roll_dice("demo_002", "alice", 11).get("reason", "")), "", "roll succeeds and ends match")
+
+    var sync_result: Dictionary = server.rpc_sync_request("demo_002", "alice", 11)
+    assert_eq(str(sync_result.get("reason", "")), "", "sync succeeds")
+    var snapshot: Dictionary = sync_result.get("snapshot", { })
+    assert_true(bool(snapshot.get("has_finished", false)), "snapshot marks match finished")
+    assert_eq(int(snapshot.get("winner_index", -1)), 1, "snapshot winner index")
+    assert_eq(str(snapshot.get("end_reason", "")), "btc_goal_reached", "snapshot end reason")

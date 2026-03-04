@@ -37,6 +37,32 @@ func rpc_turn_started(seq: int, player_index: int, turn_number: int, cycle: int)
     )
 
 
+func rpc_game_ended(seq: int, winner_index: int, reason: String, btc_goal: float, winner_btc: float) -> void:
+    events.append(
+        {
+            "method": "rpc_game_ended",
+            "seq": seq,
+            "winner_index": winner_index,
+            "reason": reason,
+            "btc_goal": btc_goal,
+            "winner_btc": winner_btc,
+        },
+    )
+
+
+func rpc_player_ready_state(seq: int, player_index: int, is_ready: bool, ready_count: int, total_players: int) -> void:
+    events.append(
+        {
+            "method": "rpc_player_ready_state",
+            "seq": seq,
+            "player_index": player_index,
+            "is_ready": is_ready,
+            "ready_count": ready_count,
+            "total_players": total_players,
+        },
+    )
+
+
 func rpc_player_joined(seq: int, player_id: String, player_index: int) -> void:
     events.append(
         {

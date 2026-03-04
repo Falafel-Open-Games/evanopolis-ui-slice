@@ -110,7 +110,7 @@ func _load_matches() -> void:
         var config: Config = Config.new(path)
         assert(not config.game_id.is_empty())
         assert(not server.matches.has(config.game_id))
-        server.create_match(config)
+        server.create_match(config, true)
         print("server: loaded match game_id=%s from %s" % [config.game_id, path])
 
 
@@ -184,6 +184,15 @@ func _handle_sync_request(game_id: String, player_id: String, last_applied_seq: 
         "server: sync complete game_id=%s player_id=%s peer=%d client_last_seq=%d final_seq=%d"
         % [game_id, player_id, sender_id, last_applied_seq, final_seq],
     )
+
+
+func _handle_player_ready(game_id: String, player_id: String) -> void:
+    var sender_id: int = _get_sender_id()
+    var result: Dictionary = server.rpc_player_ready(game_id, player_id, sender_id)
+    var reason: String = str(result.get("reason", ""))
+    var seq: int = int(result.get("seq", 0))
+    if not reason.is_empty():
+        _rpc_to_peer(sender_id, "rpc_action_rejected", [seq, reason])
 
 
 func _verify_token(peer_id: int, token: String) -> void:

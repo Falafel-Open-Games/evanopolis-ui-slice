@@ -7,7 +7,7 @@ const MatchTestClient = preload("res://tests/match_test_client.gd")
 
 func test_broadcast_sequence_is_monotonic() -> void:
     var config: Config = Config.new("res://configs/demo_002.toml")
-    var game_match: GameMatch = GameMatch.new(config, [])
+    var game_match: GameMatch = GameMatch.new(config, [], true)
     var client_a: MatchTestClient = MatchTestClient.new()
     var client_b: MatchTestClient = MatchTestClient.new()
 
@@ -15,6 +15,8 @@ func test_broadcast_sequence_is_monotonic() -> void:
     assert_eq(str(result_a.get("reason", "")), "", "first client should register")
     var result_b: Dictionary = game_match.assign_client("bob", client_b)
     assert_eq(str(result_b.get("reason", "")), "", "second client should register")
+    assert_eq(game_match.rpc_player_ready(config.game_id, "alice"), "", "alice ready accepted")
+    assert_eq(game_match.rpc_player_ready(config.game_id, "bob"), "", "bob ready accepted")
 
     _assert_monotonic_sequences(client_a)
     _assert_monotonic_sequences(client_b)
@@ -22,7 +24,7 @@ func test_broadcast_sequence_is_monotonic() -> void:
 
 func test_turn_started_matches_state_player_index() -> void:
     var config: Config = Config.new("res://configs/demo_002.toml")
-    var game_match: GameMatch = GameMatch.new(config, [])
+    var game_match: GameMatch = GameMatch.new(config, [], true)
     var client_a: MatchTestClient = MatchTestClient.new()
     var client_b: MatchTestClient = MatchTestClient.new()
 
@@ -30,6 +32,8 @@ func test_turn_started_matches_state_player_index() -> void:
     assert_eq(str(result_a.get("reason", "")), "", "first client should register")
     var result_b: Dictionary = game_match.assign_client("bob", client_b)
     assert_eq(str(result_b.get("reason", "")), "", "second client should register")
+    assert_eq(game_match.rpc_player_ready(config.game_id, "alice"), "", "alice ready accepted")
+    assert_eq(game_match.rpc_player_ready(config.game_id, "bob"), "", "bob ready accepted")
 
     var turn_started: Array[Dictionary] = _filter_events(client_a, "rpc_turn_started")
     assert_eq(turn_started.size(), 1, "turn started event emitted")

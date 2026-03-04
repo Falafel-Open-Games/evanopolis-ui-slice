@@ -11,6 +11,12 @@ extends RefCounted
 @abstract func rpc_turn_started(seq: int, player_index: int, turn_number: int, cycle: int) -> void
 
 
+@abstract func rpc_game_ended(seq: int, winner_index: int, reason: String, btc_goal: float, winner_btc: float) -> void
+
+
+@abstract func rpc_player_ready_state(seq: int, player_index: int, is_ready: bool, ready_count: int, total_players: int) -> void
+
+
 @abstract func rpc_player_joined(seq: int, player_id: String, player_index: int) -> void
 
 

@@ -14,21 +14,31 @@ var clients: Array[Client]
 var rng: RandomNumberGenerator
 var state: GameState
 var has_started: bool = false
+var has_finished: bool = false
+var winner_index: int = -1
+var end_reason: String = ""
+var player_ready: Array[bool] = []
 var player_ids: Array[String]
 var next_event_seq: int = 1
 var board_state: Dictionary = { }
 var pending_action: Dictionary = { }
 var bear_card_cursor: int = 0
 var bull_card_cursor: int = 0
+var require_explicit_ready: bool = false
 
 
-func _init(config_node: Config, client_nodes: Array[Client]) -> void:
+func _init(config_node: Config, client_nodes: Array[Client], require_ready: bool = false) -> void:
     config = config_node
     assert(config)
+    require_explicit_ready = require_ready
     clients = []
     clients.resize(config.player_count)
     player_ids = []
     player_ids.resize(config.player_count)
+    player_ready = []
+    player_ready.resize(config.player_count)
+    for index in range(player_ready.size()):
+        player_ready[index] = false
     assert(client_nodes.size() <= clients.size())
     for index in range(client_nodes.size()):
         clients[index] = client_nodes[index]
@@ -58,8 +68,9 @@ func register_client_at_index(player_id: String, player_index: int, client: Clie
         return "player_id_taken"
     clients[player_index] = client
     player_ids[player_index] = player_id
+    player_ready[player_index] = false
     _broadcast("rpc_player_joined", [player_id, player_index])
-    if _has_all_clients():
+    if _has_all_clients() and not require_explicit_ready:
         start_game()
     return ""
 
@@ -82,6 +93,24 @@ func detach_client(player_id: String, player_index: int) -> void:
     assert(player_index >= 0 and player_index < clients.size())
     assert(player_ids[player_index] == player_id)
     clients[player_index] = null
+    if not has_started:
+        player_ready[player_index] = false
+
+
+func rpc_player_ready(game_id: String, player_id: String) -> String:
+    if has_started:
+        return "match_already_started"
+    if game_id != state.game_id:
+        return "invalid_game_id"
+    var resolved_index: int = _player_index_from_id(player_id)
+    if resolved_index < 0:
+        return "invalid_player_id"
+    if clients[resolved_index] == null:
+        return "player_not_connected"
+    player_ready[resolved_index] = true
+    _broadcast("rpc_player_ready_state", [resolved_index, true, _ready_player_count(), clients.size()])
+    _maybe_start_game_when_all_ready()
+    return ""
 
 
 func _has_all_clients() -> bool:
@@ -89,6 +118,31 @@ func _has_all_clients() -> bool:
         if client == null:
             return false
     return true
+
+
+func _all_players_ready() -> bool:
+    for ready in player_ready:
+        if not ready:
+            return false
+    return true
+
+
+func _ready_player_count() -> int:
+    var count: int = 0
+    for ready in player_ready:
+        if ready:
+            count += 1
+    return count
+
+
+func _maybe_start_game_when_all_ready() -> void:
+    if has_started:
+        return
+    if not _has_all_clients():
+        return
+    if require_explicit_ready and not _all_players_ready():
+        return
+    start_game()
 
 
 func _player_index_from_id(player_id: String) -> int:
@@ -114,6 +168,9 @@ func rpc_roll_dice(game_id: String, player_id: String) -> void:
         return
     var resolved_index: int = _player_index_from_id(player_id)
     if resolved_index < 0:
+        return
+    if has_finished:
+        _send_to_player(resolved_index, "rpc_action_rejected", ["match_finished"])
         return
     if resolved_index != state.current_player_index:
         _send_to_player(resolved_index, "rpc_action_rejected", ["not_current_player"])
@@ -154,6 +211,8 @@ func _server_move_pawn(steps: int) -> void:
         ],
     )
     _apply_property_landing_mining_reward(landing_context)
+    if has_finished:
+        return
     var tile_type: String = str(landing_context.get("tile_type", ""))
     if tile_type == "inspection":
         _apply_inspection_to_player(state.current_player_index, "tile_inspection")
@@ -190,6 +249,8 @@ func _server_move_pawn(steps: int) -> void:
 func rpc_end_turn(game_id: String, player_id: String) -> String:
     if not has_started:
         return "match_not_started"
+    if has_finished:
+        return "match_finished"
     if game_id != state.game_id:
         return "invalid_game_id"
     var resolved_index: int = _player_index_from_id(player_id)
@@ -209,6 +270,8 @@ func rpc_end_turn(game_id: String, player_id: String) -> String:
 func rpc_buy_property(game_id: String, player_id: String, tile_index: int) -> String:
     if not has_started:
         return "match_not_started"
+    if has_finished:
+        return "match_finished"
     if game_id != state.game_id:
         return "invalid_game_id"
     var resolved_index: int = _player_index_from_id(player_id)
@@ -247,6 +310,8 @@ func rpc_buy_property(game_id: String, player_id: String, tile_index: int) -> St
 func rpc_buy_miner_batch(game_id: String, player_id: String, tile_index: int) -> String:
     if not has_started:
         return "match_not_started"
+    if has_finished:
+        return "match_finished"
     if game_id != state.game_id:
         return "invalid_game_id"
     var resolved_index: int = _player_index_from_id(player_id)
@@ -287,6 +352,8 @@ func rpc_buy_miner_batch(game_id: String, player_id: String, tile_index: int) ->
 func rpc_pay_toll(game_id: String, player_id: String) -> String:
     if not has_started:
         return "match_not_started"
+    if has_finished:
+        return "match_finished"
     if game_id != state.game_id:
         return "invalid_game_id"
     var resolved_index: int = _player_index_from_id(player_id)
@@ -322,6 +389,8 @@ func rpc_pay_toll(game_id: String, player_id: String) -> String:
 func rpc_pay_inspection_fee(game_id: String, player_id: String) -> String:
     if not has_started:
         return "match_not_started"
+    if has_finished:
+        return "match_finished"
     if game_id != state.game_id:
         return "invalid_game_id"
     var resolved_index: int = _player_index_from_id(player_id)
@@ -344,6 +413,8 @@ func rpc_pay_inspection_fee(game_id: String, player_id: String) -> String:
 func rpc_roll_inspection_exit(game_id: String, player_id: String) -> String:
     if not has_started:
         return "match_not_started"
+    if has_finished:
+        return "match_finished"
     if game_id != state.game_id:
         return "invalid_game_id"
     var resolved_index: int = _player_index_from_id(player_id)
@@ -372,6 +443,8 @@ func rpc_roll_inspection_exit(game_id: String, player_id: String) -> String:
 func rpc_use_inspection_voucher(game_id: String, player_id: String) -> String:
     if not has_started:
         return "match_not_started"
+    if has_finished:
+        return "match_finished"
     if game_id != state.game_id:
         return "invalid_game_id"
     var resolved_index: int = _player_index_from_id(player_id)
@@ -475,6 +548,7 @@ func _apply_property_landing_mining_reward(landing_context: Dictionary) -> void:
     var miner_batches: int = int(tile.get("miner_batches", 0))
     var reason: String = "no_miners"
     var btc_payout: float = 0.0
+    var should_check_goal: bool = false
     var owner: PlayerState = state.players[owner_index]
     if miner_batches > 0:
         if owner.in_inspection:
@@ -483,8 +557,11 @@ func _apply_property_landing_mining_reward(landing_context: Dictionary) -> void:
             btc_payout = EconomyV0.MINER_BTC_PAYOUT_PER_BATCH * float(miner_batches)
             owner.bitcoin_balance += btc_payout
             reason = "rewarded"
+            should_check_goal = true
             _broadcast("rpc_player_balance_changed", [owner_index, 0.0, btc_payout, "property_landing_mining_reward"])
     _broadcast("rpc_mining_reward", [owner_index, tile_index, miner_batches, btc_payout, reason])
+    if should_check_goal:
+        _check_btc_goal_victory(owner_index)
 
 
 func _compute_property_price(city: String) -> float:
@@ -623,6 +700,7 @@ func _apply_incident_effect(card: Dictionary, player_index: int) -> void:
         player.fiat_balance += fiat_delta
         player.bitcoin_balance += btc_delta
         _broadcast("rpc_player_balance_changed", [player_index, fiat_delta, btc_delta, card_id])
+        _check_btc_goal_victory(player_index)
         return
     if effect == "send_to_inspection":
         _apply_inspection_to_player(player_index, card_id)
@@ -680,9 +758,14 @@ func build_state_snapshot() -> Dictionary:
         "current_player_index": state.current_player_index,
         "current_cycle": state.current_cycle,
         "has_started": has_started,
+        "has_finished": has_finished,
+        "winner_index": winner_index,
+        "end_reason": end_reason,
         "board_state": board_state.duplicate(true),
         "players": players_snapshot,
         "pending_action": pending_action.duplicate(true),
+        "ready_players": player_ready.duplicate(),
+        "ready_count": _ready_player_count(),
     }
 
 
@@ -702,6 +785,8 @@ func _clear_pending_action() -> void:
 
 
 func _advance_turn() -> void:
+    if has_finished:
+        return
     _clear_pending_action()
     var next_player_index: int = state.current_player_index + 1
     if next_player_index >= clients.size():
@@ -709,6 +794,27 @@ func _advance_turn() -> void:
         state.turn_number += 1
     state.current_player_index = next_player_index
     _broadcast("rpc_turn_started", [state.current_player_index, state.turn_number, state.current_cycle])
+
+
+func _check_btc_goal_victory(player_index: int) -> void:
+    if has_finished:
+        return
+    assert(player_index >= 0 and player_index < state.players.size())
+    var player: PlayerState = state.players[player_index]
+    if player.bitcoin_balance < EconomyV0.BTC_GOAL_TO_WIN:
+        return
+    _finish_match(player_index, "btc_goal_reached")
+
+
+func _finish_match(resolved_winner_index: int, reason: String) -> void:
+    if has_finished:
+        return
+    has_finished = true
+    winner_index = resolved_winner_index
+    end_reason = reason
+    _clear_pending_action()
+    var winner_btc: float = float(state.players[winner_index].bitcoin_balance)
+    _broadcast("rpc_game_ended", [winner_index, reason, EconomyV0.BTC_GOAL_TO_WIN, winner_btc])
 
 
 func _broadcast(method: String, args: Array) -> void:

@@ -24,6 +24,14 @@ func rpc_turn_started(seq: int, player_index: int, turn_number: int, cycle: int)
     server_node.rpc_id(peer_id, "rpc_turn_started", seq, player_index, turn_number, cycle)
 
 
+func rpc_game_ended(seq: int, winner_index: int, reason: String, btc_goal: float, winner_btc: float) -> void:
+    server_node.rpc_id(peer_id, "rpc_game_ended", seq, winner_index, reason, btc_goal, winner_btc)
+
+
+func rpc_player_ready_state(seq: int, player_index: int, is_ready: bool, ready_count: int, total_players: int) -> void:
+    server_node.rpc_id(peer_id, "rpc_player_ready_state", seq, player_index, is_ready, ready_count, total_players)
+
+
 func rpc_player_joined(seq: int, player_id: String, player_index: int) -> void:
     server_node.rpc_id(peer_id, "rpc_player_joined", seq, player_id, player_index)
 
