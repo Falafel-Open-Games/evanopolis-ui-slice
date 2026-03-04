@@ -2,6 +2,7 @@ extends "res://scripts/headless_rpc.gd"
 
 const DEFAULT_HOST: String = "127.0.0.1"
 const DEFAULT_PORT: int = 9010
+const EconomyV0 = preload("res://scripts/rules/economy_v0.gd")
 
 var host: String = DEFAULT_HOST
 var port: int = DEFAULT_PORT
@@ -25,6 +26,8 @@ var sync_in_progress: bool = false
 var connected_player_indexes: Dictionary = { }
 var player_fiat_balances: Dictionary = { }
 var player_bitcoin_balances: Dictionary = { }
+var player_in_inspection: Dictionary = { }
+var player_inspection_free_exits: Dictionary = { }
 
 
 func _ready() -> void:
@@ -261,6 +264,9 @@ func _apply_turn_started(player_index_value: int, turn_number: int, cycle: int) 
     )
     if player_index_value != player_index:
         return
+    if bool(player_in_inspection.get(player_index_value, false)):
+        await _start_inspection_resolution_prompt()
+        return
     await _start_turn_prompt()
 
 
@@ -340,6 +346,12 @@ func _apply_player_balance_changed(player_index_value: int, fiat_delta: float, b
     var bitcoin_balance: float = float(player_bitcoin_balances.get(player_index_value, 0.0))
     bitcoin_balance += btc_delta
     player_bitcoin_balances[player_index_value] = bitcoin_balance
+    if reason == "inspection_fee_paid":
+        player_in_inspection[player_index_value] = false
+    if reason == "inspection_voucher_used":
+        player_in_inspection[player_index_value] = false
+    if reason == "inspection_exit_doubles":
+        player_in_inspection[player_index_value] = false
     _log_server(
         "player balance changed: player=%d fiat_delta=%.2f btc_delta=%.8f reason=%s"
         % [player_index_value, fiat_delta, btc_delta, reason],
@@ -400,10 +412,15 @@ func _apply_toll_paid(payer_index: int, owner_index: int, amount: float) -> void
 
 
 func _apply_player_sent_to_inspection(player_index_value: int, reason: String) -> void:
+    player_in_inspection[player_index_value] = true
     _log_server("player sent to inspection: player=%d reason=%s" % [player_index_value, reason])
 
 
 func _apply_inspection_voucher_granted(player_index_value: int, amount: int, reason: String) -> void:
+    connected_player_indexes[player_index_value] = true
+    var free_exits: int = int(player_inspection_free_exits.get(player_index_value, 0))
+    free_exits += amount
+    player_inspection_free_exits[player_index_value] = free_exits
     _log_server("inspection voucher granted: player=%d amount=%d reason=%s" % [player_index_value, amount, reason])
 
 
@@ -426,6 +443,8 @@ func _apply_state_snapshot(snapshot: Dictionary) -> void:
     connected_player_indexes.clear()
     player_fiat_balances.clear()
     player_bitcoin_balances.clear()
+    player_in_inspection.clear()
+    player_inspection_free_exits.clear()
     for player_variant in players:
         var player_in_snapshot: Dictionary = player_variant
         var player_index_value: int = int(player_in_snapshot.get("player_index", -1))
@@ -434,6 +453,8 @@ func _apply_state_snapshot(snapshot: Dictionary) -> void:
         connected_player_indexes[player_index_value] = true
         player_fiat_balances[player_index_value] = float(player_in_snapshot.get("fiat_balance", 0.0))
         player_bitcoin_balances[player_index_value] = float(player_in_snapshot.get("bitcoin_balance", 0.0))
+        player_in_inspection[player_index_value] = bool(player_in_snapshot.get("in_inspection", false))
+        player_inspection_free_exits[player_index_value] = int(player_in_snapshot.get("inspection_free_exits", 0))
     _log_server(
         "state snapshot: game_id=%s turn=%d cycle=%d current_player=%d players=%d board_size=%d started=%s pending_action=%s pending_tile=%d pending_owner=%d pending_amount=%.2f pending_buy_price=%.2f"
         % [
@@ -552,6 +573,21 @@ func _request_pay_toll() -> void:
     _rpc_to_server("rpc_pay_toll", [game_id, player_id])
 
 
+func _request_pay_inspection_fee() -> void:
+    _log_client("pay inspection fee: game_id=%s, player_id=%s" % [game_id, player_id])
+    _rpc_to_server("rpc_pay_inspection_fee", [game_id, player_id])
+
+
+func _request_roll_inspection_exit() -> void:
+    _log_client("roll inspection exit: game_id=%s, player_id=%s" % [game_id, player_id])
+    _rpc_to_server("rpc_roll_inspection_exit", [game_id, player_id])
+
+
+func _request_use_inspection_voucher() -> void:
+    _log_client("use inspection voucher: game_id=%s, player_id=%s" % [game_id, player_id])
+    _rpc_to_server("rpc_use_inspection_voucher", [game_id, player_id])
+
+
 func _rpc_to_server(method: String, args: Array = []) -> void:
     var payload: Array = [1, method]
     payload.append_array(args)
@@ -635,6 +671,36 @@ func _start_pay_toll_prompt(tile_index: int, city: String, owner_index: int, amo
     )
     await _wait_for_enter()
     _request_pay_toll()
+
+
+func _start_inspection_resolution_prompt() -> void:
+    var fee: float = EconomyV0.INSPECTION_FEE
+    var free_exits: int = int(player_inspection_free_exits.get(player_index, 0))
+    if free_exits > 0:
+        _log_prompt("in inspection: use free exit voucher=%d? [y/n]" % [free_exits])
+        var use_voucher: bool = _wait_for_buy_choice()
+        if use_voucher:
+            player_inspection_free_exits[player_index] = free_exits - 1
+            player_in_inspection[player_index] = false
+            _request_use_inspection_voucher()
+            await _start_turn_prompt()
+            return
+    _log_prompt("in inspection: try doubles roll? [y/n]")
+    var roll_exit: bool = _wait_for_buy_choice()
+    if roll_exit:
+        _request_roll_inspection_exit()
+        return
+    var available_fiat: float = float(player_fiat_balances.get(player_index, 0.0))
+    if available_fiat < fee:
+        _log_note(
+            "cannot pay inspection fee: fiat=%.2f required=%.2f; waiting for next action"
+            % [available_fiat, fee],
+        )
+        return
+    _log_prompt("in inspection: pay fee amount=%.2f [enter]" % [fee])
+    await _wait_for_enter()
+    _request_pay_inspection_fee()
+    await _start_turn_prompt()
 
 
 func _wait_for_buy_choice() -> bool:

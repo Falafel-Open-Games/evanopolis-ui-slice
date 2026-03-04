@@ -2,6 +2,7 @@ class_name EconomyV0
 extends RefCounted
 
 const INITIAL_FIAT_BALANCE: float = 20.0
+const INSPECTION_FEE: float = 10.0
 
 
 static func base_property_price(city: String) -> float:

@@ -9,7 +9,7 @@
 ## Inspection Rules
 
 - Inspection blocks mining payouts from the player's properties until cleared.
-- Enforce inspection turn gating in `godot2`: landing on inspection (or inspection incident) must set player inspection status, and turn start/roll flow must require inspection resolution (pay, doubles, or free-exit card) before normal movement.
+- Enforce "max 3 failed doubles attempts then forced fee" for inspection exit flow.
 
 ## Reconnection Test Roadmap
 

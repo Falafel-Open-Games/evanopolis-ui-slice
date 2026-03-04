@@ -118,6 +118,10 @@ func rpc_roll_dice(game_id: String, player_id: String) -> void:
     if resolved_index != state.current_player_index:
         _send_to_player(resolved_index, "rpc_action_rejected", ["not_current_player"])
         return
+    var current_player: PlayerState = state.players[resolved_index]
+    if current_player.in_inspection:
+        _send_to_player(resolved_index, "rpc_action_rejected", ["inspection_resolution_required"])
+        return
     if not pending_action.is_empty():
         _send_to_player(resolved_index, "rpc_action_rejected", ["pending_action_required"])
         return
@@ -149,6 +153,9 @@ func _server_move_pawn(steps: int) -> void:
             str(landing_context.get("action_required", "")),
         ],
     )
+    var tile_type: String = str(landing_context.get("tile_type", ""))
+    if tile_type == "inspection":
+        _apply_inspection_to_player(state.current_player_index, "tile_inspection")
     var action_required: String = str(landing_context.get("action_required", ""))
     if action_required == "buy_or_end_turn":
         _set_pending_action(
@@ -266,6 +273,77 @@ func rpc_pay_toll(game_id: String, player_id: String) -> String:
     owner.fiat_balance += amount
     _broadcast("rpc_toll_paid", [resolved_index, owner_index, amount])
     _advance_turn()
+    return ""
+
+
+func rpc_pay_inspection_fee(game_id: String, player_id: String) -> String:
+    if not has_started:
+        return "match_not_started"
+    if game_id != state.game_id:
+        return "invalid_game_id"
+    var resolved_index: int = _player_index_from_id(player_id)
+    if resolved_index < 0:
+        return "invalid_player_id"
+    if resolved_index != state.current_player_index:
+        return "not_current_player"
+    var player: PlayerState = state.players[resolved_index]
+    if not player.in_inspection:
+        return "not_in_inspection"
+    var fee: float = EconomyV0.INSPECTION_FEE
+    if player.fiat_balance < fee:
+        return "insufficient_fiat"
+    player.fiat_balance -= fee
+    player.in_inspection = false
+    _broadcast("rpc_player_balance_changed", [resolved_index, -fee, 0.0, "inspection_fee_paid"])
+    return ""
+
+
+func rpc_roll_inspection_exit(game_id: String, player_id: String) -> String:
+    if not has_started:
+        return "match_not_started"
+    if game_id != state.game_id:
+        return "invalid_game_id"
+    var resolved_index: int = _player_index_from_id(player_id)
+    if resolved_index < 0:
+        return "invalid_player_id"
+    if resolved_index != state.current_player_index:
+        return "not_current_player"
+    if not pending_action.is_empty():
+        return "pending_action_required"
+    var player: PlayerState = state.players[resolved_index]
+    if not player.in_inspection:
+        return "not_in_inspection"
+    var die_1: int = rng.randi_range(1, 6)
+    var die_2: int = rng.randi_range(1, 6)
+    var total: int = die_1 + die_2
+    _broadcast("rpc_dice_rolled", [die_1, die_2, total])
+    if die_1 == die_2:
+        player.in_inspection = false
+        _broadcast("rpc_player_balance_changed", [resolved_index, 0.0, 0.0, "inspection_exit_doubles"])
+        _server_move_pawn(total)
+        return ""
+    _advance_turn()
+    return ""
+
+
+func rpc_use_inspection_voucher(game_id: String, player_id: String) -> String:
+    if not has_started:
+        return "match_not_started"
+    if game_id != state.game_id:
+        return "invalid_game_id"
+    var resolved_index: int = _player_index_from_id(player_id)
+    if resolved_index < 0:
+        return "invalid_player_id"
+    if resolved_index != state.current_player_index:
+        return "not_current_player"
+    var player: PlayerState = state.players[resolved_index]
+    if not player.in_inspection:
+        return "not_in_inspection"
+    if player.inspection_free_exits <= 0:
+        return "no_inspection_voucher"
+    player.inspection_free_exits -= 1
+    player.in_inspection = false
+    _broadcast("rpc_player_balance_changed", [resolved_index, 0.0, 0.0, "inspection_voucher_used"])
     return ""
 
 
@@ -474,14 +552,20 @@ func _apply_incident_effect(card: Dictionary, player_index: int) -> void:
         _broadcast("rpc_player_balance_changed", [player_index, fiat_delta, btc_delta, card_id])
         return
     if effect == "send_to_inspection":
-        player.in_inspection = true
-        _broadcast("rpc_player_sent_to_inspection", [player_index, card_id])
+        _apply_inspection_to_player(player_index, card_id)
         return
     if effect == "grant_inspection_voucher":
         player.inspection_free_exits += 1
         _broadcast("rpc_inspection_voucher_granted", [player_index, 1, card_id])
         return
     assert(false)
+
+
+func _apply_inspection_to_player(player_index: int, reason: String) -> void:
+    assert(player_index >= 0 and player_index < state.players.size())
+    var player: PlayerState = state.players[player_index]
+    player.in_inspection = true
+    _broadcast("rpc_player_sent_to_inspection", [player_index, reason])
 
 
 func _flip_incident_kind(incident_kind: String) -> String:

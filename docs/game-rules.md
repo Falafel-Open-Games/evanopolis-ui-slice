@@ -119,6 +119,15 @@ Para sair da cadeia, ele pode:
 - Pagar 10 EVA e sair no próximo turno
 - Rodar dois dados e tirar números iguais. Após 3 turnos ele é obrigado a pagar e sair
 
+### Escopo v0 (implementado no headless)
+- Ao entrar em inspeção, o jogador fica bloqueado para `roll` normal até resolver a inspeção.
+- Resoluções disponíveis no turno do jogador:
+- usar saída livre de inspeção (se tiver),
+- tentar sair com dados iguais,
+- pagar a taxa de inspeção.
+- Se a tentativa de dados não resultar em números iguais, o turno termina e o jogador permanece em inspeção.
+- A regra de "3 tentativas e pagamento obrigatório" permanece pendente para implementação completa.
+
 Durante esse período:
 - Dividendos das mineradoras não são coletados
 - Taxa de energia paga por outros jogadores são recebidos normalmente

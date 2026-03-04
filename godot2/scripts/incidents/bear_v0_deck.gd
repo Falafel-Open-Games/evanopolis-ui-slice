@@ -10,11 +10,11 @@ const CARDS: Array[Dictionary] = [
         "btc_delta": 0.0,
     },
     {
-        "card_id": "bear_lost_btc_0_2",
-        "card_text": "Perca 0.2 BTC.",
+        "card_id": "bear_fine_eva_3",
+        "card_text": "Pague 3 EVA.",
         "effect": "balance_delta",
-        "fiat_delta": 0.0,
-        "btc_delta": -0.2,
+        "fiat_delta": -3.0,
+        "btc_delta": 0.0,
     },
     {
         "card_id": "bear_legal_inspection",
