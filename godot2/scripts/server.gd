@@ -70,6 +70,17 @@ class NullClient:
         pass
 
 
+    func rpc_mining_reward(
+            _seq: int,
+            _owner_index: int,
+            _tile_index: int,
+            _miner_batches: int,
+            _btc_reward: float,
+            _reason: String,
+    ) -> void:
+        pass
+
+
     func rpc_toll_paid(_seq: int, _payer_index: int, _owner_index: int, _amount: float) -> void:
         pass
 

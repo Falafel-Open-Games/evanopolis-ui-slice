@@ -169,6 +169,27 @@ func rpc_miner_batches_added(seq: int, player_index: int, tile_index: int, count
     )
 
 
+func rpc_mining_reward(
+        seq: int,
+        owner_index: int,
+        tile_index: int,
+        miner_batches: int,
+        btc_reward: float,
+        reason: String,
+) -> void:
+    events.append(
+        {
+            "method": "rpc_mining_reward",
+            "seq": seq,
+            "owner_index": owner_index,
+            "tile_index": tile_index,
+            "miner_batches": miner_batches,
+            "btc_reward": btc_reward,
+            "reason": reason,
+        },
+    )
+
+
 func rpc_toll_paid(seq: int, payer_index: int, owner_index: int, amount: float) -> void:
     events.append(
         {

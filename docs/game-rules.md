@@ -33,7 +33,7 @@
 O criador da sala envia os convites e espera os jogadores entrarem. Quem estiver no lobby precisa apertar o botão de ready para informar que pode ser iniciada a partida, porém o criador da sala é quem tem o botão de começar.
 
 ## Início da partida
-Todos os jogadores começam no tile inicial, com 200 EVAs, 0 BTCs e sem nenhuma propriedade.
+Todos os jogadores começam no tile inicial, com 120 EVAs, 0 BTCs e sem nenhuma propriedade.
 A ordem do turno é sorteada e o primeiro jogador inicia sua jogada.
 
 ## Ponto inicial (tile de partida)

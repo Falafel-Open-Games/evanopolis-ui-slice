@@ -73,6 +73,17 @@ func rpc_miner_batches_added(seq: int, player_index: int, tile_index: int, count
     server_node.rpc_id(peer_id, "rpc_miner_batches_added", seq, player_index, tile_index, count)
 
 
+func rpc_mining_reward(
+        seq: int,
+        owner_index: int,
+        tile_index: int,
+        miner_batches: int,
+        btc_reward: float,
+        reason: String,
+) -> void:
+    server_node.rpc_id(peer_id, "rpc_mining_reward", seq, owner_index, tile_index, miner_batches, btc_reward, reason)
+
+
 func rpc_toll_paid(seq: int, payer_index: int, owner_index: int, amount: float) -> void:
     server_node.rpc_id(peer_id, "rpc_toll_paid", seq, payer_index, owner_index, amount)
 

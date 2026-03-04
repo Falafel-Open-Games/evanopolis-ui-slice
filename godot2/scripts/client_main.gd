@@ -66,7 +66,7 @@ func _parse_args(args: PackedStringArray) -> void:
             continue
         if arg == "--player-id":
             _log_note("--player-id is no longer supported; player_id is derived from JWT sub")
-            get_tree().quit(1)
+            _exit_with_code(1)
             return
         index += 1
 
@@ -89,11 +89,16 @@ func _on_connected_to_server() -> void:
 
 func _on_connection_failed() -> void:
     print("client: connection failed")
+    _exit_with_code(1)
 
 
 func _on_server_disconnected() -> void:
     print("client: server disconnected")
-    get_tree().quit(1)
+    _exit_with_code(1)
+
+
+func _exit_with_code(code: int) -> void:
+    get_tree().quit(code)
 
 
 func _handle_game_started(seq: int, new_game_id: String) -> void:
@@ -167,6 +172,17 @@ func _handle_property_acquired(seq: int, owner_player_index: int, tile_index: in
 
 func _handle_miner_batches_added(seq: int, owner_player_index: int, tile_index: int, count: int) -> void:
     _queue_event(seq, "_apply_miner_batches_added", [owner_player_index, tile_index, count])
+
+
+func _handle_mining_reward(
+        seq: int,
+        owner_index: int,
+        tile_index: int,
+        miner_batches: int,
+        btc_reward: float,
+        reason: String,
+) -> void:
+    _queue_event(seq, "_apply_mining_reward", [owner_index, tile_index, miner_batches, btc_reward, reason])
 
 
 func _handle_toll_paid(seq: int, payer_index: int, owner_index: int, amount: float) -> void:
@@ -420,6 +436,14 @@ func _apply_miner_batches_added(owner_player_index: int, tile_index: int, count:
     _log_server("miner batches added: player=%d tile=%d count=%d" % [owner_player_index, tile_index, count])
 
 
+func _apply_mining_reward(owner_index: int, tile_index: int, miner_batches: int, btc_reward: float, reason: String) -> void:
+    connected_player_indexes[owner_index] = true
+    _log_server(
+        "mining reward: owner=%d tile=%d miner_batches=%d btc_reward=%.8f reason=%s"
+        % [owner_index, tile_index, miner_batches, btc_reward, reason],
+    )
+
+
 func _apply_toll_paid(payer_index: int, owner_index: int, amount: float) -> void:
     connected_player_indexes[payer_index] = true
     connected_player_indexes[owner_index] = true
@@ -545,13 +569,15 @@ func _build_connected_players_summary() -> String:
     for player_index_value in connected_player_indexes_sorted:
         var player_holdings: Dictionary = holdings_by_player.get(player_index_value, { })
         player_summaries.append(
-            "p%d(tile=%d fiat=%s%.2f%s btc=%.8f properties=%d miners=%d)" % [
+            "p%d(tile=%d fiat=%s%.2f%s btc=%s%.8f%s properties=%d miners=%d)" % [
                 player_index_value,
                 int(player_positions.get(player_index_value, -1)),
                 ANSI_BOLD,
                 float(player_fiat_balances.get(player_index_value, 0.0)),
                 ANSI_RESET,
+                ANSI_YELLOW,
                 float(player_bitcoin_balances.get(player_index_value, 0.0)),
+                ANSI_RESET,
                 int(player_holdings.get("properties", 0)),
                 int(player_holdings.get("miners", 0)),
             ],
