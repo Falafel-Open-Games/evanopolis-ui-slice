@@ -14,6 +14,15 @@ In the current text-only client flow, this leaves the match waiting for a follow
 4. Client logs `rpc_action_rejected` reason.
 5. Pending action remains open; turn does not advance.
 
+## Reproduction (Manual, 2026-03-04)
+- Turn start snapshot showed active player with negative fiat:
+- `turn started: player=0, turn=5, cycle=2, connected_players=[p0(fiat=-2.40 ...), p1(...)]`
+- Player landed on unowned property tile `11` (`ciudad_del_este`, `buy_price=5.50`, `action_required=buy_or_end_turn`).
+- Player selected `y` (buy), client sent `rpc_buy_property`.
+- Server replied:
+- `action rejected: reason=insufficient_fiat`
+- After rejection, client did not prompt fallback `end_turn`, and match appeared stuck on unresolved pending action.
+
 ## Why It Matters
 - In a two-client headless game, this can appear as a soft lock.
 - The active player does not receive an automatic fallback to skip/end turn.

@@ -243,6 +243,46 @@ func rpc_buy_property(game_id: String, player_id: String, tile_index: int) -> St
     return ""
 
 
+func rpc_buy_miner_batch(game_id: String, player_id: String, tile_index: int) -> String:
+    if not has_started:
+        return "match_not_started"
+    if game_id != state.game_id:
+        return "invalid_game_id"
+    var resolved_index: int = _player_index_from_id(player_id)
+    if resolved_index < 0:
+        return "invalid_player_id"
+    if resolved_index != state.current_player_index:
+        return "not_current_player"
+    var player: PlayerState = state.players[resolved_index]
+    if player.in_inspection:
+        return "inspection_resolution_required"
+    if not pending_action.is_empty():
+        return "pending_action_required"
+    var tiles: Array = board_state.get("tiles", [])
+    if tile_index < 0 or tile_index >= tiles.size():
+        return "invalid_tile_index"
+    var tile: Dictionary = tiles[tile_index]
+    var tile_type: String = str(tile.get("tile_type", ""))
+    if not _is_property_tile(tile_type):
+        return "tile_not_mineable"
+    var owner_index: int = int(tile.get("owner_index", -1))
+    if owner_index != resolved_index:
+        return "not_property_owner"
+    var miner_batches: int = int(tile.get("miner_batches", 0))
+    if miner_batches >= EconomyV0.MAX_MINER_BATCHES_PER_PROPERTY:
+        return "max_miner_batches_reached"
+    var miner_price: float = EconomyV0.MINER_BATCH_PRICE
+    if player.fiat_balance < miner_price:
+        return "insufficient_fiat"
+    player.fiat_balance -= miner_price
+    tile["miner_batches"] = miner_batches + 1
+    tiles[tile_index] = tile
+    board_state["tiles"] = tiles
+    _broadcast("rpc_player_balance_changed", [resolved_index, -miner_price, 0.0, "miner_batch_purchased"])
+    _broadcast("rpc_miner_batches_added", [resolved_index, tile_index, 1])
+    return ""
+
+
 func rpc_pay_toll(game_id: String, player_id: String) -> String:
     if not has_started:
         return "match_not_started"

@@ -3,6 +3,8 @@ extends RefCounted
 
 const INITIAL_FIAT_BALANCE: float = 20.0
 const INSPECTION_FEE: float = 10.0
+const MINER_BATCH_PRICE: float = 12.0
+const MAX_MINER_BATCHES_PER_PROPERTY: int = 4
 
 
 static func base_property_price(city: String) -> float:

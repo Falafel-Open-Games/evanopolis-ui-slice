@@ -55,7 +55,8 @@ Caso seja necessário injetar dinheiro na economia do jogo, podemos adicionar a 
 - Sair da cadeia (pagando ou rolando dois dados iguais)
 
 ## Turno
-- A primeira ação é a rolagem de dados e é obrigatória.
+- No fluxo headless/text-client v0, antes da rolagem o jogador pode comprar e instalar lotes de mineradoras em propriedades próprias elegíveis.
+- Após essa etapa opcional, a rolagem de dados é obrigatória.
 - Ao cair numa propriedade vazia, o jogador pode adquiri-la ou ignorá-la
 - Caso seja uma propriedade de outro jogador, é obrigatório o pagamento da taxa de energia
 - Caso seja uma propriedade sua, nenhuma ação é executada
@@ -73,6 +74,8 @@ Caso 1 EVA seja um valor muito elevado (US$ 29,00 / R$ 153,00 em 03/2026), podem
 - Rockdale = 8 EVA
 ### Mineradoras
 - Adquirir 1 lote de mineradoras = 12 EVA
+- No v0 headless, compra/instalação ocorre no turno do próprio jogador, antes da rolagem.
+- No v0 headless, cada propriedade aceita até 4 lotes de mineradoras.
 - Pagar conta de luz (energy toll) = 10% do valor da propriedade + 2,5% por lote de mineradoras
 - Receber dividendos de mineração: 2 BTCs * número de mineradoras
 ### EVA <> BTC

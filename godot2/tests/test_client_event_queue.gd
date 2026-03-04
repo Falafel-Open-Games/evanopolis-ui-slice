@@ -586,3 +586,21 @@ func test_sync_complete_does_not_prompt_roll_when_match_not_started() -> void:
     assert_eq(client.buy_prompt_count, 0, "match not started should not prompt buy")
     assert_eq(client.pay_toll_prompt_count, 0, "match not started should not prompt pay toll")
     client.free()
+
+
+func test_action_rejected_insufficient_fiat_on_buy_auto_sends_end_turn() -> void:
+    var client: ClientMainDouble = ClientMainDouble.new()
+    client.player_index = 0
+    client.current_player_index = 0
+    client.pending_action_type = "buy_or_end_turn"
+    client.game_id = "demo_002"
+    client.player_id = "alice"
+
+    client._apply_action_rejected("insufficient_fiat")
+
+    assert_eq(client.server_calls.size(), 1, "insufficient fiat rejection should trigger one fallback rpc")
+    assert_eq(str(client.server_calls[0].get("method", "")), "rpc_end_turn", "fallback should send end_turn")
+    var args: Array = client.server_calls[0].get("args", [])
+    assert_eq(str(args[0]), "demo_002", "fallback end_turn includes game id")
+    assert_eq(str(args[1]), "alice", "fallback end_turn includes player id")
+    client.free()

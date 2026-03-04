@@ -3,6 +3,8 @@ extends "res://scripts/headless_rpc.gd"
 const DEFAULT_HOST: String = "127.0.0.1"
 const DEFAULT_PORT: int = 9010
 const EconomyV0 = preload("res://scripts/rules/economy_v0.gd")
+const ANSI_RESET: String = "\u001b[0m"
+const ANSI_BOLD: String = "\u001b[1m"
 
 var host: String = DEFAULT_HOST
 var port: int = DEFAULT_PORT
@@ -157,6 +159,10 @@ func _handle_incident_type_changed(seq: int, tile_index: int, incident_kind: Str
 
 func _handle_property_acquired(seq: int, owner_player_index: int, tile_index: int, price: float) -> void:
     _queue_event(seq, "_apply_property_acquired", [owner_player_index, tile_index, price])
+
+
+func _handle_miner_batches_added(seq: int, owner_player_index: int, tile_index: int, count: int) -> void:
+    _queue_event(seq, "_apply_miner_batches_added", [owner_player_index, tile_index, count])
 
 
 func _handle_toll_paid(seq: int, payer_index: int, owner_index: int, amount: float) -> void:
@@ -332,9 +338,10 @@ func _apply_tile_landed(
 
 
 func _apply_incident_drawn(tile_index: int, incident_kind: String, card_id: String, card_text: String) -> void:
+    var bold_card_text: String = "%s%s%s" % [ANSI_BOLD, card_text, ANSI_RESET]
     _log_server(
         "incident drawn: tile=%d kind=%s card_id=%s card_text=%s"
-        % [tile_index, incident_kind, card_id, card_text],
+        % [tile_index, incident_kind, card_id, bold_card_text],
     )
 
 
@@ -392,6 +399,15 @@ func _apply_property_acquired(owner_player_index: int, tile_index: int, price: f
     pending_action_amount = 0.0
     pending_action_buy_price = 0.0
     _log_server("property acquired: player=%d tile=%d price=%.2f" % [owner_player_index, tile_index, price])
+
+
+func _apply_miner_batches_added(owner_player_index: int, tile_index: int, count: int) -> void:
+    connected_player_indexes[owner_player_index] = true
+    var tile: Dictionary = _tile_info_from_index(tile_index)
+    if not tile.is_empty():
+        var miner_batches: int = int(tile.get("miner_batches", 0))
+        tile["miner_batches"] = miner_batches + count
+    _log_server("miner batches added: player=%d tile=%d count=%d" % [owner_player_index, tile_index, count])
 
 
 func _apply_toll_paid(payer_index: int, owner_index: int, amount: float) -> void:
@@ -542,9 +558,13 @@ func _apply_sync_complete(final_seq: int) -> void:
 
 func _apply_action_rejected(reason: String) -> void:
     _log_server("action rejected: reason=%s" % reason)
+    if reason == "insufficient_fiat" and player_index == current_player_index and pending_action_type == "buy_or_end_turn":
+        _log_note("buy rejected for insufficient fiat; auto-sending end_turn")
+        _request_end_turn()
 
 
 func _start_turn_prompt() -> void:
+    await _start_buy_miner_batch_prompt()
     _log_prompt("press enter to roll dice")
     await _wait_for_enter()
     _request_roll()
@@ -558,6 +578,11 @@ func _request_roll() -> void:
 func _request_buy_property(tile_index: int) -> void:
     _log_client("buy property: game_id=%s, player_id=%s, tile_index=%d" % [game_id, player_id, tile_index])
     _rpc_to_server("rpc_buy_property", [game_id, player_id, tile_index])
+
+
+func _request_buy_miner_batch(tile_index: int) -> void:
+    _log_client("buy miner batch: game_id=%s, player_id=%s, tile_index=%d" % [game_id, player_id, tile_index])
+    _rpc_to_server("rpc_buy_miner_batch", [game_id, player_id, tile_index])
 
 
 func _request_end_turn() -> void:
@@ -673,6 +698,45 @@ func _start_pay_toll_prompt(tile_index: int, city: String, owner_index: int, amo
     _request_pay_toll()
 
 
+func _start_buy_miner_batch_prompt() -> void:
+    var miner_price: float = EconomyV0.MINER_BATCH_PRICE
+    var available_fiat: float = float(player_fiat_balances.get(player_index, 0.0))
+    if available_fiat < miner_price:
+        _log_note(
+            "skipping miner prompt: fiat=%.2f below miner price=%.2f"
+            % [available_fiat, miner_price],
+        )
+        return
+    var owned_tile_indexes: Array[int] = []
+    var tiles: Array = board_state.get("tiles", [])
+    for tile_variant in tiles:
+        var tile: Dictionary = tile_variant
+        var tile_type: String = str(tile.get("tile_type", ""))
+        if tile_type != "property" and tile_type != "special_property":
+            continue
+        if int(tile.get("owner_index", -1)) != player_index:
+            continue
+        var miner_batches: int = int(tile.get("miner_batches", 0))
+        if miner_batches >= EconomyV0.MAX_MINER_BATCHES_PER_PROPERTY:
+            continue
+        owned_tile_indexes.append(int(tile.get("index", -1)))
+    if owned_tile_indexes.is_empty():
+        _log_note("skipping miner prompt: no owned property with available miner slots")
+        return
+    owned_tile_indexes.sort()
+    var tile_choices: PackedStringArray = []
+    for tile_index in owned_tile_indexes:
+        tile_choices.append(str(tile_index))
+    _log_prompt(
+        "buy miner batch price=%.2f choose owned tile index [%s] or press enter to skip"
+        % [miner_price, ", ".join(tile_choices)],
+    )
+    var selected_tile: int = _wait_for_tile_choice(owned_tile_indexes)
+    if selected_tile < 0:
+        return
+    _request_buy_miner_batch(selected_tile)
+
+
 func _start_inspection_resolution_prompt() -> void:
     var fee: float = EconomyV0.INSPECTION_FEE
     var free_exits: int = int(player_inspection_free_exits.get(player_index, 0))
@@ -721,6 +785,22 @@ func _wait_for_enter() -> void:
         OS.read_string_from_stdin()
         return
     _log_note("stdin not available; continuing")
+
+
+func _wait_for_tile_choice(valid_tile_indexes: Array[int]) -> int:
+    if not OS.has_method("read_string_from_stdin"):
+        return -1
+    var input_text: String = OS.read_string_from_stdin().strip_edges().to_lower()
+    if input_text.is_empty():
+        return -1
+    if not input_text.is_valid_int():
+        _log_note("invalid tile index '%s'; skipping miner purchase" % input_text)
+        return -1
+    var tile_index: int = int(input_text)
+    if not valid_tile_indexes.has(tile_index):
+        _log_note("tile index %d is not a valid owned property; skipping miner purchase" % tile_index)
+        return -1
+    return tile_index
 
 
 func _log_server(message: String) -> void:

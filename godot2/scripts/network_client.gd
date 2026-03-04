@@ -69,6 +69,10 @@ func rpc_property_acquired(seq: int, player_index: int, tile_index: int, price: 
     server_node.rpc_id(peer_id, "rpc_property_acquired", seq, player_index, tile_index, price)
 
 
+func rpc_miner_batches_added(seq: int, player_index: int, tile_index: int, count: int) -> void:
+    server_node.rpc_id(peer_id, "rpc_miner_batches_added", seq, player_index, tile_index, count)
+
+
 func rpc_toll_paid(seq: int, payer_index: int, owner_index: int, amount: float) -> void:
     server_node.rpc_id(peer_id, "rpc_toll_paid", seq, payer_index, owner_index, amount)
 

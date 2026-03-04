@@ -157,6 +157,18 @@ func rpc_property_acquired(seq: int, player_index: int, tile_index: int, price: 
     )
 
 
+func rpc_miner_batches_added(seq: int, player_index: int, tile_index: int, count: int) -> void:
+    events.append(
+        {
+            "method": "rpc_miner_batches_added",
+            "seq": seq,
+            "player_index": player_index,
+            "tile_index": tile_index,
+            "count": count,
+        },
+    )
+
+
 func rpc_toll_paid(seq: int, payer_index: int, owner_index: int, amount: float) -> void:
     events.append(
         {

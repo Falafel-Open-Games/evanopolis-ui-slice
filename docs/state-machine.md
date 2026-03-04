@@ -12,9 +12,12 @@ stateDiagram-v2
     WaitingForPlayers --> GameStarted: seats filled
     GameStarted --> TurnStarted: rpc_game_started + rpc_turn_started
 
-    TurnStarted --> AwaitingRoll: no pending action
+    TurnStarted --> AwaitingPreRollEconomy: no pending action
     TurnStarted --> AwaitingInspectionResolution: current player in inspection
     TurnStarted --> AwaitingPendingAction: pending action from snapshot/reconnect
+    AwaitingPreRollEconomy --> ResolvingMinerBuy: rpc_buy_miner_batch
+    ResolvingMinerBuy --> AwaitingPreRollEconomy: buy accepted/rejected (same turn)
+    AwaitingPreRollEconomy --> AwaitingRoll: player proceeds to roll
     AwaitingInspectionResolution --> ResolvingInspectionFee: rpc_pay_inspection_fee
     AwaitingInspectionResolution --> ResolvingInspectionVoucher: rpc_use_inspection_voucher
     AwaitingInspectionResolution --> ResolvingInspectionRoll: rpc_roll_inspection_exit
@@ -42,6 +45,7 @@ stateDiagram-v2
     ResolvingEndTurn --> TurnAdvanced: rpc_turn_started
     TurnAdvanced --> TurnStarted: next player
 
+    AwaitingPreRollEconomy --> IntentQueued: rpc_* outside-turn intent accepted
     AwaitingRoll --> IntentQueued: rpc_* outside-turn intent accepted
     AwaitingPendingAction --> IntentQueued: rpc_* outside-turn intent accepted
     IntentQueued --> AwaitingRoll: effect deferred to deterministic boundary
@@ -62,6 +66,7 @@ stateDiagram-v2
 Notes:
 - "Pending action" is authoritative server state and gates which action RPCs are valid.
 - v0 action set is `buy_or_end_turn`, `pay_toll`, `resolve_incident`, and `end_turn`.
+- Miner purchase (`rpc_buy_miner_batch`) is a pre-roll, current-turn economy action and is not represented as landing pending action.
 - Inspection is a separate gate before roll for the current player; it is not modeled as a pending tile action.
 - Inspection resolution can clear inspection and continue the same turn (`fee`, `voucher`, `doubles`) or consume the turn (`non-doubles`).
 - Incident resolution is server-driven and may emit multiple mutation events before tile flip + turn advance.

@@ -1,6 +1,7 @@
 # Text Client Needs Rich Local State + On-Demand Status Shortcut (2026-03-03)
 
 Issue: `ISS-004`
+Status: `WONTFIX` on `2026-03-04`
 
 ## Summary
 The text-only client currently logs authoritative events and snapshot summaries, but does not maintain a rich, queryable local model for all players/tiles over time.
@@ -25,3 +26,7 @@ This makes it hard to inspect current match status on demand while playing.
 - Text client keeps an up-to-date local model from snapshot + ordered events.
 - Pressing `?` prints a concise status view without altering game flow.
 - Output includes at least: turn owner, current player balances, positions, inspection flags, and current pending action.
+
+## Closure Rationale (2026-03-04)
+- The improved turn-start log now includes connected-player balances and holdings, which is sufficient for current manual testing needs.
+- The extra shortcut/local rich-state work is intentionally deferred to avoid expanding scope for this milestone.
