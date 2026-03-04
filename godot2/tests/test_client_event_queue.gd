@@ -9,8 +9,11 @@ class ClientMainDouble:
     var server_calls: Array[Dictionary] = []
     var server_messages: Array[String] = []
     var prompt_messages: Array[String] = []
+    var note_messages: Array[String] = []
     var next_buy_choice: bool = false
+    var next_buy_choices: Array[bool] = []
     var turn_prompt_count: int = 0
+    var inspection_prompt_count: int = 0
     var buy_prompt_count: int = 0
     var pay_toll_prompt_count: int = 0
 
@@ -28,9 +31,20 @@ class ClientMainDouble:
         turn_prompt_count += 1
 
 
+    func _start_inspection_resolution_prompt() -> void:
+        inspection_prompt_count += 1
+        if next_buy_choices.is_empty() and not next_buy_choice:
+            return
+        await super._start_inspection_resolution_prompt()
+
+
     func _start_buy_or_end_turn_prompt(tile_index: int, city: String, buy_price: float) -> void:
         buy_prompt_count += 1
-        _log_prompt("buy property on tile=%d city=%s price=%.2f? [y/n]" % [tile_index, city, buy_price])
+        var available_fiat: float = float(player_fiat_balances.get(player_index, 0.0))
+        _log_prompt(
+            "buy property on tile=%d city=%s price=%.2f fiat=%.2f? [y/n]"
+            % [tile_index, city, buy_price, available_fiat],
+        )
         if next_buy_choice:
             _request_buy_property(tile_index)
             return
@@ -43,6 +57,10 @@ class ClientMainDouble:
 
 
     func _wait_for_buy_choice() -> bool:
+        if not next_buy_choices.is_empty():
+            var scripted_choice: bool = next_buy_choices[0]
+            next_buy_choices.remove_at(0)
+            return scripted_choice
         return next_buy_choice
 
 
@@ -52,6 +70,10 @@ class ClientMainDouble:
 
     func _log_prompt(message: String) -> void:
         prompt_messages.append(message)
+
+
+    func _log_note(message: String) -> void:
+        note_messages.append(message)
 
 
 func test_join_requests_snapshot_sync_and_drops_pre_sync_events() -> void:
@@ -251,8 +273,8 @@ func test_turn_started_logs_connected_players_balances_and_holdings() -> void:
     var last_message: String = client.server_messages[client.server_messages.size() - 1]
     assert_eq(
         last_message,
-        "turn started: player=1, turn=4, cycle=2, connected_players=[p0(fiat=\u001b[1m20.00\u001b[0m btc=0.50000000 properties=2 miners=3), p1(fiat=\u001b[1m13.50\u001b[0m btc=0.37500000 properties=1 miners=4)]",
-        "turn started includes connected players balances/properties/miners",
+        "\u001b[32mturn started\u001b[0m: player=1, turn=4, cycle=2, connected_players=[p0(tile=6 fiat=\u001b[1m20.00\u001b[0m btc=0.50000000 properties=2 miners=3), p1(tile=3 fiat=\u001b[1m13.50\u001b[0m btc=0.37500000 properties=1 miners=4)]",
+        "turn started includes green label and connected players tile/balance/properties/miners",
     )
 
     client.free()
@@ -308,8 +330,8 @@ func test_turn_started_logs_purchase_balance_after_property_acquired() -> void:
     var last_message: String = client.server_messages[client.server_messages.size() - 1]
     assert_eq(
         last_message,
-        "turn started: player=1, turn=1, cycle=1, connected_players=[p0(fiat=\u001b[1m16.00\u001b[0m btc=0.00000000 properties=1 miners=0), p1(fiat=\u001b[1m20.00\u001b[0m btc=0.00000000 properties=0 miners=0)]",
-        "turn started summary reflects fiat deduction from property purchase",
+        "\u001b[32mturn started\u001b[0m: player=1, turn=1, cycle=1, connected_players=[p0(tile=6 fiat=\u001b[1m16.00\u001b[0m btc=0.00000000 properties=1 miners=0), p1(tile=0 fiat=\u001b[1m20.00\u001b[0m btc=0.00000000 properties=0 miners=0)]",
+        "turn started summary reflects fiat deduction and player tile indexes",
     )
 
     client.free()
@@ -358,13 +380,14 @@ func test_tile_landed_buy_prompt_submits_buy_property() -> void:
     client.player_index = 0
     client.current_player_index = 0
     client.next_buy_choice = true
+    client.player_fiat_balances[0] = 30.0
 
     client._apply_tile_landed(6, "property", "assuncion", -1, 0.0, 4.0, "buy_or_end_turn")
 
     assert_eq(client.server_calls.size(), 1, "buy prompt sends one rpc")
     assert_eq(str(client.server_calls[0].get("method", "")), "rpc_buy_property", "buy path sends buy_property rpc")
     assert_eq(client.prompt_messages.size(), 1, "buy prompt logged once")
-    assert_eq(client.prompt_messages[0], "buy property on tile=6 city=assuncion price=4.00? [y/n]", "buy prompt includes buy price")
+    assert_eq(client.prompt_messages[0], "buy property on tile=6 city=assuncion price=4.00 fiat=30.00? [y/n]", "buy prompt includes buy price and current fiat")
     var args: Array = client.server_calls[0].get("args", [])
     assert_eq(int(args[2]), 6, "tile index is forwarded for buy")
     client.free()
@@ -588,6 +611,45 @@ func test_sync_complete_does_not_prompt_roll_when_match_not_started() -> void:
     client.free()
 
 
+func test_sync_complete_resumes_inspection_prompt_when_snapshot_player_is_inspected() -> void:
+    var client: ClientMainDouble = ClientMainDouble.new()
+    client.player_id = "p2"
+    client.game_id = "demo_002"
+
+    client._handle_join_accepted(0, "p2", 1, 4)
+    client._handle_state_snapshot(
+        0,
+        {
+            "game_id": "demo_002",
+            "turn_number": 8,
+            "current_player_index": 1,
+            "current_cycle": 3,
+            "pending_action": { },
+            "board_state": {
+                "size": 24,
+                "tiles": [],
+            },
+            "has_started": true,
+            "players": [
+                {
+                    "player_index": 1,
+                    "position": 20,
+                    "laps": 0,
+                    "fiat_balance": 0.0,
+                    "bitcoin_balance": 0.0,
+                    "in_inspection": true,
+                    "inspection_free_exits": 0,
+                },
+            ],
+        },
+    )
+    client._handle_sync_complete(0, 4)
+
+    assert_eq(client.turn_prompt_count, 0, "inspected player should not be prompted to roll on sync resume")
+    assert_eq(client.inspection_prompt_count, 1, "inspected player should be prompted for inspection resolution on sync resume")
+    client.free()
+
+
 func test_action_rejected_insufficient_fiat_on_buy_auto_sends_end_turn() -> void:
     var client: ClientMainDouble = ClientMainDouble.new()
     client.player_index = 0
@@ -603,4 +665,32 @@ func test_action_rejected_insufficient_fiat_on_buy_auto_sends_end_turn() -> void
     var args: Array = client.server_calls[0].get("args", [])
     assert_eq(str(args[0]), "demo_002", "fallback end_turn includes game id")
     assert_eq(str(args[1]), "alice", "fallback end_turn includes player id")
+    client.free()
+
+
+func test_inspection_prompt_repeats_when_player_cannot_pay_fee() -> void:
+    var client: ClientMainDouble = ClientMainDouble.new()
+    client.player_index = 0
+    client.player_id = "alice"
+    client.game_id = "demo_002"
+    client.player_fiat_balances[0] = 0.0
+    client.player_inspection_free_exits[0] = 0
+    client.player_in_inspection[0] = true
+    client.next_buy_choices = [false, true]
+
+    client._start_inspection_resolution_prompt()
+
+    assert_eq(client.server_calls.size(), 1, "inspection flow should eventually send one rpc")
+    assert_eq(str(client.server_calls[0].get("method", "")), "rpc_roll_inspection_exit", "client should retry prompt and send roll inspection exit")
+    assert_eq(
+        client.prompt_messages,
+        ["in inspection: try doubles roll? [y/n]", "in inspection: try doubles roll? [y/n]"],
+        "client repeats doubles prompt when player declines and cannot pay fee",
+    )
+    assert_eq(client.note_messages.size(), 1, "insufficient fiat note logged once before repeating prompt")
+    assert_eq(
+        client.note_messages[0],
+        "cannot pay inspection fee: fiat=0.00 required=2.00; choose doubles roll to continue",
+        "note explains why prompt repeats",
+    )
     client.free()

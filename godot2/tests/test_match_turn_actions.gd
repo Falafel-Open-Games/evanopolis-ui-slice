@@ -4,6 +4,7 @@ const Config = preload("res://scripts/config.gd")
 const GameMatch = preload("res://scripts/match.gd")
 const MatchTestClient = preload("res://tests/match_test_client.gd")
 
+
 func test_roll_emits_landing_context_for_property_tile() -> void:
     var config: Config = Config.new("res://configs/demo_002.toml")
     var game_match: GameMatch = GameMatch.new(config, [])
@@ -26,8 +27,6 @@ func test_roll_emits_landing_context_for_property_tile() -> void:
     assert_eq(float(event.get("toll_due", -1.0)), 0.0, "no toll on unowned property")
     assert_true(is_equal_approx(float(event.get("buy_price", -1.0)), 4.0), "buy price provided for unowned property")
     assert_eq(str(event.get("action_required", "")), "buy_or_end_turn", "expected action for unowned property")
-
-
 
 
 func test_landing_context_for_owned_property_by_other_player() -> void:
@@ -61,8 +60,6 @@ func test_landing_context_for_owned_property_by_other_player() -> void:
     assert_eq(str(event.get("action_required", "")), "pay_toll", "owned by other requires pay_toll")
 
 
-
-
 func test_landing_context_for_owned_property_by_self() -> void:
     var config: Config = Config.new("res://configs/demo_002.toml")
     var game_match: GameMatch = GameMatch.new(config, [])
@@ -91,8 +88,6 @@ func test_landing_context_for_owned_property_by_self() -> void:
     assert_eq(str(event.get("action_required", "")), "end_turn", "self-owned property ends turn")
 
 
-
-
 func test_buy_property_resolves_pending_action_and_advances_turn() -> void:
     var config: Config = Config.new("res://configs/demo_002.toml")
     var game_match: GameMatch = GameMatch.new(config, [])
@@ -111,7 +106,7 @@ func test_buy_property_resolves_pending_action_and_advances_turn() -> void:
 
     var tile: Dictionary = game_match._tile_from_index(6)
     assert_eq(int(tile.get("owner_index", -1)), 0, "tile ownership transferred to buyer")
-    assert_true(is_equal_approx(game_match.state.players[0].fiat_balance, 16.0), "buyer fiat balance reduced by property price")
+    assert_true(is_equal_approx(game_match.state.players[0].fiat_balance, 196.0), "buyer fiat balance reduced by property price")
 
     var acquired: Array[Dictionary] = _filter_events(client_a, "rpc_property_acquired")
     assert_eq(acquired.size(), 1, "property acquired event emitted once")
@@ -119,8 +114,6 @@ func test_buy_property_resolves_pending_action_and_advances_turn() -> void:
     assert_eq(turns.size(), 2, "next turn starts after buy resolution")
     assert_eq(int(turns[1].get("player_index", -1)), 1, "turn advanced to next player")
     assert_true(int(acquired[0].get("seq", -1)) < int(turns[1].get("seq", -1)), "property acquired emitted before next turn started")
-
-
 
 
 func test_end_turn_resolves_pending_action_without_purchase() -> void:
@@ -146,8 +139,6 @@ func test_end_turn_resolves_pending_action_without_purchase() -> void:
     assert_eq(int(turns[1].get("player_index", -1)), 1, "turn advanced to next player")
 
 
-
-
 func test_pay_toll_resolves_pending_action_and_advances_turn() -> void:
     var config: Config = Config.new("res://configs/demo_002.toml")
     var game_match: GameMatch = GameMatch.new(config, [])
@@ -167,8 +158,8 @@ func test_pay_toll_resolves_pending_action_and_advances_turn() -> void:
     var pay_reason: String = game_match.rpc_pay_toll("demo_002", "alice")
     assert_eq(pay_reason, "", "pay toll should succeed")
     assert_true(game_match.pending_action.is_empty(), "pending action cleared after pay toll")
-    assert_true(is_equal_approx(game_match.state.players[0].fiat_balance, 19.4), "payer fiat reduced by toll")
-    assert_true(is_equal_approx(game_match.state.players[1].fiat_balance, 20.6), "owner fiat increased by toll")
+    assert_true(is_equal_approx(game_match.state.players[0].fiat_balance, 199.4), "payer fiat reduced by toll")
+    assert_true(is_equal_approx(game_match.state.players[1].fiat_balance, 200.6), "owner fiat increased by toll")
 
     var toll_paid: Array[Dictionary] = _filter_events(client_a, "rpc_toll_paid")
     assert_eq(toll_paid.size(), 1, "toll paid event emitted once")
@@ -176,8 +167,6 @@ func test_pay_toll_resolves_pending_action_and_advances_turn() -> void:
     assert_eq(turns.size(), 2, "next turn starts after pay toll resolution")
     assert_eq(int(turns[1].get("player_index", -1)), 1, "turn advanced to next player")
     assert_true(int(toll_paid[0].get("seq", -1)) < int(turns[1].get("seq", -1)), "toll paid emitted before next turn started")
-
-
 
 
 func test_buy_property_rejected_without_pending_action() -> void:
@@ -195,8 +184,6 @@ func test_buy_property_rejected_without_pending_action() -> void:
     assert_eq(reason, "no_pending_action", "buy requires pending action")
 
 
-
-
 func test_pay_toll_rejected_without_pending_action() -> void:
     var config: Config = Config.new("res://configs/demo_002.toml")
     var game_match: GameMatch = GameMatch.new(config, [])
@@ -209,9 +196,7 @@ func test_pay_toll_rejected_without_pending_action() -> void:
     assert_eq(reason, "no_pending_action", "pay toll requires pending action")
 
 
-
-
-func test_pay_toll_rejected_for_insufficient_fiat() -> void:
+func test_pay_toll_insufficient_fiat_sends_player_to_inspection_and_advances_turn() -> void:
     var config: Config = Config.new("res://configs/demo_002.toml")
     var game_match: GameMatch = GameMatch.new(config, [])
     var client_a: MatchTestClient = MatchTestClient.new()
@@ -229,9 +214,16 @@ func test_pay_toll_rejected_for_insufficient_fiat() -> void:
     game_match.rpc_roll_dice("demo_002", "alice")
     game_match.state.players[0].fiat_balance = 0.1
     var reason: String = game_match.rpc_pay_toll("demo_002", "alice")
-    assert_eq(reason, "insufficient_fiat", "pay toll rejects when payer cannot afford toll")
+    assert_eq(reason, "", "pay toll resolves with inspection when payer cannot afford toll")
+    assert_true(game_match.state.players[0].in_inspection, "payer is sent to inspection")
+    assert_eq(game_match.state.current_player_index, 1, "turn advances to next player")
 
-
+    var toll_events: Array[Dictionary] = _filter_events(client_a, "rpc_toll_paid")
+    assert_eq(toll_events.size(), 0, "no toll payment event emitted when player cannot pay")
+    var inspection_events: Array[Dictionary] = _filter_events(client_a, "rpc_player_sent_to_inspection")
+    assert_eq(inspection_events.size(), 1, "inspection event emitted when player cannot pay toll")
+    if inspection_events.size() == 1:
+        assert_eq(str(inspection_events[0].get("reason", "")), "insufficient_fiat_toll", "inspection reason is insufficient toll fiat")
 
 
 func test_pay_toll_rejected_for_non_current_player() -> void:
@@ -254,8 +246,6 @@ func test_pay_toll_rejected_for_non_current_player() -> void:
     assert_eq(reason, "not_current_player", "only current player can pay toll")
 
 
-
-
 func test_pay_toll_rejected_when_pending_action_type_mismatch() -> void:
     var config: Config = Config.new("res://configs/demo_002.toml")
     var game_match: GameMatch = GameMatch.new(config, [])
@@ -267,8 +257,6 @@ func test_pay_toll_rejected_when_pending_action_type_mismatch() -> void:
     game_match.rpc_roll_dice("demo_002", "alice")
     var reason: String = game_match.rpc_pay_toll("demo_002", "alice")
     assert_eq(reason, "action_not_allowed", "pay toll rejected when pending action is buy_or_end_turn")
-
-
 
 
 func test_pay_toll_rejected_with_invalid_owner_index() -> void:
@@ -292,8 +280,6 @@ func test_pay_toll_rejected_with_invalid_owner_index() -> void:
     assert_eq(reason, "invalid_owner", "pay toll rejects invalid owner index")
 
 
-
-
 func test_pay_toll_rejected_when_owner_is_payer() -> void:
     var config: Config = Config.new("res://configs/demo_002.toml")
     var game_match: GameMatch = GameMatch.new(config, [])
@@ -313,8 +299,6 @@ func test_pay_toll_rejected_when_owner_is_payer() -> void:
     game_match.pending_action["owner_index"] = 0
     var reason: String = game_match.rpc_pay_toll("demo_002", "alice")
     assert_eq(reason, "invalid_owner", "pay toll rejects self as owner")
-
-
 
 
 func test_pay_toll_rejected_with_invalid_toll_amount() -> void:
@@ -338,8 +322,6 @@ func test_pay_toll_rejected_with_invalid_toll_amount() -> void:
     assert_eq(reason, "invalid_toll_amount", "pay toll rejects non-positive toll amount")
 
 
-
-
 func test_end_turn_rejected_for_non_current_player() -> void:
     var config: Config = Config.new("res://configs/demo_002.toml")
     var game_match: GameMatch = GameMatch.new(config, [])
@@ -356,8 +338,6 @@ func test_end_turn_rejected_for_non_current_player() -> void:
     assert_eq(reason, "not_current_player", "only current player can resolve pending action")
 
 
-
-
 func test_buy_property_rejected_on_tile_mismatch() -> void:
     var config: Config = Config.new("res://configs/demo_002.toml")
     var game_match: GameMatch = GameMatch.new(config, [])
@@ -369,8 +349,6 @@ func test_buy_property_rejected_on_tile_mismatch() -> void:
     game_match.rpc_roll_dice("demo_002", "alice")
     var reason: String = game_match.rpc_buy_property("demo_002", "alice", 5)
     assert_eq(reason, "tile_mismatch", "buy must match pending tile")
-
-
 
 
 func test_buy_property_rejected_when_property_already_owned() -> void:
@@ -392,8 +370,6 @@ func test_buy_property_rejected_when_property_already_owned() -> void:
     assert_eq(reason, "property_already_owned", "buy rejects if property is already owned")
 
 
-
-
 func test_buy_property_rejected_for_insufficient_fiat() -> void:
     var config: Config = Config.new("res://configs/demo_002.toml")
     var game_match: GameMatch = GameMatch.new(config, [])
@@ -406,8 +382,6 @@ func test_buy_property_rejected_for_insufficient_fiat() -> void:
     game_match.state.players[0].fiat_balance = 1.0
     var reason: String = game_match.rpc_buy_property("demo_002", "alice", 6)
     assert_eq(reason, "insufficient_fiat", "buy rejects when player cannot afford property")
-
-
 
 
 func test_turn_number_increments_after_last_player_ends_turn() -> void:
@@ -448,7 +422,7 @@ func test_buy_miner_batch_updates_balance_and_tile_state() -> void:
 
     var tile: Dictionary = game_match._tile_from_index(6)
     assert_eq(int(tile.get("miner_batches", -1)), 1, "tile miner batches incremented")
-    assert_true(is_equal_approx(game_match.state.players[0].fiat_balance, 8.0), "fiat reduced by miner batch price")
+    assert_true(is_equal_approx(game_match.state.players[0].fiat_balance, 188.0), "fiat reduced by miner batch price")
 
     var balance_events: Array[Dictionary] = _filter_events(client_a, "rpc_player_balance_changed")
     assert_true(balance_events.size() >= 1, "balance change emitted")
@@ -604,7 +578,6 @@ func test_buy_miner_batch_emits_balance_change_before_miner_added() -> void:
             int(latest_balance.get("seq", -1)) < int(miner_events[0].get("seq", -1)),
             "balance change should be emitted before miner added event",
         )
-
 
 
 func _filter_events(client: MatchTestClient, method: String) -> Array[Dictionary]:

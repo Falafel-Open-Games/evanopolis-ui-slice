@@ -195,8 +195,8 @@ This section defines the server-authoritative flow needed to complete a full fir
 - `rpc_pay_toll(game_id, player_id)`:
 - allowed only when pending action type is `pay_toll`
 - server uses pending action snapshot values (`amount`, `owner_index`) captured at landing time
-- player must have sufficient fiat balance for `amount`
-- on success: debit payer, credit owner, emit toll event, clear pending action, advance turn
+- if player has sufficient fiat: debit payer, credit owner, emit toll event, clear pending action, advance turn
+- if player has insufficient fiat: send payer to inspection (`reason=insufficient_fiat_toll`), do not emit toll payment, clear pending action, advance turn
 - `rpc_buy_miner_batch(game_id, player_id, tile_index)`:
 - allowed only for current player, with no pending action and while not in inspection
 - target tile must be owned by player and still below per-property miner cap
@@ -315,6 +315,7 @@ This section defines the server-authoritative flow needed to complete a full fir
 ### Incident Effect Mutation Events (v0)
 - `rpc_player_balance_changed` is an additive delta event:
 - `fiat_delta` and `btc_delta` can be positive or negative.
+- For incident `balance_delta` with negative EVA (`fiat_delta < 0`), if player fiat is insufficient for the full debit, server sends player to inspection (`reason=insufficient_fiat_incident`) and does not apply a partial debit.
 - `reason` should include a stable card/effect id for log readability and testing.
 - `rpc_player_sent_to_inspection` means:
 - server has already updated player inspection state before broadcasting.

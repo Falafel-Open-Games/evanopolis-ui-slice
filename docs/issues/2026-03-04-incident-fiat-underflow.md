@@ -1,6 +1,7 @@
 # Incident Fiat Underflow Allowed (2026-03-04)
 
 Issue: `ISS-006`
+Status: `Fixed` on `2026-03-04`
 
 ## Summary
 During incident resolution, a negative fiat delta can be applied even when the current player has insufficient fiat balance. This allows fiat to go below zero.
@@ -32,3 +33,13 @@ Policy should be explicit in rules/docs and covered by tests.
 - Incident debit path does not produce negative fiat unless debt is an explicit modeled state.
 - Behavior is deterministic and documented in `docs/game-rules.md` + `godot2/DESIGN.md`.
 - Unit tests cover insufficient-fiat incident debit path.
+
+## Resolution Implemented (2026-03-04)
+- Server now applies insolvency policy for mandatory incident EVA debits:
+- if player fiat is insufficient for the full debit, player is sent to inspection (`reason=insufficient_fiat_incident`) and no partial debit is applied.
+- This matches the same mandatory-payment insolvency policy used for energy tolls (`reason=insufficient_fiat_toll`).
+- Added regression coverage in `godot2/tests/test_match_incidents.gd`:
+- `test_incident_fiat_debit_insufficient_sends_player_to_inspection`
+- Documentation synced in:
+- `docs/game-rules.md`
+- `godot2/DESIGN.md`

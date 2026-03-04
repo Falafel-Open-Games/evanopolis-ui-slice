@@ -6,6 +6,8 @@ const EconomyV0 = preload("res://scripts/rules/economy_v0.gd")
 const ANSI_RESET: String = "\u001b[0m"
 const ANSI_BOLD: String = "\u001b[1m"
 const ANSI_RED: String = "\u001b[31m"
+const ANSI_GREEN: String = "\u001b[32m"
+const ANSI_YELLOW: String = "\u001b[33m"
 
 var host: String = DEFAULT_HOST
 var port: int = DEFAULT_PORT
@@ -29,6 +31,7 @@ var sync_in_progress: bool = false
 var connected_player_indexes: Dictionary = { }
 var player_fiat_balances: Dictionary = { }
 var player_bitcoin_balances: Dictionary = { }
+var player_positions: Dictionary = { }
 var player_in_inspection: Dictionary = { }
 var player_inspection_free_exits: Dictionary = { }
 
@@ -266,8 +269,8 @@ func _apply_turn_started(player_index_value: int, turn_number: int, cycle: int) 
     pending_action_buy_price = 0.0
     var connected_players_summary: String = _build_connected_players_summary()
     _log_server(
-        "turn started: player=%d, turn=%d, cycle=%d, connected_players=[%s]"
-        % [player_index_value, turn_number, cycle, connected_players_summary],
+        "%sturn started%s: player=%d, turn=%d, cycle=%d, connected_players=[%s]"
+        % [ANSI_GREEN, ANSI_RESET, player_index_value, turn_number, cycle, connected_players_summary],
     )
     if player_index_value != player_index:
         return
@@ -279,6 +282,8 @@ func _apply_turn_started(player_index_value: int, turn_number: int, cycle: int) 
 
 func _apply_player_joined(player_id_value: String, player_index_value: int) -> void:
     connected_player_indexes[player_index_value] = true
+    if not player_positions.has(player_index_value):
+        player_positions[player_index_value] = -1
     if not player_fiat_balances.has(player_index_value):
         player_fiat_balances[player_index_value] = 0.0
     if not player_bitcoin_balances.has(player_index_value):
@@ -287,10 +292,14 @@ func _apply_player_joined(player_id_value: String, player_index_value: int) -> v
 
 
 func _apply_dice_rolled(die_1: int, die_2: int, total: int) -> void:
-    _log_server("dice rolled: player=%d, die1=%d, die2=%d, total=%d" % [current_player_index, die_1, die_2, total])
+    _log_server(
+        "dice rolled: player=%d, die1=%s%d%s, die2=%s%d%s, total=%s%d%s"
+        % [current_player_index, ANSI_YELLOW, die_1, ANSI_RESET, ANSI_YELLOW, die_2, ANSI_RESET, ANSI_YELLOW, total, ANSI_RESET],
+    )
 
 
 func _apply_pawn_moved(from_tile: int, to_tile: int, passed_tiles: Array[int]) -> void:
+    player_positions[current_player_index] = to_tile
     _log_server("pawn moved: from=%d, to=%d, passed_tiles=%s" % [from_tile, to_tile, passed_tiles])
 
 
@@ -339,10 +348,10 @@ func _apply_tile_landed(
 
 
 func _apply_incident_drawn(tile_index: int, incident_kind: String, card_id: String, card_text: String) -> void:
-    var bold_card_text: String = "%s%s%s" % [ANSI_BOLD, card_text, ANSI_RESET]
+    var highlighted_card_text: String = "%s%s%s" % [ANSI_YELLOW, card_text, ANSI_RESET]
     _log_server(
         "incident drawn: tile=%d kind=%s card_id=%s card_text=%s"
-        % [tile_index, incident_kind, card_id, bold_card_text],
+        % [tile_index, incident_kind, card_id, highlighted_card_text],
     )
 
 
@@ -430,7 +439,10 @@ func _apply_toll_paid(payer_index: int, owner_index: int, amount: float) -> void
 
 func _apply_player_sent_to_inspection(player_index_value: int, reason: String) -> void:
     player_in_inspection[player_index_value] = true
-    _log_server("player sent to inspection: player=%d reason=%s" % [player_index_value, reason])
+    _log_server(
+        "%splayer sent to inspection: player=%d reason=%s%s"
+        % [ANSI_RED, player_index_value, reason, ANSI_RESET],
+    )
 
 
 func _apply_inspection_voucher_granted(player_index_value: int, amount: int, reason: String) -> void:
@@ -458,6 +470,7 @@ func _apply_state_snapshot(snapshot: Dictionary) -> void:
     var board_size: int = int(board_state.get("size", 0))
     var players: Array = snapshot.get("players", [])
     connected_player_indexes.clear()
+    player_positions.clear()
     player_fiat_balances.clear()
     player_bitcoin_balances.clear()
     player_in_inspection.clear()
@@ -468,6 +481,7 @@ func _apply_state_snapshot(snapshot: Dictionary) -> void:
         if player_index_value < 0:
             continue
         connected_player_indexes[player_index_value] = true
+        player_positions[player_index_value] = int(player_in_snapshot.get("position", -1))
         player_fiat_balances[player_index_value] = float(player_in_snapshot.get("fiat_balance", 0.0))
         player_bitcoin_balances[player_index_value] = float(player_in_snapshot.get("bitcoin_balance", 0.0))
         player_in_inspection[player_index_value] = bool(player_in_snapshot.get("in_inspection", false))
@@ -531,8 +545,9 @@ func _build_connected_players_summary() -> String:
     for player_index_value in connected_player_indexes_sorted:
         var player_holdings: Dictionary = holdings_by_player.get(player_index_value, { })
         player_summaries.append(
-            "p%d(fiat=%s%.2f%s btc=%.8f properties=%d miners=%d)" % [
+            "p%d(tile=%d fiat=%s%.2f%s btc=%.8f properties=%d miners=%d)" % [
                 player_index_value,
+                int(player_positions.get(player_index_value, -1)),
                 ANSI_BOLD,
                 float(player_fiat_balances.get(player_index_value, 0.0)),
                 ANSI_RESET,
@@ -670,18 +685,26 @@ func _resume_after_sync_from_snapshot() -> void:
         _log_server("sync resume: pending end_turn")
         _request_end_turn()
         return
+    if bool(player_in_inspection.get(player_index, false)):
+        _log_server("sync resume: current player in inspection; prompting inspection resolution")
+        await _start_inspection_resolution_prompt()
+        return
     _log_server("sync resume: prompting roll for current turn=%d" % current_turn_number)
     await _start_turn_prompt()
 
 
 func _start_buy_or_end_turn_prompt(tile_index: int, city: String, buy_price: float) -> void:
     var label_city: String = city
+    var available_fiat: float = float(player_fiat_balances.get(player_index, 0.0))
     if label_city.is_empty():
         label_city = "unknown"
     if buy_price > 0.0:
-        _log_prompt("buy property on tile=%d city=%s price=%.2f? [y/n]" % [tile_index, label_city, buy_price])
+        _log_prompt(
+            "buy property on tile=%d city=%s price=%.2f fiat=%.2f? [y/n]"
+            % [tile_index, label_city, buy_price, available_fiat],
+        )
     else:
-        _log_prompt("buy property on tile=%d city=%s? [y/n]" % [tile_index, label_city])
+        _log_prompt("buy property on tile=%d city=%s fiat=%.2f? [y/n]" % [tile_index, label_city, available_fiat])
     var buy_property: bool = _wait_for_buy_choice()
     if buy_property:
         _request_buy_property(tile_index)
@@ -742,32 +765,34 @@ func _start_buy_miner_batch_prompt() -> void:
 
 func _start_inspection_resolution_prompt() -> void:
     var fee: float = EconomyV0.INSPECTION_FEE
-    var free_exits: int = int(player_inspection_free_exits.get(player_index, 0))
-    if free_exits > 0:
-        _log_prompt("in inspection: use free exit voucher=%d? [y/n]" % [free_exits])
-        var use_voucher: bool = _wait_for_buy_choice()
-        if use_voucher:
-            player_inspection_free_exits[player_index] = free_exits - 1
-            player_in_inspection[player_index] = false
-            _request_use_inspection_voucher()
-            await _start_turn_prompt()
+    while true:
+        var free_exits: int = int(player_inspection_free_exits.get(player_index, 0))
+        if free_exits > 0:
+            _log_prompt("in inspection: use free exit voucher=%d? [y/n]" % [free_exits])
+            var use_voucher: bool = _wait_for_buy_choice()
+            if use_voucher:
+                player_inspection_free_exits[player_index] = free_exits - 1
+                player_in_inspection[player_index] = false
+                _request_use_inspection_voucher()
+                await _start_turn_prompt()
+                return
+        _log_prompt("in inspection: try doubles roll? [y/n]")
+        var roll_exit: bool = _wait_for_buy_choice()
+        if roll_exit:
+            _request_roll_inspection_exit()
             return
-    _log_prompt("in inspection: try doubles roll? [y/n]")
-    var roll_exit: bool = _wait_for_buy_choice()
-    if roll_exit:
-        _request_roll_inspection_exit()
+        var available_fiat: float = float(player_fiat_balances.get(player_index, 0.0))
+        if available_fiat < fee:
+            _log_note(
+                "cannot pay inspection fee: fiat=%.2f required=%.2f; choose doubles roll to continue"
+                % [available_fiat, fee],
+            )
+            continue
+        _log_prompt("in inspection: pay fee amount=%.2f [enter]" % [fee])
+        await _wait_for_enter()
+        _request_pay_inspection_fee()
+        await _start_turn_prompt()
         return
-    var available_fiat: float = float(player_fiat_balances.get(player_index, 0.0))
-    if available_fiat < fee:
-        _log_note(
-            "cannot pay inspection fee: fiat=%.2f required=%.2f; waiting for next action"
-            % [available_fiat, fee],
-        )
-        return
-    _log_prompt("in inspection: pay fee amount=%.2f [enter]" % [fee])
-    await _wait_for_enter()
-    _request_pay_inspection_fee()
-    await _start_turn_prompt()
 
 
 func _wait_for_buy_choice() -> bool:

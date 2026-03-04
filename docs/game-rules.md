@@ -33,7 +33,7 @@
 O criador da sala envia os convites e espera os jogadores entrarem. Quem estiver no lobby precisa apertar o botão de ready para informar que pode ser iniciada a partida, porém o criador da sala é quem tem o botão de começar.
 
 ## Início da partida
-Todos os jogadores começam no tile inicial, com 20 EVAs, 0 BTCs e sem nenhuma propriedade.
+Todos os jogadores começam no tile inicial, com 200 EVAs, 0 BTCs e sem nenhuma propriedade.
 A ordem do turno é sorteada e o primeiro jogador inicia sua jogada.
 
 ## Ponto inicial (tile de partida)
@@ -119,8 +119,8 @@ Ao ser preso, o peão é movido para lá até que o jogador consiga sair. Isso p
 - não tenha dinheiro para pagar a taxa de luz de uma propriedade
 
 Para sair da cadeia, ele pode:
-- Pagar 5 EVA e sair no próximo turno
-- Rodar dois dados e tirar números iguais. Após 3 turnos ele é obrigado a pagar e sair
+- Pagar 2 EVA e sair no próximo turno
+- Rodar dois dados e tirar números iguais
 
 ### Escopo v0 (implementado no headless)
 - Ao entrar em inspeção, o jogador fica bloqueado para `roll` normal até resolver a inspeção.
@@ -129,7 +129,6 @@ Para sair da cadeia, ele pode:
 - tentar sair com dados iguais,
 - pagar a taxa de inspeção.
 - Se a tentativa de dados não resultar em números iguais, o turno termina e o jogador permanece em inspeção.
-- A regra de "3 tentativas e pagamento obrigatório" permanece pendente para implementação completa.
 
 Durante esse período:
 - Dividendos das mineradoras não são coletados
@@ -146,9 +145,10 @@ O catálogo de cartas e evolução pós-v0 fica em `docs/incident-cards.md`.
 
 ### Bear (v0)
 Cartas bear afetam o próprio jogador:
-- `bear_fine_eva_2`: pague 2 EVA.
+- `bear_fine_eva_2`: pague 1 EVA.
 - `bear_lost_btc_0_5`: perca 0.5 BTC.
 - `bear_legal_inspection`: vá para inspeção.
+- No v0 headless, se o jogador não tiver EVA suficiente para uma cobrança obrigatória (taxa de energia ou multa bear em EVA), ele é enviado para inspeção e o pagamento não é aplicado parcialmente.
 
 ### Bull (v0)
 Cartas bull afetam apenas o próprio jogador:
