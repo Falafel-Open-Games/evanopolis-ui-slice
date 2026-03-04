@@ -7,6 +7,7 @@ class ClientMainDouble:
     extends "res://scripts/client_main.gd"
 
     var server_calls: Array[Dictionary] = []
+    var server_messages: Array[String] = []
     var prompt_messages: Array[String] = []
     var next_buy_choice: bool = false
     var turn_prompt_count: int = 0
@@ -43,6 +44,10 @@ class ClientMainDouble:
 
     func _wait_for_buy_choice() -> bool:
         return next_buy_choice
+
+
+    func _log_server(message: String) -> void:
+        server_messages.append(message)
 
 
     func _log_prompt(message: String) -> void:
@@ -178,6 +183,134 @@ func test_state_snapshot_logs_with_players_present() -> void:
     assert_eq(client.game_id, "demo_002", "snapshot applies game id")
     assert_eq(client.current_player_index, 1, "snapshot applies current player")
     assert_eq(int(client.board_state.get("size", 0)), 24, "snapshot applies board state")
+
+    client.free()
+
+
+func test_turn_started_logs_connected_players_balances_and_holdings() -> void:
+    var client: ClientMainDouble = ClientMainDouble.new()
+    client.player_index = 0
+    client._apply_state_snapshot(
+        {
+            "game_id": "demo_002",
+            "turn_number": 3,
+            "current_player_index": 1,
+            "current_cycle": 2,
+            "has_started": true,
+            "board_state": {
+                "size": 24,
+                "tiles": [
+                    {
+                        "index": 1,
+                        "tile_type": "property",
+                        "city": "caracas",
+                        "owner_index": 0,
+                        "miner_batches": 2,
+                    },
+                    {
+                        "index": 2,
+                        "tile_type": "property",
+                        "city": "caracas",
+                        "owner_index": 0,
+                        "miner_batches": 1,
+                    },
+                    {
+                        "index": 6,
+                        "tile_type": "property",
+                        "city": "assuncion",
+                        "owner_index": 1,
+                        "miner_batches": 4,
+                    },
+                ],
+            },
+            "players": [
+                {
+                    "player_index": 0,
+                    "position": 6,
+                    "laps": 0,
+                    "fiat_balance": 20.0,
+                    "bitcoin_balance": 0.5,
+                    "in_inspection": false,
+                },
+                {
+                    "player_index": 1,
+                    "position": 3,
+                    "laps": 1,
+                    "fiat_balance": 16.0,
+                    "bitcoin_balance": 0.25,
+                    "in_inspection": false,
+                },
+            ],
+        },
+    )
+
+    client._apply_player_balance_changed(1, -2.5, 0.125, "test_adjustment")
+    client._apply_turn_started(1, 4, 2)
+
+    assert_true(client.server_messages.size() > 0, "expected server log messages")
+    var last_message: String = client.server_messages[client.server_messages.size() - 1]
+    assert_eq(
+        last_message,
+        "turn started: player=1, turn=4, cycle=2, connected_players=[p0(fiat=20.00 btc=0.50000000 properties=2 miners=3), p1(fiat=13.50 btc=0.37500000 properties=1 miners=4)]",
+        "turn started includes connected players balances/properties/miners",
+    )
+
+    client.free()
+
+
+func test_turn_started_logs_purchase_balance_after_property_acquired() -> void:
+    var client: ClientMainDouble = ClientMainDouble.new()
+    client.player_index = 0
+    client._apply_state_snapshot(
+        {
+            "game_id": "demo_002",
+            "turn_number": 1,
+            "current_player_index": 0,
+            "current_cycle": 1,
+            "has_started": true,
+            "board_state": {
+                "size": 24,
+                "tiles": [
+                    {
+                        "index": 6,
+                        "tile_type": "property",
+                        "city": "assuncion",
+                        "owner_index": -1,
+                        "miner_batches": 0,
+                    },
+                ],
+            },
+            "players": [
+                {
+                    "player_index": 0,
+                    "position": 6,
+                    "laps": 0,
+                    "fiat_balance": 20.0,
+                    "bitcoin_balance": 0.0,
+                    "in_inspection": false,
+                },
+                {
+                    "player_index": 1,
+                    "position": 0,
+                    "laps": 0,
+                    "fiat_balance": 20.0,
+                    "bitcoin_balance": 0.0,
+                    "in_inspection": false,
+                },
+            ],
+        },
+    )
+
+    client._apply_property_acquired(0, 6, 4.0)
+    client._apply_turn_started(1, 1, 1)
+
+    assert_true(client.server_messages.size() > 0, "expected server log messages")
+    var last_message: String = client.server_messages[client.server_messages.size() - 1]
+    assert_eq(
+        last_message,
+        "turn started: player=1, turn=1, cycle=1, connected_players=[p0(fiat=16.00 btc=0.00000000 properties=1 miners=0), p1(fiat=20.00 btc=0.00000000 properties=0 miners=0)]",
+        "turn started summary reflects fiat deduction from property purchase",
+    )
 
     client.free()
 

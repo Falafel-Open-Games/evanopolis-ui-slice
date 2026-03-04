@@ -22,6 +22,9 @@ var pending_game_started: bool = false
 var next_expected_seq: int = 1
 var pending_events: Dictionary = { }
 var sync_in_progress: bool = false
+var connected_player_indexes: Dictionary = { }
+var player_fiat_balances: Dictionary = { }
+var player_bitcoin_balances: Dictionary = { }
 
 
 func _ready() -> void:
@@ -251,13 +254,22 @@ func _apply_turn_started(player_index_value: int, turn_number: int, cycle: int) 
     pending_action_owner_index = -1
     pending_action_amount = 0.0
     pending_action_buy_price = 0.0
-    _log_server("turn started: player=%d, turn=%d, cycle=%d" % [player_index_value, turn_number, cycle])
+    var connected_players_summary: String = _build_connected_players_summary()
+    _log_server(
+        "turn started: player=%d, turn=%d, cycle=%d, connected_players=[%s]"
+        % [player_index_value, turn_number, cycle, connected_players_summary],
+    )
     if player_index_value != player_index:
         return
     await _start_turn_prompt()
 
 
 func _apply_player_joined(player_id_value: String, player_index_value: int) -> void:
+    connected_player_indexes[player_index_value] = true
+    if not player_fiat_balances.has(player_index_value):
+        player_fiat_balances[player_index_value] = 0.0
+    if not player_bitcoin_balances.has(player_index_value):
+        player_bitcoin_balances[player_index_value] = 0.0
     _log_server("player joined: player_id=%s player_index=%d" % [player_id_value, player_index_value])
 
 
@@ -321,6 +333,13 @@ func _apply_incident_drawn(tile_index: int, incident_kind: String, card_id: Stri
 
 
 func _apply_player_balance_changed(player_index_value: int, fiat_delta: float, btc_delta: float, reason: String) -> void:
+    connected_player_indexes[player_index_value] = true
+    var fiat_balance: float = float(player_fiat_balances.get(player_index_value, 0.0))
+    fiat_balance += fiat_delta
+    player_fiat_balances[player_index_value] = fiat_balance
+    var bitcoin_balance: float = float(player_bitcoin_balances.get(player_index_value, 0.0))
+    bitcoin_balance += btc_delta
+    player_bitcoin_balances[player_index_value] = bitcoin_balance
     _log_server(
         "player balance changed: player=%d fiat_delta=%.2f btc_delta=%.8f reason=%s"
         % [player_index_value, fiat_delta, btc_delta, reason],
@@ -348,6 +367,10 @@ func _apply_incident_type_changed(tile_index: int, incident_kind: String) -> voi
 
 
 func _apply_property_acquired(owner_player_index: int, tile_index: int, price: float) -> void:
+    connected_player_indexes[owner_player_index] = true
+    var owner_fiat_balance: float = float(player_fiat_balances.get(owner_player_index, 0.0))
+    owner_fiat_balance -= price
+    player_fiat_balances[owner_player_index] = owner_fiat_balance
     var tile: Dictionary = _tile_info_from_index(tile_index)
     if not tile.is_empty():
         tile["owner_index"] = owner_player_index
@@ -360,6 +383,14 @@ func _apply_property_acquired(owner_player_index: int, tile_index: int, price: f
 
 
 func _apply_toll_paid(payer_index: int, owner_index: int, amount: float) -> void:
+    connected_player_indexes[payer_index] = true
+    connected_player_indexes[owner_index] = true
+    var payer_fiat_balance: float = float(player_fiat_balances.get(payer_index, 0.0))
+    payer_fiat_balance -= amount
+    player_fiat_balances[payer_index] = payer_fiat_balance
+    var owner_fiat_balance: float = float(player_fiat_balances.get(owner_index, 0.0))
+    owner_fiat_balance += amount
+    player_fiat_balances[owner_index] = owner_fiat_balance
     pending_action_type = ""
     pending_action_tile_index = -1
     pending_action_owner_index = -1
@@ -392,6 +423,17 @@ func _apply_state_snapshot(snapshot: Dictionary) -> void:
     match_has_started = bool(snapshot.get("has_started", match_has_started))
     var board_size: int = int(board_state.get("size", 0))
     var players: Array = snapshot.get("players", [])
+    connected_player_indexes.clear()
+    player_fiat_balances.clear()
+    player_bitcoin_balances.clear()
+    for player_variant in players:
+        var player_in_snapshot: Dictionary = player_variant
+        var player_index_value: int = int(player_in_snapshot.get("player_index", -1))
+        if player_index_value < 0:
+            continue
+        connected_player_indexes[player_index_value] = true
+        player_fiat_balances[player_index_value] = float(player_in_snapshot.get("fiat_balance", 0.0))
+        player_bitcoin_balances[player_index_value] = float(player_in_snapshot.get("bitcoin_balance", 0.0))
     _log_server(
         "state snapshot: game_id=%s turn=%d cycle=%d current_player=%d players=%d board_size=%d started=%s pending_action=%s pending_tile=%d pending_owner=%d pending_amount=%.2f pending_buy_price=%.2f"
         % [
@@ -425,6 +467,41 @@ func _apply_state_snapshot(snapshot: Dictionary) -> void:
         )
     if not player_summaries.is_empty():
         _log_server("state snapshot players: %s" % [", ".join(player_summaries)])
+
+
+func _build_connected_players_summary() -> String:
+    if connected_player_indexes.is_empty():
+        return "none"
+    var holdings_by_player: Dictionary = { }
+    var tiles: Array = board_state.get("tiles", [])
+    for tile_variant in tiles:
+        var tile: Dictionary = tile_variant
+        var owner_index: int = int(tile.get("owner_index", -1))
+        if owner_index < 0:
+            continue
+        if not holdings_by_player.has(owner_index):
+            holdings_by_player[owner_index] = { "properties": 0, "miners": 0 }
+        var owner_holdings: Dictionary = holdings_by_player[owner_index]
+        owner_holdings["properties"] = int(owner_holdings.get("properties", 0)) + 1
+        owner_holdings["miners"] = int(owner_holdings.get("miners", 0)) + int(tile.get("miner_batches", 0))
+        holdings_by_player[owner_index] = owner_holdings
+    var connected_player_indexes_sorted: Array[int] = []
+    for player_index_key in connected_player_indexes.keys():
+        connected_player_indexes_sorted.append(int(player_index_key))
+    connected_player_indexes_sorted.sort()
+    var player_summaries: Array[String] = []
+    for player_index_value in connected_player_indexes_sorted:
+        var player_holdings: Dictionary = holdings_by_player.get(player_index_value, { })
+        player_summaries.append(
+            "p%d(fiat=%.2f btc=%.8f properties=%d miners=%d)" % [
+                player_index_value,
+                float(player_fiat_balances.get(player_index_value, 0.0)),
+                float(player_bitcoin_balances.get(player_index_value, 0.0)),
+                int(player_holdings.get("properties", 0)),
+                int(player_holdings.get("miners", 0)),
+            ],
+        )
+    return ", ".join(player_summaries)
 
 
 func _apply_sync_complete(final_seq: int) -> void:
