@@ -176,7 +176,8 @@ This section defines the server-authoritative flow needed to complete a full fir
 - `game_id` exists and matches peer slot
 - peer is registered and authorized for `player_id`
 - `player_id` maps to `current_player_index`
-- a compatible pending action exists
+- if player is in inspection, only inspection-resolution RPCs are allowed
+- otherwise, a compatible pending action exists
 - target tile/action arguments match pending action
 - On validation failure: `rpc_action_rejected(seq=0, reason)` to requesting peer.
 
@@ -201,6 +202,18 @@ This section defines the server-authoritative flow needed to complete a full fir
 - server emits explicit effect-mutation events that update authoritative state (balances, inspection, voucher), when applicable
 - server flips the landed tile face and emits `rpc_incident_type_changed`
 - server clears pending action and advances turn (unless future incident effects explicitly create another pending action)
+- `rpc_pay_inspection_fee(game_id, player_id)`:
+- allowed only when current player is in inspection
+- player must have sufficient fiat balance for `INSPECTION_FEE`
+- on success: deduct fiat, clear inspection, emit `rpc_player_balance_changed(... reason=\"inspection_fee_paid\")`
+- `rpc_use_inspection_voucher(game_id, player_id)`:
+- allowed only when current player is in inspection and has `inspection_free_exits > 0`
+- on success: decrement voucher count, clear inspection, emit `rpc_player_balance_changed(... reason=\"inspection_voucher_used\")` with zero monetary delta
+- `rpc_roll_inspection_exit(game_id, player_id)`:
+- allowed only when current player is in inspection and no pending action exists
+- server rolls dice and emits `rpc_dice_rolled`
+- if doubles: clear inspection, emit `rpc_player_balance_changed(... reason=\"inspection_exit_doubles\")`, then move pawn by roll total
+- if not doubles: keep inspection state and advance turn
 - Deferred intents do not run in the middle of the current player's landing resolution.
 - Auto-advance is server-driven for v0: after buy/skip/toll resolution, server immediately emits next `rpc_turn_started` without waiting for an additional confirmation RPC.
 
@@ -220,6 +233,20 @@ This section defines the server-authoritative flow needed to complete a full fir
 - `rpc_turn_started` (next player, unless incident effect creates another pending action)
 - End-turn path:
 - `rpc_turn_started` (next player)
+- Inspection fee path:
+- `rpc_player_balance_changed` (`reason=inspection_fee_paid`)
+- same player continues turn (roll prompt)
+- Inspection voucher path:
+- `rpc_player_balance_changed` (`reason=inspection_voucher_used`, zero delta)
+- same player continues turn (roll prompt)
+- Inspection doubles path:
+- `rpc_dice_rolled`
+- `rpc_player_balance_changed` (`reason=inspection_exit_doubles`, zero delta)
+- `rpc_pawn_moved`
+- `rpc_tile_landed` + normal pending-action flow
+- Inspection failed doubles path:
+- `rpc_dice_rolled`
+- `rpc_turn_started` (next player; inspected player remains blocked next turn)
 - `turn_number` increments after control passes from the last seat to seat 0; otherwise only `current_player_index` advances.
 
 #### Valuation Snapshot Rule
@@ -234,6 +261,11 @@ This section defines the server-authoritative flow needed to complete a full fir
 
 ### Text-Only Client Prompt Contract (v0)
 - Prompt source of truth is `action_required` from `rpc_tile_landed` or pending action from snapshot on reconnect.
+- Inspection gate prompt (current player with `in_inspection = true`):
+- if vouchers available, prompt for voucher use
+- if not using voucher, prompt to attempt doubles roll
+- if not attempting doubles, prompt fee payment
+- while inspection remains active, client must not offer normal roll prompt
 - `buy_or_end_turn` prompt:
 - `prompt: buy property on tile=<tile> city=<city> price=<buy_price>? [y/n]`
 - `y` sends `rpc_buy_property`; `n` or empty sends `rpc_end_turn`.
@@ -281,6 +313,9 @@ This section defines the server-authoritative flow needed to complete a full fir
 ### Client -> Server RPCs
 - `rpc_join(game_id: String, player_id: String)`
 - `rpc_roll_dice(match_id: String, player_id: String)`
+- `rpc_pay_inspection_fee(match_id: String, player_id: String)`
+- `rpc_use_inspection_voucher(match_id: String, player_id: String)`
+- `rpc_roll_inspection_exit(match_id: String, player_id: String)`
 - `rpc_end_turn(match_id: String, player_id: String)`
 - `rpc_buy_property(match_id: String, player_id: String, tile_index: int)`
 - `rpc_pay_toll(match_id: String, player_id: String)`

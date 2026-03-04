@@ -32,6 +32,21 @@ func rpc_pay_toll(game_id: String, player_id: String) -> void:
 
 
 @rpc("any_peer")
+func rpc_pay_inspection_fee(game_id: String, player_id: String) -> void:
+    _handle_pay_inspection_fee(game_id, player_id)
+
+
+@rpc("any_peer")
+func rpc_roll_inspection_exit(game_id: String, player_id: String) -> void:
+    _handle_roll_inspection_exit(game_id, player_id)
+
+
+@rpc("any_peer")
+func rpc_use_inspection_voucher(game_id: String, player_id: String) -> void:
+    _handle_use_inspection_voucher(game_id, player_id)
+
+
+@rpc("any_peer")
 func rpc_sync_request(game_id: String, player_id: String, last_applied_seq: int) -> void:
     _handle_sync_request(game_id, player_id, last_applied_seq)
 
@@ -171,6 +186,18 @@ func _handle_buy_property(game_id: String, player_id: String, tile_index: int) -
 
 
 func _handle_pay_toll(game_id: String, player_id: String) -> void:
+    pass
+
+
+func _handle_pay_inspection_fee(game_id: String, player_id: String) -> void:
+    pass
+
+
+func _handle_roll_inspection_exit(game_id: String, player_id: String) -> void:
+    pass
+
+
+func _handle_use_inspection_voucher(game_id: String, player_id: String) -> void:
     pass
 
 

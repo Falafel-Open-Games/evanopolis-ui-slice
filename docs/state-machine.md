@@ -13,7 +13,15 @@ stateDiagram-v2
     GameStarted --> TurnStarted: rpc_game_started + rpc_turn_started
 
     TurnStarted --> AwaitingRoll: no pending action
+    TurnStarted --> AwaitingInspectionResolution: current player in inspection
     TurnStarted --> AwaitingPendingAction: pending action from snapshot/reconnect
+    AwaitingInspectionResolution --> ResolvingInspectionFee: rpc_pay_inspection_fee
+    AwaitingInspectionResolution --> ResolvingInspectionVoucher: rpc_use_inspection_voucher
+    AwaitingInspectionResolution --> ResolvingInspectionRoll: rpc_roll_inspection_exit
+    ResolvingInspectionFee --> AwaitingRoll: inspection cleared
+    ResolvingInspectionVoucher --> AwaitingRoll: inspection cleared
+    ResolvingInspectionRoll --> ResolvingMove: doubles rolled
+    ResolvingInspectionRoll --> TurnAdvanced: no doubles (stay in inspection)
     AwaitingRoll --> ResolvingRoll: rpc_roll_dice
     ResolvingRoll --> ResolvingMove: rpc_dice_rolled
     ResolvingMove --> TileLanded: rpc_pawn_moved + rpc_tile_landed
@@ -54,6 +62,8 @@ stateDiagram-v2
 Notes:
 - "Pending action" is authoritative server state and gates which action RPCs are valid.
 - v0 action set is `buy_or_end_turn`, `pay_toll`, `resolve_incident`, and `end_turn`.
+- Inspection is a separate gate before roll for the current player; it is not modeled as a pending tile action.
+- Inspection resolution can clear inspection and continue the same turn (`fee`, `voucher`, `doubles`) or consume the turn (`non-doubles`).
 - Incident resolution is server-driven and may emit multiple mutation events before tile flip + turn advance.
 - Outside-turn actions are recorded as deferred intents and never mutate the currently resolving turn.
 - Deferred intents activate only at a deterministic boundary (`effective_from_turn` / equivalent rule).
