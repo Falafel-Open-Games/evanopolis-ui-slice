@@ -251,7 +251,7 @@ func test_turn_started_logs_connected_players_balances_and_holdings() -> void:
     var last_message: String = client.server_messages[client.server_messages.size() - 1]
     assert_eq(
         last_message,
-        "turn started: player=1, turn=4, cycle=2, connected_players=[p0(fiat=20.00 btc=0.50000000 properties=2 miners=3), p1(fiat=13.50 btc=0.37500000 properties=1 miners=4)]",
+        "turn started: player=1, turn=4, cycle=2, connected_players=[p0(fiat=\u001b[1m20.00\u001b[0m btc=0.50000000 properties=2 miners=3), p1(fiat=\u001b[1m13.50\u001b[0m btc=0.37500000 properties=1 miners=4)]",
         "turn started includes connected players balances/properties/miners",
     )
 
@@ -308,7 +308,7 @@ func test_turn_started_logs_purchase_balance_after_property_acquired() -> void:
     var last_message: String = client.server_messages[client.server_messages.size() - 1]
     assert_eq(
         last_message,
-        "turn started: player=1, turn=1, cycle=1, connected_players=[p0(fiat=16.00 btc=0.00000000 properties=1 miners=0), p1(fiat=20.00 btc=0.00000000 properties=0 miners=0)]",
+        "turn started: player=1, turn=1, cycle=1, connected_players=[p0(fiat=\u001b[1m16.00\u001b[0m btc=0.00000000 properties=1 miners=0), p1(fiat=\u001b[1m20.00\u001b[0m btc=0.00000000 properties=0 miners=0)]",
         "turn started summary reflects fiat deduction from property purchase",
     )
 
