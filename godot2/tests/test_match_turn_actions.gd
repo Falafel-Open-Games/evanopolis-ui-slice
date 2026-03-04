@@ -448,13 +448,13 @@ func test_buy_miner_batch_updates_balance_and_tile_state() -> void:
 
     var tile: Dictionary = game_match._tile_from_index(6)
     assert_eq(int(tile.get("miner_batches", -1)), 1, "tile miner batches incremented")
-    assert_true(is_equal_approx(game_match.state.players[0].fiat_balance, 4.0), "fiat reduced by miner batch price")
+    assert_true(is_equal_approx(game_match.state.players[0].fiat_balance, 8.0), "fiat reduced by miner batch price")
 
     var balance_events: Array[Dictionary] = _filter_events(client_a, "rpc_player_balance_changed")
     assert_true(balance_events.size() >= 1, "balance change emitted")
     if balance_events.size() >= 1:
         var latest_balance: Dictionary = balance_events[balance_events.size() - 1]
-        assert_true(is_equal_approx(float(latest_balance.get("fiat_delta", 0.0)), -12.0), "miner purchase delta")
+        assert_true(is_equal_approx(float(latest_balance.get("fiat_delta", 0.0)), -8.0), "miner purchase delta")
         assert_eq(str(latest_balance.get("reason", "")), "miner_batch_purchased", "miner purchase reason")
     var miner_events: Array[Dictionary] = _filter_events(client_a, "rpc_miner_batches_added")
     assert_eq(miner_events.size(), 1, "miner batch added event emitted")
@@ -490,7 +490,7 @@ func test_buy_miner_batch_rejected_for_insufficient_fiat() -> void:
     game_match.rpc_roll_dice("demo_002", "bob")
     assert_eq(game_match.rpc_end_turn("demo_002", "bob"), "", "bob ends turn")
 
-    game_match.state.players[0].fiat_balance = 11.0
+    game_match.state.players[0].fiat_balance = 7.0
     var reason: String = game_match.rpc_buy_miner_batch("demo_002", "alice", 6)
     assert_eq(reason, "insufficient_fiat", "miner purchase requires sufficient fiat")
 

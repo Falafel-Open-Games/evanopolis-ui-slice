@@ -73,7 +73,7 @@ Caso 1 EVA seja um valor muito elevado (US$ 29,00 / R$ 153,00 em 03/2026), podem
 - Irkutsk = 7 EVA
 - Rockdale = 8 EVA
 ### Mineradoras
-- Adquirir 1 lote de mineradoras = 12 EVA
+- Adquirir 1 lote de mineradoras = 8 EVA
 - No v0 headless, compra/instalação ocorre no turno do próprio jogador, antes da rolagem.
 - No v0 headless, cada propriedade aceita até 4 lotes de mineradoras.
 - Pagar conta de luz (energy toll) = 10% do valor da propriedade + 2,5% por lote de mineradoras
@@ -119,7 +119,7 @@ Ao ser preso, o peão é movido para lá até que o jogador consiga sair. Isso p
 - não tenha dinheiro para pagar a taxa de luz de uma propriedade
 
 Para sair da cadeia, ele pode:
-- Pagar 10 EVA e sair no próximo turno
+- Pagar 5 EVA e sair no próximo turno
 - Rodar dois dados e tirar números iguais. Após 3 turnos ele é obrigado a pagar e sair
 
 ### Escopo v0 (implementado no headless)

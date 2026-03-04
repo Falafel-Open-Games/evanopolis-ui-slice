@@ -5,6 +5,7 @@ const DEFAULT_PORT: int = 9010
 const EconomyV0 = preload("res://scripts/rules/economy_v0.gd")
 const ANSI_RESET: String = "\u001b[0m"
 const ANSI_BOLD: String = "\u001b[1m"
+const ANSI_RED: String = "\u001b[31m"
 
 var host: String = DEFAULT_HOST
 var port: int = DEFAULT_PORT
@@ -530,9 +531,11 @@ func _build_connected_players_summary() -> String:
     for player_index_value in connected_player_indexes_sorted:
         var player_holdings: Dictionary = holdings_by_player.get(player_index_value, { })
         player_summaries.append(
-            "p%d(fiat=%.2f btc=%.8f properties=%d miners=%d)" % [
+            "p%d(fiat=%s%.2f%s btc=%.8f properties=%d miners=%d)" % [
                 player_index_value,
+                ANSI_BOLD,
                 float(player_fiat_balances.get(player_index_value, 0.0)),
+                ANSI_RESET,
                 float(player_bitcoin_balances.get(player_index_value, 0.0)),
                 int(player_holdings.get("properties", 0)),
                 int(player_holdings.get("miners", 0)),
@@ -557,7 +560,7 @@ func _apply_sync_complete(final_seq: int) -> void:
 
 
 func _apply_action_rejected(reason: String) -> void:
-    _log_server("action rejected: reason=%s" % reason)
+    _log_server("action rejected: reason=%s%s%s%s" % [ANSI_BOLD, ANSI_RED, reason, ANSI_RESET])
     if reason == "insufficient_fiat" and player_index == current_player_index and pending_action_type == "buy_or_end_turn":
         _log_note("buy rejected for insufficient fiat; auto-sending end_turn")
         _request_end_turn()
