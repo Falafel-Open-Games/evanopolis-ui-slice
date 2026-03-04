@@ -88,6 +88,159 @@ func test_landing_context_for_owned_property_by_self() -> void:
     assert_eq(str(event.get("action_required", "")), "end_turn", "self-owned property ends turn")
 
 
+func test_owned_property_landing_without_miners_emits_no_btc_reward() -> void:
+    var config: Config = Config.new("res://configs/demo_002.toml")
+    var game_match: GameMatch = GameMatch.new(config, [])
+    var client_a: MatchTestClient = MatchTestClient.new()
+    var client_b: MatchTestClient = MatchTestClient.new()
+    assert_eq(str(game_match.assign_client("alice", client_a).get("reason", "")), "", "first client should register")
+    assert_eq(str(game_match.assign_client("bob", client_b).get("reason", "")), "", "second client should register")
+
+    var tiles: Array = game_match.board_state.get("tiles", [])
+    var tile: Dictionary = tiles[6]
+    tile["owner_index"] = 1
+    tile["miner_batches"] = 0
+    tiles[6] = tile
+    game_match.board_state["tiles"] = tiles
+
+    game_match._server_move_pawn(6)
+    var mining_events: Array[Dictionary] = _filter_events(client_a, "rpc_mining_reward")
+    assert_eq(mining_events.size(), 1, "mining reward event should still be emitted for owned tile")
+    if mining_events.size() == 1:
+        assert_eq(int(mining_events[0].get("owner_index", -1)), 1, "owner is included in mining reward event")
+        assert_eq(int(mining_events[0].get("miner_batches", -1)), 0, "no miner batches reflected in event")
+        assert_true(is_equal_approx(float(mining_events[0].get("btc_reward", -1.0)), 0.0), "zero payout when no miners")
+        assert_eq(str(mining_events[0].get("reason", "")), "no_miners", "reason explains zero payout")
+    var balance_events: Array[Dictionary] = _filter_events(client_a, "rpc_player_balance_changed")
+    for event in balance_events:
+        assert_ne(str(event.get("reason", "")), "property_landing_mining_reward", "no mining reward reason when miner count is zero")
+
+
+func test_owned_property_landing_by_other_player_emits_owner_btc_reward() -> void:
+    var config: Config = Config.new("res://configs/demo_002.toml")
+    var game_match: GameMatch = GameMatch.new(config, [])
+    var client_a: MatchTestClient = MatchTestClient.new()
+    var client_b: MatchTestClient = MatchTestClient.new()
+    assert_eq(str(game_match.assign_client("alice", client_a).get("reason", "")), "", "first client should register")
+    assert_eq(str(game_match.assign_client("bob", client_b).get("reason", "")), "", "second client should register")
+
+    var tiles: Array = game_match.board_state.get("tiles", [])
+    var tile: Dictionary = tiles[6]
+    tile["owner_index"] = 1
+    tile["miner_batches"] = 2
+    tiles[6] = tile
+    game_match.board_state["tiles"] = tiles
+
+    game_match._server_move_pawn(6)
+    var mining_events: Array[Dictionary] = _filter_events(client_a, "rpc_mining_reward")
+    assert_eq(mining_events.size(), 1, "mining reward event emitted")
+    if mining_events.size() == 1:
+        assert_eq(int(mining_events[0].get("owner_index", -1)), 1, "owner in mining event")
+        assert_eq(int(mining_events[0].get("miner_batches", -1)), 2, "miner batches in mining event")
+        assert_true(is_equal_approx(float(mining_events[0].get("btc_reward", -1.0)), 4.0), "mining event payout")
+        assert_eq(str(mining_events[0].get("reason", "")), "rewarded", "mining event reward reason")
+    var balance_events: Array[Dictionary] = _filter_events(client_a, "rpc_player_balance_changed")
+    assert_true(balance_events.size() >= 1, "mining payout should emit balance change")
+    if balance_events.size() >= 1:
+        var latest_balance: Dictionary = balance_events[balance_events.size() - 1]
+        assert_eq(int(latest_balance.get("player_index", -1)), 1, "owner receives mining payout")
+        assert_true(is_equal_approx(float(latest_balance.get("fiat_delta", -1.0)), 0.0), "mining payout has no fiat delta")
+        assert_true(is_equal_approx(float(latest_balance.get("btc_delta", -1.0)), 4.0), "2 miner batches pay 4.0 BTC")
+        assert_eq(str(latest_balance.get("reason", "")), "property_landing_mining_reward", "expected mining payout reason")
+
+
+func test_owned_property_landing_emits_mining_reward_to_all_clients() -> void:
+    var config: Config = Config.new("res://configs/demo_002.toml")
+    var game_match: GameMatch = GameMatch.new(config, [])
+    var client_a: MatchTestClient = MatchTestClient.new()
+    var client_b: MatchTestClient = MatchTestClient.new()
+    assert_eq(str(game_match.assign_client("alice", client_a).get("reason", "")), "", "first client should register")
+    assert_eq(str(game_match.assign_client("bob", client_b).get("reason", "")), "", "second client should register")
+
+    var tiles: Array = game_match.board_state.get("tiles", [])
+    var tile: Dictionary = tiles[6]
+    tile["owner_index"] = 1
+    tile["miner_batches"] = 2
+    tiles[6] = tile
+    game_match.board_state["tiles"] = tiles
+
+    game_match._server_move_pawn(6)
+    var mining_events_a: Array[Dictionary] = _filter_events(client_a, "rpc_mining_reward")
+    var mining_events_b: Array[Dictionary] = _filter_events(client_b, "rpc_mining_reward")
+    assert_eq(mining_events_a.size(), 1, "acting client receives mining reward event")
+    assert_eq(mining_events_b.size(), 1, "other client receives mining reward event")
+    if mining_events_a.size() == 1 and mining_events_b.size() == 1:
+        assert_eq(int(mining_events_a[0].get("owner_index", -1)), int(mining_events_b[0].get("owner_index", -2)), "owner is consistent")
+        assert_eq(int(mining_events_a[0].get("tile_index", -1)), int(mining_events_b[0].get("tile_index", -2)), "tile is consistent")
+        assert_eq(int(mining_events_a[0].get("miner_batches", -1)), int(mining_events_b[0].get("miner_batches", -2)), "miner batches are consistent")
+        assert_true(
+            is_equal_approx(float(mining_events_a[0].get("btc_reward", -1.0)), float(mining_events_b[0].get("btc_reward", -2.0))),
+            "btc reward is consistent",
+        )
+        assert_eq(str(mining_events_a[0].get("reason", "")), str(mining_events_b[0].get("reason", "_mismatch")), "reason is consistent")
+
+
+func test_owned_property_landing_by_owner_emits_owner_btc_reward_without_toll() -> void:
+    var config: Config = Config.new("res://configs/demo_002.toml")
+    var game_match: GameMatch = GameMatch.new(config, [])
+    var client_a: MatchTestClient = MatchTestClient.new()
+    var client_b: MatchTestClient = MatchTestClient.new()
+    assert_eq(str(game_match.assign_client("alice", client_a).get("reason", "")), "", "first client should register")
+    assert_eq(str(game_match.assign_client("bob", client_b).get("reason", "")), "", "second client should register")
+
+    var tiles: Array = game_match.board_state.get("tiles", [])
+    var tile: Dictionary = tiles[6]
+    tile["owner_index"] = 0
+    tile["miner_batches"] = 3
+    tiles[6] = tile
+    game_match.board_state["tiles"] = tiles
+
+    game_match._server_move_pawn(6)
+    var mining_events: Array[Dictionary] = _filter_events(client_a, "rpc_mining_reward")
+    assert_eq(mining_events.size(), 1, "mining reward event emitted")
+    if mining_events.size() == 1:
+        assert_eq(int(mining_events[0].get("owner_index", -1)), 0, "owner in mining event")
+        assert_eq(int(mining_events[0].get("miner_batches", -1)), 3, "miner batches in mining event")
+        assert_true(is_equal_approx(float(mining_events[0].get("btc_reward", -1.0)), 6.0), "mining event payout")
+        assert_eq(str(mining_events[0].get("reason", "")), "rewarded", "mining event reward reason")
+    var balance_events: Array[Dictionary] = _filter_events(client_a, "rpc_player_balance_changed")
+    assert_true(balance_events.size() >= 1, "owner landing should emit mining payout")
+    if balance_events.size() >= 1:
+        var latest_balance: Dictionary = balance_events[balance_events.size() - 1]
+        assert_eq(int(latest_balance.get("player_index", -1)), 0, "owner receives payout on own landing")
+        assert_true(is_equal_approx(float(latest_balance.get("btc_delta", -1.0)), 6.0), "3 miner batches pay 6.0 BTC")
+        assert_eq(str(latest_balance.get("reason", "")), "property_landing_mining_reward", "expected mining payout reason")
+    var toll_events: Array[Dictionary] = _filter_events(client_a, "rpc_toll_paid")
+    assert_eq(toll_events.size(), 0, "owner landing does not emit toll payment event")
+
+
+func test_owned_property_landing_does_not_emit_btc_reward_when_owner_is_in_inspection() -> void:
+    var config: Config = Config.new("res://configs/demo_002.toml")
+    var game_match: GameMatch = GameMatch.new(config, [])
+    var client_a: MatchTestClient = MatchTestClient.new()
+    var client_b: MatchTestClient = MatchTestClient.new()
+    assert_eq(str(game_match.assign_client("alice", client_a).get("reason", "")), "", "first client should register")
+    assert_eq(str(game_match.assign_client("bob", client_b).get("reason", "")), "", "second client should register")
+
+    var tiles: Array = game_match.board_state.get("tiles", [])
+    var tile: Dictionary = tiles[6]
+    tile["owner_index"] = 1
+    tile["miner_batches"] = 2
+    tiles[6] = tile
+    game_match.board_state["tiles"] = tiles
+    game_match.state.players[1].in_inspection = true
+
+    game_match._server_move_pawn(6)
+    var mining_events: Array[Dictionary] = _filter_events(client_a, "rpc_mining_reward")
+    assert_eq(mining_events.size(), 1, "mining reward event emitted even when blocked")
+    if mining_events.size() == 1:
+        assert_true(is_equal_approx(float(mining_events[0].get("btc_reward", -1.0)), 0.0), "inspection blocks payout amount")
+        assert_eq(str(mining_events[0].get("reason", "")), "owner_in_inspection", "reason explains blocked payout")
+    var balance_events: Array[Dictionary] = _filter_events(client_a, "rpc_player_balance_changed")
+    for event in balance_events:
+        assert_ne(str(event.get("reason", "")), "property_landing_mining_reward", "inspection blocks mining payout")
+
+
 func test_buy_property_resolves_pending_action_and_advances_turn() -> void:
     var config: Config = Config.new("res://configs/demo_002.toml")
     var game_match: GameMatch = GameMatch.new(config, [])
@@ -106,7 +259,7 @@ func test_buy_property_resolves_pending_action_and_advances_turn() -> void:
 
     var tile: Dictionary = game_match._tile_from_index(6)
     assert_eq(int(tile.get("owner_index", -1)), 0, "tile ownership transferred to buyer")
-    assert_true(is_equal_approx(game_match.state.players[0].fiat_balance, 196.0), "buyer fiat balance reduced by property price")
+    assert_true(is_equal_approx(game_match.state.players[0].fiat_balance, 116.0), "buyer fiat balance reduced by property price")
 
     var acquired: Array[Dictionary] = _filter_events(client_a, "rpc_property_acquired")
     assert_eq(acquired.size(), 1, "property acquired event emitted once")
@@ -158,8 +311,8 @@ func test_pay_toll_resolves_pending_action_and_advances_turn() -> void:
     var pay_reason: String = game_match.rpc_pay_toll("demo_002", "alice")
     assert_eq(pay_reason, "", "pay toll should succeed")
     assert_true(game_match.pending_action.is_empty(), "pending action cleared after pay toll")
-    assert_true(is_equal_approx(game_match.state.players[0].fiat_balance, 199.4), "payer fiat reduced by toll")
-    assert_true(is_equal_approx(game_match.state.players[1].fiat_balance, 200.6), "owner fiat increased by toll")
+    assert_true(is_equal_approx(game_match.state.players[0].fiat_balance, 119.4), "payer fiat reduced by toll")
+    assert_true(is_equal_approx(game_match.state.players[1].fiat_balance, 120.6), "owner fiat increased by toll")
 
     var toll_paid: Array[Dictionary] = _filter_events(client_a, "rpc_toll_paid")
     assert_eq(toll_paid.size(), 1, "toll paid event emitted once")
@@ -224,6 +377,45 @@ func test_pay_toll_insufficient_fiat_sends_player_to_inspection_and_advances_tur
     assert_eq(inspection_events.size(), 1, "inspection event emitted when player cannot pay toll")
     if inspection_events.size() == 1:
         assert_eq(str(inspection_events[0].get("reason", "")), "insufficient_fiat_toll", "inspection reason is insufficient toll fiat")
+
+
+func test_pay_toll_insufficient_fiat_keeps_prior_mining_reward_to_owner() -> void:
+    var config: Config = Config.new("res://configs/demo_002.toml")
+    var game_match: GameMatch = GameMatch.new(config, [])
+    var client_a: MatchTestClient = MatchTestClient.new()
+    var client_b: MatchTestClient = MatchTestClient.new()
+    assert_eq(str(game_match.assign_client("alice", client_a).get("reason", "")), "", "first client should register")
+    assert_eq(str(game_match.assign_client("bob", client_b).get("reason", "")), "", "second client should register")
+
+    var tiles: Array = game_match.board_state.get("tiles", [])
+    var tile: Dictionary = tiles[6]
+    tile["owner_index"] = 1
+    tile["miner_batches"] = 2
+    tiles[6] = tile
+    game_match.board_state["tiles"] = tiles
+
+    game_match.rpc_roll_dice("demo_002", "alice")
+    game_match.state.players[0].fiat_balance = 0.1
+    var reason: String = game_match.rpc_pay_toll("demo_002", "alice")
+    assert_eq(reason, "", "pay toll resolves to inspection when payer cannot afford toll")
+    assert_true(game_match.state.players[0].in_inspection, "payer is sent to inspection")
+    assert_eq(game_match.state.current_player_index, 1, "turn advances to next player")
+    assert_true(is_equal_approx(game_match.state.players[1].bitcoin_balance, 4.0), "owner keeps mining reward from landing")
+
+    var mining_events: Array[Dictionary] = _filter_events(client_a, "rpc_mining_reward")
+    assert_eq(mining_events.size(), 1, "mining reward event emitted from landing context")
+    if mining_events.size() == 1:
+        assert_eq(str(mining_events[0].get("reason", "")), "rewarded", "mining reward reason indicates payout")
+        assert_true(is_equal_approx(float(mining_events[0].get("btc_reward", -1.0)), 4.0), "mining reward amount is preserved")
+    var balance_events: Array[Dictionary] = _filter_events(client_a, "rpc_player_balance_changed")
+    var found_owner_mining_delta: bool = false
+    for event in balance_events:
+        if int(event.get("player_index", -1)) == 1 and str(event.get("reason", "")) == "property_landing_mining_reward":
+            found_owner_mining_delta = true
+            assert_true(is_equal_approx(float(event.get("btc_delta", -1.0)), 4.0), "owner mining balance delta emitted")
+    assert_true(found_owner_mining_delta, "owner mining balance delta should be emitted before toll resolution")
+    var inspection_events: Array[Dictionary] = _filter_events(client_a, "rpc_player_sent_to_inspection")
+    assert_eq(inspection_events.size(), 1, "inspection event still emitted for insufficient toll payer")
 
 
 func test_pay_toll_rejected_for_non_current_player() -> void:
@@ -422,7 +614,7 @@ func test_buy_miner_batch_updates_balance_and_tile_state() -> void:
 
     var tile: Dictionary = game_match._tile_from_index(6)
     assert_eq(int(tile.get("miner_batches", -1)), 1, "tile miner batches incremented")
-    assert_true(is_equal_approx(game_match.state.players[0].fiat_balance, 188.0), "fiat reduced by miner batch price")
+    assert_true(is_equal_approx(game_match.state.players[0].fiat_balance, 108.0), "fiat reduced by miner batch price")
 
     var balance_events: Array[Dictionary] = _filter_events(client_a, "rpc_player_balance_changed")
     assert_true(balance_events.size() >= 1, "balance change emitted")

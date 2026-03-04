@@ -153,6 +153,7 @@ func _server_move_pawn(steps: int) -> void:
             str(landing_context.get("action_required", "")),
         ],
     )
+    _apply_property_landing_mining_reward(landing_context)
     var tile_type: String = str(landing_context.get("tile_type", ""))
     if tile_type == "inspection":
         _apply_inspection_to_player(state.current_player_index, "tile_inspection")
@@ -423,6 +424,7 @@ func _build_landing_context(tile_index: int, landing_player_index: int) -> Dicti
     if _is_property_tile(tile_type) and owner_index >= 0 and owner_index != landing_player_index:
         toll_due = _compute_toll(city, miner_batches)
     return {
+        "tile_index": tile_index,
         "tile_type": tile_type,
         "city": city,
         "owner_index": owner_index,
@@ -457,6 +459,32 @@ func _tile_from_index(tile_index: int) -> Dictionary:
 func _compute_toll(city: String, miner_batches: int) -> float:
     var property_price: float = _compute_property_price(city)
     return property_price * (0.10 + (0.025 * float(miner_batches)))
+
+
+func _apply_property_landing_mining_reward(landing_context: Dictionary) -> void:
+    var tile_type: String = str(landing_context.get("tile_type", ""))
+    if not _is_property_tile(tile_type):
+        return
+    var owner_index: int = int(landing_context.get("owner_index", -1))
+    if owner_index < 0 or owner_index >= state.players.size():
+        return
+    var tile_index: int = int(landing_context.get("tile_index", -1))
+    if tile_index < 0:
+        return
+    var tile: Dictionary = _tile_from_index(tile_index)
+    var miner_batches: int = int(tile.get("miner_batches", 0))
+    var reason: String = "no_miners"
+    var btc_payout: float = 0.0
+    var owner: PlayerState = state.players[owner_index]
+    if miner_batches > 0:
+        if owner.in_inspection:
+            reason = "owner_in_inspection"
+        else:
+            btc_payout = EconomyV0.MINER_BTC_PAYOUT_PER_BATCH * float(miner_batches)
+            owner.bitcoin_balance += btc_payout
+            reason = "rewarded"
+            _broadcast("rpc_player_balance_changed", [owner_index, 0.0, btc_payout, "property_landing_mining_reward"])
+    _broadcast("rpc_mining_reward", [owner_index, tile_index, miner_batches, btc_payout, reason])
 
 
 func _compute_property_price(city: String) -> float:

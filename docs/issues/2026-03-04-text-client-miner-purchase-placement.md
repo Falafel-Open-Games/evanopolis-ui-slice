@@ -1,6 +1,7 @@
 # Text Client Missing Miner Purchase/Placement Flow (2026-03-04)
 
 Issue: `ISS-007`
+Status: `Fixed` on `2026-03-04`
 
 ## Summary
 The headless text client does not yet expose a user flow to buy miner batches and place them on owned properties.

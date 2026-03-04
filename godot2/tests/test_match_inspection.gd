@@ -51,7 +51,7 @@ func test_pay_inspection_fee_clears_inspection_and_allows_roll() -> void:
     var pay_reason: String = game_match.rpc_pay_inspection_fee("demo_002", "alice")
     assert_eq(pay_reason, "", "pay inspection fee should succeed")
     assert_eq(game_match.state.players[0].in_inspection, false, "inspection should be cleared")
-    assert_true(is_equal_approx(game_match.state.players[0].fiat_balance, 198.0), "inspection fee deducted from fiat")
+    assert_true(is_equal_approx(game_match.state.players[0].fiat_balance, 118.0), "inspection fee deducted from fiat")
 
     var balance_changed: Array[Dictionary] = _filter_events(client_a, "rpc_player_balance_changed")
     assert_eq(balance_changed.size(), 1, "paying inspection fee emits one balance change")

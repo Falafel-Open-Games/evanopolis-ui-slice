@@ -1,6 +1,7 @@
 # Property Landing Should Trigger Miner BTC Reward (2026-03-04)
 
 Issue: `ISS-009`
+Status: `Fixed` on `2026-03-04`
 
 ## Summary
 Landing on a property with installed miners should award BTC to the property owner, independent of toll payment.

@@ -10,6 +10,7 @@ class ClientMainDouble:
     var server_messages: Array[String] = []
     var prompt_messages: Array[String] = []
     var note_messages: Array[String] = []
+    var exit_codes: Array[int] = []
     var next_buy_choice: bool = false
     var next_buy_choices: Array[bool] = []
     var turn_prompt_count: int = 0
@@ -74,6 +75,10 @@ class ClientMainDouble:
 
     func _log_note(message: String) -> void:
         note_messages.append(message)
+
+
+    func _exit_with_code(code: int) -> void:
+        exit_codes.append(code)
 
 
 func test_join_requests_snapshot_sync_and_drops_pre_sync_events() -> void:
@@ -209,6 +214,30 @@ func test_state_snapshot_logs_with_players_present() -> void:
     client.free()
 
 
+func test_connection_failed_exits_client_process() -> void:
+    var client: ClientMainDouble = ClientMainDouble.new()
+
+    client._on_connection_failed()
+
+    assert_eq(client.exit_codes.size(), 1, "connection failure should trigger process exit")
+    if client.exit_codes.size() == 1:
+        assert_eq(client.exit_codes[0], 1, "connection failure exits with code 1")
+
+    client.free()
+
+
+func test_server_disconnected_exits_client_process() -> void:
+    var client: ClientMainDouble = ClientMainDouble.new()
+
+    client._on_server_disconnected()
+
+    assert_eq(client.exit_codes.size(), 1, "server disconnection should trigger process exit")
+    if client.exit_codes.size() == 1:
+        assert_eq(client.exit_codes[0], 1, "server disconnection exits with code 1")
+
+    client.free()
+
+
 func test_turn_started_logs_connected_players_balances_and_holdings() -> void:
     var client: ClientMainDouble = ClientMainDouble.new()
     client.player_index = 0
@@ -273,8 +302,56 @@ func test_turn_started_logs_connected_players_balances_and_holdings() -> void:
     var last_message: String = client.server_messages[client.server_messages.size() - 1]
     assert_eq(
         last_message,
-        "\u001b[32mturn started\u001b[0m: player=1, turn=4, cycle=2, connected_players=[p0(tile=6 fiat=\u001b[1m20.00\u001b[0m btc=0.50000000 properties=2 miners=3), p1(tile=3 fiat=\u001b[1m13.50\u001b[0m btc=0.37500000 properties=1 miners=4)]",
+        "\u001b[32mturn started\u001b[0m: player=1, turn=4, cycle=2, connected_players=[p0(tile=6 fiat=\u001b[1m20.00\u001b[0m btc=\u001b[33m0.50000000\u001b[0m properties=2 miners=3), p1(tile=3 fiat=\u001b[1m13.50\u001b[0m btc=\u001b[33m0.37500000\u001b[0m properties=1 miners=4)]",
         "turn started includes green label and connected players tile/balance/properties/miners",
+    )
+
+    client.free()
+
+
+func test_turn_started_logs_ansi_formatting_for_negative_fiat_and_large_btc() -> void:
+    var client: ClientMainDouble = ClientMainDouble.new()
+    client.player_index = 0
+    client._apply_state_snapshot(
+        {
+            "game_id": "demo_002",
+            "turn_number": 4,
+            "current_player_index": 1,
+            "current_cycle": 2,
+            "has_started": true,
+            "board_state": {
+                "size": 24,
+                "tiles": [],
+            },
+            "players": [
+                {
+                    "player_index": 0,
+                    "position": 9,
+                    "laps": 0,
+                    "fiat_balance": -1.25,
+                    "bitcoin_balance": 12.3456789,
+                    "in_inspection": false,
+                },
+                {
+                    "player_index": 1,
+                    "position": 14,
+                    "laps": 1,
+                    "fiat_balance": 999.99,
+                    "bitcoin_balance": 0.0,
+                    "in_inspection": false,
+                },
+            ],
+        },
+    )
+
+    client._apply_turn_started(1, 4, 2)
+
+    assert_true(client.server_messages.size() > 0, "expected server log messages")
+    var last_message: String = client.server_messages[client.server_messages.size() - 1]
+    assert_eq(
+        last_message,
+        "\u001b[32mturn started\u001b[0m: player=1, turn=4, cycle=2, connected_players=[p0(tile=9 fiat=\u001b[1m-1.25\u001b[0m btc=\u001b[33m12.34567890\u001b[0m properties=0 miners=0), p1(tile=14 fiat=\u001b[1m999.99\u001b[0m btc=\u001b[33m0.00000000\u001b[0m properties=0 miners=0)]",
+        "turn started keeps ansi formatting for negative fiat and large btc balances",
     )
 
     client.free()
@@ -330,7 +407,7 @@ func test_turn_started_logs_purchase_balance_after_property_acquired() -> void:
     var last_message: String = client.server_messages[client.server_messages.size() - 1]
     assert_eq(
         last_message,
-        "\u001b[32mturn started\u001b[0m: player=1, turn=1, cycle=1, connected_players=[p0(tile=6 fiat=\u001b[1m16.00\u001b[0m btc=0.00000000 properties=1 miners=0), p1(tile=0 fiat=\u001b[1m20.00\u001b[0m btc=0.00000000 properties=0 miners=0)]",
+        "\u001b[32mturn started\u001b[0m: player=1, turn=1, cycle=1, connected_players=[p0(tile=6 fiat=\u001b[1m16.00\u001b[0m btc=\u001b[33m0.00000000\u001b[0m properties=1 miners=0), p1(tile=0 fiat=\u001b[1m20.00\u001b[0m btc=\u001b[33m0.00000000\u001b[0m properties=0 miners=0)]",
         "turn started summary reflects fiat deduction and player tile indexes",
     )
 
@@ -372,6 +449,19 @@ func test_tile_landed_uses_board_state_details() -> void:
     assert_eq(str(tile_info.get("tile_type", "")), "property", "tile type should resolve from board state")
     assert_eq(str(tile_info.get("city", "")), "caracas", "city should resolve from board state")
 
+    client.free()
+
+
+func test_mining_reward_logs_zero_payout_reason() -> void:
+    var client: ClientMainDouble = ClientMainDouble.new()
+
+    client._apply_mining_reward(1, 5, 0, 0.0, "no_miners")
+
+    assert_eq(
+        client.server_messages[0],
+        "mining reward: owner=1 tile=5 miner_batches=0 btc_reward=0.00000000 reason=no_miners",
+        "mining reward log includes zero payout reason",
+    )
     client.free()
 
 

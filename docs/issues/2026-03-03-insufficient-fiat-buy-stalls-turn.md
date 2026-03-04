@@ -1,6 +1,7 @@
 # Insufficient Fiat Buy On Unowned Property Stalls Turn (2026-03-03)
 
 Issue: `ISS-003`
+Status: `Fixed` on `2026-03-04`
 
 ## Summary
 When a player lands on an unowned property and chooses `buy`, if the player's fiat balance is below property price, the server rejects with `insufficient_fiat` and keeps the pending action unresolved.

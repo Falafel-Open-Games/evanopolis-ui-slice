@@ -146,6 +146,18 @@ func rpc_miner_batches_added(seq: int, player_index: int, tile_index: int, count
 
 
 @rpc("authority")
+func rpc_mining_reward(
+        seq: int,
+        owner_index: int,
+        tile_index: int,
+        miner_batches: int,
+        btc_reward: float,
+        reason: String,
+) -> void:
+    _handle_mining_reward(seq, owner_index, tile_index, miner_batches, btc_reward, reason)
+
+
+@rpc("authority")
 func rpc_toll_paid(seq: int, payer_index: int, owner_index: int, amount: float) -> void:
     _handle_toll_paid(seq, payer_index, owner_index, amount)
 
@@ -289,6 +301,17 @@ func _handle_property_acquired(seq: int, player_index: int, tile_index: int, pri
 
 
 func _handle_miner_batches_added(seq: int, player_index: int, tile_index: int, count: int) -> void:
+    pass
+
+
+func _handle_mining_reward(
+        seq: int,
+        owner_index: int,
+        tile_index: int,
+        miner_batches: int,
+        btc_reward: float,
+        reason: String,
+) -> void:
     pass
 
 

@@ -50,6 +50,16 @@ extends RefCounted
 @abstract func rpc_miner_batches_added(seq: int, player_index: int, tile_index: int, count: int) -> void
 
 
+@abstract func rpc_mining_reward(
+        seq: int,
+        owner_index: int,
+        tile_index: int,
+        miner_batches: int,
+        btc_reward: float,
+        reason: String,
+) -> void
+
+
 @abstract func rpc_toll_paid(seq: int, payer_index: int, owner_index: int, amount: float) -> void
 
 

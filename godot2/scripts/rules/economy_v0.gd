@@ -1,10 +1,11 @@
 class_name EconomyV0
 extends RefCounted
 
-const INITIAL_FIAT_BALANCE: float = 200.0
+const INITIAL_FIAT_BALANCE: float = 120.0
 const INSPECTION_FEE: float = 2.0
 const MINER_BATCH_PRICE: float = 8.0
 const MAX_MINER_BATCHES_PER_PROPERTY: int = 4
+const MINER_BTC_PAYOUT_PER_BATCH: float = 2.0
 
 
 static func base_property_price(city: String) -> float:
