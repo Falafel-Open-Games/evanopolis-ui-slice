@@ -16,7 +16,7 @@ corner_radius_top_right = 24
 corner_radius_bottom_right = 24
 corner_radius_bottom_left = 24
 
-[node name="Card" type="Panel" node_paths=PackedStringArray("title_label", "card_type_label", "price_title", "price_label", "owner_label", "miners_textures", "card_image")]
+[node name="Card" type="Panel" node_paths=PackedStringArray("title_label", "card_type_label", "price_title", "price_label", "owner_label", "mortgaged_label", "miners_textures", "card_image")]
 custom_minimum_size = Vector2(300, 500)
 anchors_preset = 1
 anchor_left = 1.0
@@ -35,8 +35,11 @@ card_type_label = NodePath("MarginContainer/Top/CardType")
 price_title = NodePath("MarginContainer/Bottom/Prices/PriceTitle")
 price_label = NodePath("MarginContainer/Bottom/Prices/PriceValue")
 owner_label = NodePath("MarginContainer/Bottom/Owner")
+mortgaged_label = NodePath("MortgagedLabel")
 miners_textures = [NodePath("MarginContainer/Bottom/Miners/Miner1"), NodePath("MarginContainer/Bottom/Miners/Miner2"), NodePath("MarginContainer/Bottom/Miners/Miner3"), NodePath("MarginContainer/Bottom/Miners/Miner4")]
 card_image = NodePath("MarginContainer/CardImage")
+color_property_normal = Color(0.13333334, 0.14509805, 0.15294118, 1)
+color_property_mortgaged = Color(0.74263394, 0.25653866, 0.22405803, 1)
 
 [node name="MarginContainer" type="MarginContainer" parent="."]
 layout_mode = 1
@@ -133,3 +136,16 @@ horizontal_alignment = 2
 [node name="Owner" type="Label" parent="MarginContainer/Bottom"]
 layout_mode = 2
 text = "IS AVAILABLE"
+
+[node name="MortgagedLabel" type="Label" parent="."]
+layout_mode = 0
+offset_left = 19.0
+offset_top = 303.0
+offset_right = 322.0
+offset_bottom = 370.0
+rotation = -0.7853982
+theme_override_colors/font_color = Color(0.83747226, 0, 0.089898564, 1)
+theme_override_colors/font_outline_color = Color(1, 1, 1, 1)
+theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 48
+text = "MORTGAGED"

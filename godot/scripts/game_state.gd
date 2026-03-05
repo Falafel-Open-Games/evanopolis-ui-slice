@@ -21,6 +21,8 @@ const SPECIAL_PROPERTIES: Array[Dictionary] = [
 const PAYOUT_PER_MINER: float = 2.0
 const MAX_MINER_BATCHES_PER_PROPERTY: int = 4
 const MINER_BATCH_PRICE_FIAT_BASE: float = 12
+const MORTGAGE_RECEIVE_RATE: float = 0.8
+const MORTGAGE_PAY_RATE: float = 1.2
 
 var current_player_index: int
 var player_positions: Array[int]
@@ -383,6 +385,12 @@ func _is_tile_buyable(tile: TileInfo) -> bool:
         and tile.owner_index == -1
     )
 
+func is_tile_mortgagable(tile: TileInfo) -> bool:
+    return(
+        (tile.tile_type == Utils.TileType.PROPERTY or tile.tile_type == Utils.TileType.SPECIAL_PROPERTY)
+        and tile.owner_index != -1
+    )
+
 func _get_tiles_per_side() -> int:
     assert(GameConfig.board_size % SIDE_COUNT == 0)
     @warning_ignore("integer_division")
@@ -399,3 +407,42 @@ func _incident_kind_for_side(side_index: int) -> String:
 func _city_for_side(side_index: int) -> String:
     assert(side_index >= 0 and side_index < Palette.CITY_ORDER.size())
     return Palette.CITY_ORDER[side_index]
+
+func can_player_mortgage(player_index: int, tile: TileInfo) -> bool:
+    return(
+        (tile.tile_type == Utils.TileType.PROPERTY or tile.tile_type == Utils.TileType.SPECIAL_PROPERTY)
+        and tile.owner_index == player_index and not tile.is_mortgaged
+    )
+
+func can_player_unmortgage(player_index: int, tile: TileInfo) -> bool:
+    var unmortgage_price = tile.property_price * MORTGAGE_PAY_RATE
+    var payer: PlayerData = players[player_index]
+    var has_payer_funds = payer.fiat_balance >= unmortgage_price
+
+    return(
+        (tile.tile_type == Utils.TileType.PROPERTY or tile.tile_type == Utils.TileType.SPECIAL_PROPERTY)
+        and tile.owner_index == player_index and tile.is_mortgaged and has_payer_funds
+    )
+
+func mortgage_property(player_index: int, tile_index: int) -> void:
+    var info: TileInfo = get_tile_info(tile_index)
+
+    if not can_player_mortgage(player_index, info):
+        return
+
+    tiles[tile_index].is_mortgaged = true
+    var payer: PlayerData = players[player_index]
+    payer.fiat_balance += tiles[tile_index].property_price * MORTGAGE_RECEIVE_RATE
+    player_data_changed.emit(player_index, payer)
+
+func unmortgage_property(player_index: int, tile_index: int) -> void:
+    var info: TileInfo = get_tile_info(tile_index)
+    var unmortgage_price = tiles[tile_index].property_price * MORTGAGE_PAY_RATE
+    var payer: PlayerData = players[player_index]
+
+    if not can_player_unmortgage(player_index, info):
+        return
+
+    tiles[tile_index].is_mortgaged = false
+    payer.fiat_balance -= unmortgage_price
+    player_data_changed.emit(player_index, payer)

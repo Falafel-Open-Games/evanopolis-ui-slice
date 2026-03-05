@@ -5,8 +5,8 @@
 [ext_resource type="PackedScene" uid="uid://dyuw0t0ual1uo" path="res://scenes/card.tscn" id="3_5ysmq"]
 [ext_resource type="Texture2D" uid="uid://b4b2qsvsc6jqc" path="res://textures/icon_map.png" id="3_hd3ao"]
 [ext_resource type="Texture2D" uid="uid://bp6o7w85lpnng" path="res://textures/icon_inventory.png" id="4_0i1j5"]
-[ext_resource type="Script" path="res://scripts/card_dialog.gd" id="4_6fi6k"]
-[ext_resource type="Script" path="res://scripts/card_inventory.gd" id="4_uo2fv"]
+[ext_resource type="Script" uid="uid://bcii2rp8t5udr" path="res://scripts/card_dialog.gd" id="4_6fi6k"]
+[ext_resource type="Script" uid="uid://cvlqvy87n2wq5" path="res://scripts/card_inventory.gd" id="4_uo2fv"]
 [ext_resource type="Texture2D" uid="uid://bsdsirftpihua" path="res://textures/miner_icon.png" id="5_047uy"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_6fi6k"]
@@ -266,19 +266,22 @@ theme_override_font_sizes/font_size = 24
 text = "PLAYER 1 IS UP"
 horizontal_alignment = 2
 
-[node name="CardDialog" type="CanvasLayer" parent="." node_paths=PackedStringArray("card", "trade_button", "miners_button", "mortgage_button", "close_button", "miner_confirm_button", "miners_buttons", "page_default", "page_miner", "miners_counter")]
-visible = false
+[node name="CardDialog" type="CanvasLayer" parent="." node_paths=PackedStringArray("card", "trade_button", "miners_button", "mortgage_button", "close_button", "miner_confirm_button", "miners_buttons", "miners_counter", "page_default", "page_miner", "page_mortgage", "mortgage_confirm_button", "mortgage_receive_value", "mortgage_pay_value")]
 script = ExtResource("4_6fi6k")
 card = NodePath("PanelContainer/MarginContainer/HBoxContainer/Card")
-trade_button = NodePath("PanelContainer/MarginContainer/HBoxContainer/Page1/TradeBtn")
-miners_button = NodePath("PanelContainer/MarginContainer/HBoxContainer/Page1/MinersBtn")
-mortgage_button = NodePath("PanelContainer/MarginContainer/HBoxContainer/Page1/MortgageBtn")
+trade_button = NodePath("PanelContainer/MarginContainer/HBoxContainer/MainPage/TradeBtn")
+miners_button = NodePath("PanelContainer/MarginContainer/HBoxContainer/MainPage/MinersBtn")
+mortgage_button = NodePath("PanelContainer/MarginContainer/HBoxContainer/MainPage/MortgageBtn")
 close_button = NodePath("PanelContainer/CloseBtn")
-miner_confirm_button = NodePath("PanelContainer/MarginContainer/HBoxContainer/Page2/MinersPayBtn")
-miners_buttons = [NodePath("PanelContainer/MarginContainer/HBoxContainer/Page2/HBoxContainer/TextureButton"), NodePath("PanelContainer/MarginContainer/HBoxContainer/Page2/HBoxContainer/TextureButton2"), NodePath("PanelContainer/MarginContainer/HBoxContainer/Page2/HBoxContainer/TextureButton3"), NodePath("PanelContainer/MarginContainer/HBoxContainer/Page2/HBoxContainer/TextureButton4")]
-page_default = NodePath("PanelContainer/MarginContainer/HBoxContainer/Page1")
-page_miner = NodePath("PanelContainer/MarginContainer/HBoxContainer/Page2")
-miners_counter = NodePath("PanelContainer/MarginContainer/HBoxContainer/Page2/Counter")
+miner_confirm_button = NodePath("PanelContainer/MarginContainer/HBoxContainer/MinersPage/MinersPayBtn")
+miners_buttons = [NodePath("PanelContainer/MarginContainer/HBoxContainer/MinersPage/HBoxContainer/TextureButton"), NodePath("PanelContainer/MarginContainer/HBoxContainer/MinersPage/HBoxContainer/TextureButton2"), NodePath("PanelContainer/MarginContainer/HBoxContainer/MinersPage/HBoxContainer/TextureButton3"), NodePath("PanelContainer/MarginContainer/HBoxContainer/MinersPage/HBoxContainer/TextureButton4")]
+miners_counter = NodePath("PanelContainer/MarginContainer/HBoxContainer/MinersPage/Counter")
+page_default = NodePath("PanelContainer/MarginContainer/HBoxContainer/MainPage")
+page_miner = NodePath("PanelContainer/MarginContainer/HBoxContainer/MinersPage")
+page_mortgage = NodePath("PanelContainer/MarginContainer/HBoxContainer/MortgagePage")
+mortgage_confirm_button = NodePath("PanelContainer/MarginContainer/HBoxContainer/MortgagePage/MortageBtn")
+mortgage_receive_value = NodePath("PanelContainer/MarginContainer/HBoxContainer/MortgagePage/MortgageBody/ValuesContainer/MortgageContainer/MortgageValue")
+mortgage_pay_value = NodePath("PanelContainer/MarginContainer/HBoxContainer/MortgagePage/MortgageBody/ValuesContainer/UnmortgageContainer/UnmortgageValue")
 
 [node name="ColorRect" type="ColorRect" parent="CardDialog"]
 anchors_preset = 15
@@ -318,48 +321,49 @@ alignment = 1
 layout_mode = 2
 mouse_filter = 2
 
-[node name="Page1" type="VBoxContainer" parent="CardDialog/PanelContainer/MarginContainer/HBoxContainer"]
+[node name="MainPage" type="VBoxContainer" parent="CardDialog/PanelContainer/MarginContainer/HBoxContainer"]
 visible = false
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_constants/separation = 24
 alignment = 1
 
-[node name="MinersBtn" type="Button" parent="CardDialog/PanelContainer/MarginContainer/HBoxContainer/Page1"]
+[node name="MinersBtn" type="Button" parent="CardDialog/PanelContainer/MarginContainer/HBoxContainer/MainPage"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 40
 text = "MINERS"
 
-[node name="TradeBtn" type="Button" parent="CardDialog/PanelContainer/MarginContainer/HBoxContainer/Page1"]
+[node name="TradeBtn" type="Button" parent="CardDialog/PanelContainer/MarginContainer/HBoxContainer/MainPage"]
+visible = false
 layout_mode = 2
 theme_override_font_sizes/font_size = 40
 disabled = true
 text = "TRADE"
 
-[node name="MortgageBtn" type="Button" parent="CardDialog/PanelContainer/MarginContainer/HBoxContainer/Page1"]
+[node name="MortgageBtn" type="Button" parent="CardDialog/PanelContainer/MarginContainer/HBoxContainer/MainPage"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 40
-disabled = true
 text = "MORTGAGE"
 
-[node name="Page2" type="VBoxContainer" parent="CardDialog/PanelContainer/MarginContainer/HBoxContainer"]
+[node name="MinersPage" type="VBoxContainer" parent="CardDialog/PanelContainer/MarginContainer/HBoxContainer"]
+visible = false
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_constants/separation = 24
 
-[node name="Title" type="Label" parent="CardDialog/PanelContainer/MarginContainer/HBoxContainer/Page2"]
+[node name="Title" type="Label" parent="CardDialog/PanelContainer/MarginContainer/HBoxContainer/MinersPage"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0, 0, 0, 1)
 theme_override_font_sizes/font_size = 40
 text = "MINERS"
 
-[node name="HBoxContainer" type="HBoxContainer" parent="CardDialog/PanelContainer/MarginContainer/HBoxContainer/Page2"]
+[node name="HBoxContainer" type="HBoxContainer" parent="CardDialog/PanelContainer/MarginContainer/HBoxContainer/MinersPage"]
 layout_mode = 2
 size_flags_horizontal = 4
 size_flags_vertical = 4
 theme_override_constants/separation = 24
 
-[node name="TextureButton" type="TextureButton" parent="CardDialog/PanelContainer/MarginContainer/HBoxContainer/Page2/HBoxContainer"]
+[node name="TextureButton" type="TextureButton" parent="CardDialog/PanelContainer/MarginContainer/HBoxContainer/MinersPage/HBoxContainer"]
 custom_minimum_size = Vector2(72, 80)
 layout_mode = 2
 size_flags_horizontal = 4
@@ -368,7 +372,7 @@ texture_normal = ExtResource("5_047uy")
 ignore_texture_size = true
 stretch_mode = 4
 
-[node name="TextureButton2" type="TextureButton" parent="CardDialog/PanelContainer/MarginContainer/HBoxContainer/Page2/HBoxContainer"]
+[node name="TextureButton2" type="TextureButton" parent="CardDialog/PanelContainer/MarginContainer/HBoxContainer/MinersPage/HBoxContainer"]
 custom_minimum_size = Vector2(72, 80)
 layout_mode = 2
 size_flags_horizontal = 4
@@ -377,7 +381,7 @@ texture_normal = ExtResource("5_047uy")
 ignore_texture_size = true
 stretch_mode = 4
 
-[node name="TextureButton3" type="TextureButton" parent="CardDialog/PanelContainer/MarginContainer/HBoxContainer/Page2/HBoxContainer"]
+[node name="TextureButton3" type="TextureButton" parent="CardDialog/PanelContainer/MarginContainer/HBoxContainer/MinersPage/HBoxContainer"]
 custom_minimum_size = Vector2(72, 80)
 layout_mode = 2
 size_flags_horizontal = 4
@@ -386,7 +390,7 @@ texture_normal = ExtResource("5_047uy")
 ignore_texture_size = true
 stretch_mode = 4
 
-[node name="TextureButton4" type="TextureButton" parent="CardDialog/PanelContainer/MarginContainer/HBoxContainer/Page2/HBoxContainer"]
+[node name="TextureButton4" type="TextureButton" parent="CardDialog/PanelContainer/MarginContainer/HBoxContainer/MinersPage/HBoxContainer"]
 custom_minimum_size = Vector2(72, 80)
 layout_mode = 2
 size_flags_horizontal = 4
@@ -395,7 +399,7 @@ texture_normal = ExtResource("5_047uy")
 ignore_texture_size = true
 stretch_mode = 4
 
-[node name="Counter" type="Label" parent="CardDialog/PanelContainer/MarginContainer/HBoxContainer/Page2"]
+[node name="Counter" type="Label" parent="CardDialog/PanelContainer/MarginContainer/HBoxContainer/MinersPage"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0, 0, 0, 1)
 theme_override_font_sizes/font_size = 24
@@ -403,10 +407,82 @@ text = "Adding 1 of 4 miners"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="MinersPayBtn" type="Button" parent="CardDialog/PanelContainer/MarginContainer/HBoxContainer/Page2"]
+[node name="MinersPayBtn" type="Button" parent="CardDialog/PanelContainer/MarginContainer/HBoxContainer/MinersPage"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 40
 text = "20 EVA"
+
+[node name="MortgagePage" type="VBoxContainer" parent="CardDialog/PanelContainer/MarginContainer/HBoxContainer"]
+custom_minimum_size = Vector2(380, 0)
+layout_mode = 2
+size_flags_horizontal = 6
+
+[node name="MortgageBody" type="VBoxContainer" parent="CardDialog/PanelContainer/MarginContainer/HBoxContainer/MortgagePage"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 24
+
+[node name="Title" type="Label" parent="CardDialog/PanelContainer/MarginContainer/HBoxContainer/MortgagePage/MortgageBody"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_font_sizes/font_size = 40
+text = "MORTGAGE"
+
+[node name="Description" type="Label" parent="CardDialog/PanelContainer/MarginContainer/HBoxContainer/MortgagePage/MortgageBody"]
+custom_minimum_size = Vector2(380, 0)
+layout_mode = 2
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_font_sizes/font_size = 20
+text = "You receive 80% of the paid value. To reverse this action, you pays 120% to the bank. Energy tolls and mining activities will be disabled."
+horizontal_alignment = 3
+vertical_alignment = 1
+autowrap_mode = 3
+
+[node name="ValuesContainer" type="VBoxContainer" parent="CardDialog/PanelContainer/MarginContainer/HBoxContainer/MortgagePage/MortgageBody"]
+layout_mode = 2
+
+[node name="MortgageContainer" type="HBoxContainer" parent="CardDialog/PanelContainer/MarginContainer/HBoxContainer/MortgagePage/MortgageBody/ValuesContainer"]
+layout_mode = 2
+
+[node name="MortgageLine" type="Label" parent="CardDialog/PanelContainer/MarginContainer/HBoxContainer/MortgagePage/MortgageBody/ValuesContainer/MortgageContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0, 0.36862746, 0, 1)
+theme_override_font_sizes/font_size = 24
+text = "Mortgage:"
+vertical_alignment = 1
+
+[node name="MortgageValue" type="Label" parent="CardDialog/PanelContainer/MarginContainer/HBoxContainer/MortgagePage/MortgageBody/ValuesContainer/MortgageContainer"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0, 0.36862746, 0, 1)
+theme_override_font_sizes/font_size = 24
+text = "30 EVA"
+horizontal_alignment = 2
+vertical_alignment = 1
+
+[node name="UnmortgageContainer" type="HBoxContainer" parent="CardDialog/PanelContainer/MarginContainer/HBoxContainer/MortgagePage/MortgageBody/ValuesContainer"]
+layout_mode = 2
+
+[node name="UnmortgageLine" type="Label" parent="CardDialog/PanelContainer/MarginContainer/HBoxContainer/MortgagePage/MortgageBody/ValuesContainer/UnmortgageContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.5803922, 0, 0, 1)
+theme_override_font_sizes/font_size = 24
+text = "Unmortgage:"
+vertical_alignment = 1
+
+[node name="UnmortgageValue" type="Label" parent="CardDialog/PanelContainer/MarginContainer/HBoxContainer/MortgagePage/MortgageBody/ValuesContainer/UnmortgageContainer"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.5803922, 0, 0, 1)
+theme_override_font_sizes/font_size = 24
+text = "50 EVA"
+horizontal_alignment = 2
+vertical_alignment = 1
+
+[node name="MortageBtn" type="Button" parent="CardDialog/PanelContainer/MarginContainer/HBoxContainer/MortgagePage"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 40
+text = "RECEIVE 30 EVA"
 
 [node name="CloseBtn" type="Button" parent="CardDialog/PanelContainer"]
 layout_mode = 2
