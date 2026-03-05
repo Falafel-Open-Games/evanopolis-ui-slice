@@ -43,6 +43,7 @@ signal miner_order_locked(player_index: int, locked: bool)
 signal miner_order_committed(player_index: int)
 signal miner_batches_changed(tile_index: int, miner_batches: int, owner_index: int)
 signal property_owner_changed(tile_index: int, owner_index: int)
+signal property_mortgaged_changed(tile_index: int, is_mortgaged: bool, operation_value: float)
 signal state_reset()
 
 func _ready() -> void:
@@ -168,6 +169,8 @@ func apply_property_payout(tile_index: int) -> void:
     if tile.owner_index < 0:
         return
     if tile.miner_batches <= 0:
+        return
+    if tile.is_mortgaged:
         return
     var payout_per_miner: float = PAYOUT_PER_MINER
     var total_payout: float = payout_per_miner * float(tile.miner_batches)
@@ -431,9 +434,11 @@ func mortgage_property(player_index: int, tile_index: int) -> void:
         return
 
     tiles[tile_index].is_mortgaged = true
+    var mortgage_value = tiles[tile_index].property_price * MORTGAGE_RECEIVE_RATE
     var payer: PlayerData = players[player_index]
-    payer.fiat_balance += tiles[tile_index].property_price * MORTGAGE_RECEIVE_RATE
+    payer.fiat_balance += mortgage_value
     player_data_changed.emit(player_index, payer)
+    property_mortgaged_changed.emit(tile_index, true, mortgage_value)
 
 func unmortgage_property(player_index: int, tile_index: int) -> void:
     var info: TileInfo = get_tile_info(tile_index)
@@ -446,3 +451,4 @@ func unmortgage_property(player_index: int, tile_index: int) -> void:
     tiles[tile_index].is_mortgaged = false
     payer.fiat_balance -= unmortgage_price
     player_data_changed.emit(player_index, payer)
+    property_mortgaged_changed.emit(tile_index, false, unmortgage_price)
