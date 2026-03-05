@@ -147,4 +147,4 @@ func _populate_cards(player_index: int):
         var toll_amount = game_state.get_energy_toll(tile_info)
 
         if is_property:
-            _cards[i].set_card_owned(tile_info.city, tile_info.tile_type, toll_amount, tile_info.miner_batches, owner_name, tile_index)
+            _cards[i].set_card_owned(tile_info.city, tile_info.tile_type, toll_amount, tile_info.miner_batches, owner_name, tile_info.is_mortgaged, tile_index)

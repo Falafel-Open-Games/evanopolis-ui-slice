@@ -128,6 +128,8 @@ func _bind_game_state() -> void:
         game_state.turn_state_changed.connect(_on_turn_state_changed)
     if not game_state.miner_batches_changed.is_connected(_on_miner_batches_changed):
         game_state.miner_batches_changed.connect(_on_miner_batches_changed)
+    if not game_state.property_mortgaged_changed.is_connected(_on_property_mortgaged_changed):
+        game_state.property_mortgaged_changed.connect(_on_property_mortgaged_changed)
 
 func _on_timer_elapsed(turn_duration: int, time_elapsed: float):
     var remaining := int(max(0.0, turn_duration - time_elapsed))
@@ -258,17 +260,17 @@ func _on_pawn_move_finished(_end_tile_index: int, _player_index: int) -> void:
             buy_property_button.disabled = not is_affordable
 
             card_ui.set_card_available(tile_info.city, tile_info.tile_type, tile_info.property_price)
-        elif tile_info.owner_index != game_state.current_player_index:
+        elif tile_info.owner_index != game_state.current_player_index and not tile_info.is_mortgaged:
             # Current player must pay the toll
             pay_toll_button.visible = true
             var toll_amount = game_state.get_energy_toll(tile_info)
             var owner_name = game_state.get_player_username(tile_info.owner_index) if tile_info.owner_index != -1 else "NO OWNER"
             card_ui.set_card_owned(tile_info.city, tile_info.tile_type, toll_amount, tile_info.miner_batches, owner_name)
         else:
-            # Current player is the owner already
+            # Current player is the owner already or is mortgaged
             var toll_amount = game_state.get_energy_toll(tile_info)
             var owner_name = game_state.get_player_username(tile_info.owner_index) if tile_info.owner_index != -1 else "NO OWNER"
-            card_ui.set_card_owned(tile_info.city, tile_info.tile_type, toll_amount, tile_info.miner_batches, owner_name)
+            card_ui.set_card_owned(tile_info.city, tile_info.tile_type, toll_amount, tile_info.miner_batches, owner_name, tile_info.is_mortgaged)
             end_turn_button.visible = true
     else:
         end_turn_button.visible = true
@@ -301,11 +303,11 @@ func _on_miner_batches_changed(tile_index: int, miner_batches: int, owner_index:
         return
 
     var paid_total = game_state.get_miner_batch_price_fiat() * miner_batches
-    _spend_value_balance_variation(int(paid_total))
+    _spend_value_balance_variation(paid_total)
 
 func _on_property_purchased(tile_index: int) -> void:
     var tile_info = game_state.get_tile_info(tile_index)
-    _spend_value_balance_variation(int(tile_info.property_price))
+    _spend_value_balance_variation(tile_info.property_price)
 
 func _on_toll_payment_confirmed(is_payed: bool, toll_value: float) -> void:
     # TODO: bankrupt player if payment is declined
@@ -314,9 +316,9 @@ func _on_toll_payment_confirmed(is_payed: bool, toll_value: float) -> void:
     card_ui.hide_card()
 
     if is_payed:
-        _spend_value_balance_variation(int(toll_value))
+        _spend_value_balance_variation(toll_value)
 
-func _spend_value_balance_variation(spent_value: int):
+func _spend_value_balance_variation(spent_value: float):
     balance_variation_label.text = "- %s EVA" % str(spent_value)
     var stylebox := balance_variation_panel.get_theme_stylebox("panel").duplicate()
     stylebox.bg_color = balance_variation_spend_color
@@ -327,7 +329,7 @@ func _spend_value_balance_variation(spent_value: int):
 
     balance_variation_panel.visible = false
 
-func _receive_value_balance_variation(add_value: int):
+func _receive_value_balance_variation(add_value: float):
     balance_variation_label.text = "+ %s EVA" % str(add_value)
     var stylebox := balance_variation_panel.get_theme_stylebox("panel").duplicate()
     stylebox.bg_color = balance_variation_receive_color
@@ -337,6 +339,12 @@ func _receive_value_balance_variation(add_value: int):
     await get_tree().create_timer(TIMER_BALANCE_VARIATION).timeout
 
     balance_variation_panel.visible = false
+
+func _on_property_mortgaged_changed(_tile_index: int, is_mortgaged: bool, operation_value: float) -> void:
+    if is_mortgaged:
+        _receive_value_balance_variation(operation_value)
+    else:
+        _spend_value_balance_variation(operation_value)
 
 # UI
 

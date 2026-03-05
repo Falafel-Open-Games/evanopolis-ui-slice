@@ -8,8 +8,11 @@ signal card_selected(tile_index: int)
 @export var price_title: Label
 @export var price_label: Label
 @export var owner_label: Label
+@export var mortgaged_label: Label
 @export var miners_textures: Array[TextureRect]
 @export var card_image: TextureRect
+@export var color_property_normal: Color
+@export var color_property_mortgaged: Color
 
 var card_assuncion_with_mining_path = "res://textures/card-assuncion-with-mining.jpg"
 
@@ -18,10 +21,12 @@ var _initial_pos_y: float
 var _initial_rot_deg: float
 var _target_pos_y: float
 var _tile_index: int
+var style : StyleBoxFlat
 
 func _ready() -> void:
     mouse_entered.connect(_on_mouse_entered)
     mouse_exited.connect(_on_mouse_exited)
+    style = self.get_theme_stylebox("panel").duplicate()
 
 func set_initial_position():
     _initial_pos_y = self.position.y
@@ -35,6 +40,7 @@ func set_card_available(title: String, type: Utils.TileType, price: float, tile_
     price_title.text = "PRICE"
     price_label.text = "%s EVA" % str(price)
     owner_label.text = "AVAILABLE"
+    mortgaged_label.visible = false
     _tile_index = tile_index
 
     for miner_texture in miners_textures:
@@ -42,7 +48,7 @@ func set_card_available(title: String, type: Utils.TileType, price: float, tile_
 
     _set_card_texture(title, false, type)
 
-func set_card_owned(title: String, type: Utils.TileType, toll_amount: float, miners: int, owner_name: String, tile_index: int = -1):
+func set_card_owned(title: String, type: Utils.TileType, toll_amount: float, miners: int, owner_name: String, is_mortgaged: bool = false, tile_index: int = -1):
     print("set_card_owned miners = %s" % miners)
     visible = true
     title_label.text = title.to_upper()
@@ -59,6 +65,10 @@ func set_card_owned(title: String, type: Utils.TileType, toll_amount: float, min
         miners_textures[i].modulate = Color(1,1,1, 1)
 
     _set_card_texture(title, true, type)
+
+    mortgaged_label.visible = is_mortgaged
+    style.bg_color = color_property_mortgaged if is_mortgaged else color_property_normal
+    self.add_theme_stylebox_override("panel", style)
 
 func hide_card():
     visible = false
