@@ -175,6 +175,30 @@ func get_energy_toll_btc(tile: TileInfo) -> float:
 func get_payout_per_miner_for_cycle(_cycle_number: int) -> float:
     return PAYOUT_PER_MINER
 
+func get_winner_username() -> String:
+    var winner_username = ""
+    var greater_btc_value = 0
+
+    for player in players:
+        if player.bitcoin_balance <= greater_btc_value:
+            continue
+
+        greater_btc_value = player.bitcoin_balance
+        winner_username = player.username
+
+    var greater_fiat_value = 0
+
+    if greater_btc_value == 0:
+        for player in players:
+            if player.fiat_balance <= greater_fiat_value:
+                continue
+
+            greater_fiat_value = player.fiat_balance
+            winner_username = player.username
+
+    return winner_username
+
+
 func apply_property_payout(tile_index: int) -> void:
     assert(tile_index >= 0 and tile_index < tiles.size())
     var tile: TileInfo = tiles[tile_index]

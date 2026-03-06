@@ -41,6 +41,7 @@ signal dice_result_shown(dice_1: int, dice_2: int, total: int)
 @export var turn_indicator_player_color : ColorRect
 @export var inventory : Control
 @export var card_dialog : CardDialog
+@export var winner_screen : WinnerScreen
 
 const TIMER_APPLY_DICES_RESULT := 1.0
 const TIMER_BALANCE_VARIATION := 3.0
@@ -82,6 +83,7 @@ func _reset_ui():
     balance_variation_panel.visible = false
     turn_indicator_panel.visible = false
     map_overview_button.visible = false
+    inventory_button.visible = false
     pay_toll_button.visible = false
     pay_exit_prision_button.visible = false
     go_to_prision_button.visible = false
@@ -111,6 +113,8 @@ func _bind_ui_elements() -> void:
 func _bind_game_controller() -> void:
     if not game_controller.match_elapsed.is_connected(_on_match_elapsed):
         game_controller.match_elapsed.connect(_on_match_elapsed)
+    if not game_controller.match_ended.is_connected(_on_match_ended):
+        game_controller.match_ended.connect(_on_match_ended)
     if not game_controller.timer_elapsed.is_connected(_on_timer_elapsed):
         game_controller.timer_elapsed.connect(_on_timer_elapsed)
     if not game_controller.turn_started.is_connected(_on_turn_started):
@@ -147,6 +151,20 @@ func _bind_game_state() -> void:
         game_state.player_arrested_changed.connect(_on_player_arrested_changed)
     if not game_state.player_money_fiat_spent.is_connected(_on_player_money_fiat_spent):
         game_state.player_money_fiat_spent.connect(_on_player_money_fiat_spent)
+
+func _on_match_ended() -> void:
+    _reset_ui()
+    timer_label.visible = false
+    match_timer_label.visible = false
+    inventory_button.visible = false
+    _is_inventory_active = false
+    inventory.hide_inventory()
+    player_name.visible = false
+    player_balance.visible = false
+    player_color.visible = false
+    dice_1_texture_rect.visible = false
+    dice_2_texture_rect.visible = false
+    winner_screen.show_dialog(game_state.get_winner_username())
 
 func _on_match_elapsed(match_duration: int, time_elapsed: float) -> void:
     var remaining := int(max(0.0, match_duration - time_elapsed))

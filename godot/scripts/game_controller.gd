@@ -8,6 +8,7 @@ signal property_purchased(tile_index: int)
 signal turn_ended(next_player_index: int, next_tile_index: int)
 signal turn_started(player_index: int, tile_index: int)
 signal match_elapsed(match_duration: int, time_elapsed: float)
+signal match_ended()
 signal timer_elapsed(turn_duration: int, time_elapsed: float)
 signal map_overview_button_pressed(is_active: bool)
 signal toll_payment_confirmed(is_payed: bool, toll_value: float)
@@ -31,6 +32,7 @@ signal try_to_escape_prision_failed()
 
 var match_timer_elapsed: float = 0.0
 var turn_elapsed: float = 0.0
+var match_timer_active: bool = false
 var turn_timer_active: bool = false
 var current_tile_index: int = 0
 var pending_toll_owner_index: int = -1
@@ -58,6 +60,7 @@ func _ready() -> void:
     call_deferred("_initialize_game_state")
 
     # call_deferred("_bind_sidebar")
+    match_timer_active = true
     set_process(true)
 
 func _bind_game_state() -> void:
@@ -103,6 +106,10 @@ func _bind_ui_controller() -> void:
 # 		turn_actions.buy_requested.connect(_on_buy_requested)
 # 	if not turn_actions.toll_payment_requested.is_connected(_on_toll_payment_requested):
 # 		turn_actions.toll_payment_requested.connect(_on_toll_payment_requested)
+
+func _on_end_match_time() -> void:
+    turn_timer_active = false
+    match_ended.emit()
 
 func _on_end_turn_pressed() -> void:
     assert(game_state)
@@ -217,17 +224,19 @@ func _initialize_game_state() -> void:
     _place_all_pawns_at_start()
 
 func _process(delta: float) -> void:
-    match_timer_elapsed += delta
-    match_elapsed.emit(GameConfig.match_duration, match_timer_elapsed)
+    if match_timer_active:
+        match_timer_elapsed += delta
+        match_elapsed.emit(GameConfig.match_duration, match_timer_elapsed)
+        if match_timer_elapsed >= GameConfig.match_duration:
+            match_timer_active = false
+            _on_end_match_time()
 
-    if not turn_timer_active:
-        return
-    turn_elapsed += delta
-    # turn_actions.set_turn_timer(GameConfig.turn_duration, turn_elapsed)
-    timer_elapsed.emit(GameConfig.turn_duration, turn_elapsed)
-    if turn_elapsed >= GameConfig.turn_duration:
-        turn_timer_active = false
-        _on_end_turn_pressed()
+    if turn_timer_active:
+        turn_elapsed += delta
+        timer_elapsed.emit(GameConfig.turn_duration, turn_elapsed)
+        if turn_elapsed >= GameConfig.turn_duration:
+            turn_timer_active = false
+            _on_end_turn_pressed()
 
 func _reset_turn_timer() -> void:
     turn_elapsed = 0.0
