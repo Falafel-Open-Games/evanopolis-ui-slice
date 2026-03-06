@@ -37,7 +37,7 @@ corner_radius_top_right = 40
 corner_radius_bottom_right = 40
 corner_radius_bottom_left = 40
 
-[node name="Hud" type="Control" node_paths=PackedStringArray("timer_label", "notification_message_label", "player_name", "player_balance", "player_color", "dice_1_texture_rect", "dice_2_texture_rect", "end_turn_button", "roll_dice_button", "buy_property_button", "pass_property_button", "pay_toll_button", "pay_exit_prision_button", "go_to_prision_button", "map_overview_button", "inventory_button", "card_ui", "balance_variation_panel", "balance_variation_label", "turn_indicator_panel", "turn_indicator_label", "turn_indicator_player_color", "inventory", "card_dialog")]
+[node name="Hud" type="Control" node_paths=PackedStringArray("match_timer_label", "timer_label", "notification_message_label", "player_name", "player_balance", "player_color", "dice_1_texture_rect", "dice_2_texture_rect", "end_turn_button", "roll_dice_button", "buy_property_button", "pass_property_button", "pay_toll_button", "pay_exit_prision_button", "go_to_prision_button", "map_overview_button", "inventory_button", "card_ui", "balance_variation_panel", "balance_variation_label", "turn_indicator_panel", "turn_indicator_label", "turn_indicator_player_color", "inventory", "card_dialog")]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -45,7 +45,8 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_ahhtf")
-timer_label = NodePath("MarginContainer/VBoxContainer/Timer")
+match_timer_label = NodePath("MarginContainer/VBoxContainer/MatchTimerValue")
+timer_label = NodePath("MarginContainer/VBoxContainer/VBoxContainer/Timer")
 notification_message_label = NodePath("MarginContainer/VBoxContainer/NotificationMessage")
 player_name = NodePath("MarginContainer/VBoxContainer/VBoxContainer/HBoxContainer/PlayerName")
 player_balance = NodePath("MarginContainer/VBoxContainer/VBoxContainer/HBoxContainer2/PlayerBalance")
@@ -87,9 +88,17 @@ theme_override_constants/margin_bottom = 40
 [node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer"]
 layout_mode = 2
 
-[node name="Timer" type="Label" parent="MarginContainer/VBoxContainer"]
+[node name="MatchTimerLabel" type="Label" parent="MarginContainer/VBoxContainer"]
 layout_mode = 2
 size_flags_vertical = 1
+theme_override_font_sizes/font_size = 12
+text = "MATCH TIMER"
+horizontal_alignment = 1
+
+[node name="MatchTimerValue" type="Label" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 1
+theme_override_font_sizes/font_size = 24
 text = "MM:SS"
 horizontal_alignment = 1
 
@@ -129,6 +138,14 @@ stretch_mode = 4
 [node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer/VBoxContainer"]
 layout_mode = 2
 theme_override_constants/separation = 16
+
+[node name="Timer" type="Label" parent="MarginContainer/VBoxContainer/VBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 8
+size_flags_vertical = 1
+theme_override_font_sizes/font_size = 24
+text = "MM:SS"
+horizontal_alignment = 2
 
 [node name="HBoxContainer3" type="HBoxContainer" parent="MarginContainer/VBoxContainer/VBoxContainer"]
 layout_mode = 2

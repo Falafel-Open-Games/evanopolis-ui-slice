@@ -14,6 +14,7 @@ signal dice_result_shown(dice_1: int, dice_2: int, total: int)
 @export var game_controller: GameController
 @export var game_state: GameState
 
+@export var match_timer_label : Label
 @export var timer_label : Label
 @export var notification_message_label : Label
 @export var player_name : Label
@@ -108,6 +109,8 @@ func _bind_ui_elements() -> void:
         go_to_prision_button.pressed.connect(_on_go_to_prision_button)
 
 func _bind_game_controller() -> void:
+    if not game_controller.match_elapsed.is_connected(_on_match_elapsed):
+        game_controller.match_elapsed.connect(_on_match_elapsed)
     if not game_controller.timer_elapsed.is_connected(_on_timer_elapsed):
         game_controller.timer_elapsed.connect(_on_timer_elapsed)
     if not game_controller.turn_started.is_connected(_on_turn_started):
@@ -144,6 +147,12 @@ func _bind_game_state() -> void:
         game_state.player_arrested_changed.connect(_on_player_arrested_changed)
     if not game_state.player_money_fiat_spent.is_connected(_on_player_money_fiat_spent):
         game_state.player_money_fiat_spent.connect(_on_player_money_fiat_spent)
+
+func _on_match_elapsed(match_duration: int, time_elapsed: float) -> void:
+    var remaining := int(max(0.0, match_duration - time_elapsed))
+    var minutes := remaining / 60
+    var seconds := remaining % 60
+    match_timer_label.text = "%02d:%02d" % [minutes, seconds]
 
 func _on_timer_elapsed(turn_duration: int, time_elapsed: float):
     var remaining := int(max(0.0, turn_duration - time_elapsed))

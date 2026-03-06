@@ -3,6 +3,7 @@ extends Control
 @onready var board_size_selector: OptionButton = %BoardSizeSelector
 @onready var player_count_selector: OptionButton = %PlayerCountSelector
 @onready var turn_time_selector: OptionButton = %TurnTimeSelector
+@onready var match_time_selector: OptionButton = %MatchTimeSelector
 @onready var game_id_input: LineEdit = %GameIdInput
 @onready var start_button: Button = %StartButton
 @onready var subtitle: Label = %Subtitle
@@ -13,6 +14,7 @@ extends Control
 const BOARD_SIZES: Array[int] = [24, 30, 36]
 const PLAYER_COUNTS: Array[int] = [2, 3, 4, 5, 6]
 const TURN_DURATIONS: Array[int] = [10, 30, 60]
+const MATCH_DURATIONS: Array[int] = [600, 900, 1800]
 
 func _ready() -> void:
 	game_id_input.text = Crypto.new().generate_random_bytes(5).hex_encode()
@@ -23,6 +25,7 @@ func _on_start_pressed() -> void:
 	GameConfig.board_size = BOARD_SIZES[board_size_selector.selected]
 	GameConfig.player_count = PLAYER_COUNTS[player_count_selector.selected]
 	GameConfig.turn_duration = TURN_DURATIONS[turn_time_selector.selected]
+	GameConfig.match_duration = MATCH_DURATIONS[match_time_selector.selected]
 	GameConfig.game_id = game_id_input.text.strip_edges()
 	GameConfig.disable_special_properties = disable_special_properties_toggle.button_pressed
 	get_tree().change_scene_to_packed(game_scene_path)

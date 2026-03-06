@@ -107,6 +107,25 @@ popup/item_1/id = 1
 popup/item_2/text = "60s"
 popup/item_2/id = 2
 
+[node name="HBoxContainerMatchTime" type="HBoxContainer" parent="Center/VBox/HBoxContainer2"]
+layout_mode = 2
+
+[node name="MatchTimeLabel" type="Label" parent="Center/VBox/HBoxContainer2/HBoxContainerMatchTime"]
+layout_mode = 2
+text = "Match Time:"
+
+[node name="MatchTimeSelector" type="OptionButton" parent="Center/VBox/HBoxContainer2/HBoxContainerMatchTime"]
+unique_name_in_owner = true
+layout_mode = 2
+selected = 2
+item_count = 3
+popup/item_0/text = "10min"
+popup/item_0/id = 0
+popup/item_1/text = "15min"
+popup/item_1/id = 1
+popup/item_2/text = "30min"
+popup/item_2/id = 2
+
 [node name="HBoxContainerGameId" type="HBoxContainer" parent="Center/VBox"]
 layout_mode = 2
 
