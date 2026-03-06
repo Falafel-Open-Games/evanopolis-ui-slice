@@ -87,6 +87,8 @@ func _bind_ui_controller() -> void:
         ui_controller.pay_toll_button_pressed.connect(_on_toll_payment_requested)
     if not ui_controller.pay_exit_prision_button_pressed.is_connected(_on_pay_exit_prision_button_pressed):
         ui_controller.pay_exit_prision_button_pressed.connect(_on_pay_exit_prision_button_pressed)
+    if not ui_controller.go_to_prision_button_pressed.is_connected(_on_go_to_prision_button_pressed):
+        ui_controller.go_to_prision_button_pressed.connect(_on_go_to_prision_button_pressed)
 
 # func _bind_sidebar() -> void:
 # 	if not turn_actions.end_turn_button.pressed.is_connected(_on_end_turn_pressed):
@@ -398,6 +400,9 @@ func _on_pay_exit_prision_button_pressed() -> void:
 
     game_state.pay_and_release_player(game_state.current_player_index)
 
+func _on_go_to_prision_button_pressed() -> void:
+    game_state.arrest_player(game_state.current_player_index)
+
 func _flip_tile(tile_index: int) -> void:
     assert(board_layout)
     assert(board_layout.has_method("get_board_tiles"))
@@ -449,7 +454,7 @@ func _update_cycle_visual(cycle_number: int) -> void:
 
 func _on_player_arrested_changed(player_index: int, arrested_status: bool) -> void:
     if arrested_status:
-        _snap_pawn_to_tile(player_index, game_state.inspection_tile_index)
+        game_state.teleport_player_to_tile(player_index, game_state.inspection_tile_index)
 
 func _try_to_escape_prision(dice_1: int, dice_2: int) -> bool:
     return dice_1 == dice_2

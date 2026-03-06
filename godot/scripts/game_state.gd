@@ -135,6 +135,16 @@ func move_player(player_index: int, steps: int, board_size: int) -> void:
     if cycle_changed:
         _emit_turn_state()
 
+func teleport_player_to_tile(player_index: int, tile_index: int) -> void:
+    var current_tile: int = player_positions[player_index]
+    var current_occupants: Array[int] = tiles[current_tile].occupants
+    var next_occupants: Array[int] = tiles[tile_index].occupants
+    current_occupants.erase(player_index)
+    next_occupants.append(player_index)
+    player_positions[player_index] = tile_index
+    var next_slot: int = next_occupants.size() - 1
+    player_position_changed.emit(tile_index, next_slot)
+
 func get_tile_info(tile_index: int) -> TileInfo:
     assert(not tiles.is_empty())
     assert(tile_index >= 0 and tile_index < tiles.size())

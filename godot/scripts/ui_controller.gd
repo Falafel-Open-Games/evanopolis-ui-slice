@@ -7,6 +7,7 @@ signal buy_property_button_pressed
 signal pass_property_button_pressed
 signal pay_toll_button_pressed
 signal pay_exit_prision_button_pressed
+signal go_to_prision_button_pressed
 signal map_overview_button_pressed(is_active: bool)
 signal dice_result_shown(dice_1: int, dice_2: int, total: int)
 
@@ -26,6 +27,7 @@ signal dice_result_shown(dice_1: int, dice_2: int, total: int)
 @export var pass_property_button : Button
 @export var pay_toll_button : Button
 @export var pay_exit_prision_button : Button
+@export var go_to_prision_button : Button
 @export var map_overview_button : TextureButton
 @export var inventory_button : TextureButton
 @export var card_ui : CardUi
@@ -57,6 +59,18 @@ var _is_inventory_active: bool = false
 
 func _ready() -> void:
     # reset UI
+    _reset_ui()
+    card_ui.hide_card()
+    card_dialog.close_dialog()
+    inventory.set_inventory(game_controller, game_state)
+    card_dialog.set_dialog(game_controller, game_state)
+
+    # bind states
+    _bind_game_state()
+    _bind_game_controller()
+    _bind_ui_elements()
+
+func _reset_ui():
     notification_message_label.visible = false
     dice_1_texture_rect.visible = false
     dice_2_texture_rect.visible = false
@@ -69,15 +83,7 @@ func _ready() -> void:
     map_overview_button.visible = false
     pay_toll_button.visible = false
     pay_exit_prision_button.visible = false
-    card_ui.hide_card()
-    card_dialog.close_dialog()
-    inventory.set_inventory(game_controller, game_state)
-    card_dialog.set_dialog(game_controller, game_state)
-
-    # bind states
-    _bind_game_state()
-    _bind_game_controller()
-    _bind_ui_elements()
+    go_to_prision_button.visible = false
 
 func _bind_ui_elements() -> void:
     if not end_turn_button.pressed.is_connected(_on_end_turn_button_pressed):
@@ -98,6 +104,8 @@ func _bind_ui_elements() -> void:
         inventory.card_selected.connect(_on_card_selected)
     if not pay_exit_prision_button.pressed.is_connected(_on_pay_exit_prision_button):
         pay_exit_prision_button.pressed.connect(_on_pay_exit_prision_button)
+    if not go_to_prision_button.pressed.is_connected(_on_go_to_prision_button):
+        go_to_prision_button.pressed.connect(_on_go_to_prision_button)
 
 func _bind_game_controller() -> void:
     if not game_controller.timer_elapsed.is_connected(_on_timer_elapsed):
@@ -146,10 +154,10 @@ func _on_timer_elapsed(turn_duration: int, time_elapsed: float):
 func _on_turn_started(player_index: int, tile_index: int):
     print("_on_turn_started %s %s" % [player_index, tile_index])
 
+    _reset_ui()
     map_overview_button.visible = true
     inventory_button.visible = true
     _is_inventory_active = false
-    notification_message_label.visible = false
     inventory.hide_inventory()
 
     player_name.text = game_state.get_player_username(player_index)
@@ -272,9 +280,14 @@ func _on_pawn_move_finished(_end_tile_index: int, _player_index: int) -> void:
             card_ui.set_card_available(tile_info.city, tile_info.tile_type, tile_info.property_price)
         elif tile_info.owner_index != game_state.current_player_index and not tile_info.is_mortgaged:
             # Current player must pay the toll
-            pay_toll_button.visible = true
             var toll_amount = game_state.get_energy_toll(tile_info)
             var owner_name = game_state.get_player_username(tile_info.owner_index) if tile_info.owner_index != -1 else "NO OWNER"
+            var player_balance_fiat = game_state.get_player_fiat_balance(_player_index)
+            var has_enough_funds = player_balance_fiat >= toll_amount
+
+            pay_toll_button.visible = true
+            pay_toll_button.disabled = not has_enough_funds
+            go_to_prision_button.visible = not has_enough_funds
             card_ui.set_card_owned(tile_info.city, tile_info.tile_type, toll_amount, tile_info.miner_batches, owner_name)
         else:
             # Current player is the owner already or is mortgaged
@@ -412,6 +425,11 @@ func _on_pay_exit_prision_button() -> void:
     roll_dice_button.visible = false
     pay_exit_prision_button.visible = false
     pay_exit_prision_button_pressed.emit()
+
+func _on_go_to_prision_button() -> void:
+    go_to_prision_button.visible = false
+    pay_toll_button.visible = false
+    go_to_prision_button_pressed.emit()
 
 func _on_map_overview_button_pressed() -> void:
     _is_map_overview_active = not _is_map_overview_active
