@@ -37,7 +37,7 @@ corner_radius_top_right = 40
 corner_radius_bottom_right = 40
 corner_radius_bottom_left = 40
 
-[node name="Hud" type="Control" node_paths=PackedStringArray("timer_label", "player_name", "player_balance", "player_color", "dice_1_texture_rect", "dice_2_texture_rect", "end_turn_button", "roll_dice_button", "buy_property_button", "pass_property_button", "pay_toll_button", "map_overview_button", "inventory_button", "card_ui", "balance_variation_panel", "balance_variation_label", "turn_indicator_panel", "turn_indicator_label", "turn_indicator_player_color", "inventory", "card_dialog")]
+[node name="Hud" type="Control" node_paths=PackedStringArray("timer_label", "notification_message_label", "player_name", "player_balance", "player_color", "dice_1_texture_rect", "dice_2_texture_rect", "end_turn_button", "roll_dice_button", "buy_property_button", "pass_property_button", "pay_toll_button", "pay_exit_prision_button", "map_overview_button", "inventory_button", "card_ui", "balance_variation_panel", "balance_variation_label", "turn_indicator_panel", "turn_indicator_label", "turn_indicator_player_color", "inventory", "card_dialog")]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -46,6 +46,7 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_ahhtf")
 timer_label = NodePath("MarginContainer/VBoxContainer/Timer")
+notification_message_label = NodePath("MarginContainer/VBoxContainer/NotificationMessage")
 player_name = NodePath("MarginContainer/VBoxContainer/VBoxContainer/HBoxContainer/PlayerName")
 player_balance = NodePath("MarginContainer/VBoxContainer/VBoxContainer/HBoxContainer2/PlayerBalance")
 player_color = NodePath("MarginContainer/VBoxContainer/VBoxContainer/HBoxContainer/PlayerColor")
@@ -56,6 +57,7 @@ roll_dice_button = NodePath("MarginContainer/MarginContainer/HBoxContainer/RollD
 buy_property_button = NodePath("MarginContainer/MarginContainer/HBoxContainer/BuyPropertyBtn")
 pass_property_button = NodePath("MarginContainer/MarginContainer/HBoxContainer/PassPropertyBtn")
 pay_toll_button = NodePath("MarginContainer/MarginContainer/HBoxContainer/PayToll")
+pay_exit_prision_button = NodePath("MarginContainer/MarginContainer/HBoxContainer/PayExitPrision")
 map_overview_button = NodePath("MarginContainer/VBoxContainer/VBoxContainer/HBoxContainer3/MapOverviewBtn")
 inventory_button = NodePath("MarginContainer/VBoxContainer/VBoxContainer/HBoxContainer3/InventoryBtn")
 card_ui = NodePath("Card")
@@ -89,6 +91,15 @@ layout_mode = 2
 size_flags_vertical = 1
 text = "MM:SS"
 horizontal_alignment = 1
+
+[node name="NotificationMessage" type="Label" parent="MarginContainer/VBoxContainer"]
+custom_minimum_size = Vector2(0, 200)
+layout_mode = 2
+size_flags_vertical = 1
+theme_override_font_sizes/font_size = 80
+text = "ARRESTED"
+horizontal_alignment = 1
+vertical_alignment = 1
 
 [node name="HBoxContainer" type="HBoxContainer" parent="MarginContainer/VBoxContainer"]
 layout_mode = 2
@@ -222,7 +233,13 @@ custom_minimum_size = Vector2(200, 80)
 layout_mode = 2
 text = "PAY"
 
+[node name="PayExitPrision" type="Button" parent="MarginContainer/MarginContainer/HBoxContainer"]
+custom_minimum_size = Vector2(200, 80)
+layout_mode = 2
+text = "PAY EXIT PRISION"
+
 [node name="Card" parent="." instance=ExtResource("3_5ysmq")]
+visible = false
 layout_mode = 1
 offset_left = -395.0
 offset_top = 151.0
@@ -267,6 +284,7 @@ text = "PLAYER 1 IS UP"
 horizontal_alignment = 2
 
 [node name="CardDialog" type="CanvasLayer" parent="." node_paths=PackedStringArray("card", "trade_button", "miners_button", "mortgage_button", "close_button", "miner_confirm_button", "miners_buttons", "miners_counter", "page_default", "page_miner", "page_mortgage", "mortgage_confirm_button", "mortgage_receive_value", "mortgage_pay_value")]
+visible = false
 script = ExtResource("4_6fi6k")
 card = NodePath("PanelContainer/MarginContainer/HBoxContainer/Card")
 trade_button = NodePath("PanelContainer/MarginContainer/HBoxContainer/MainPage/TradeBtn")

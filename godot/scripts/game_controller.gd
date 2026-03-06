@@ -10,6 +10,7 @@ signal turn_started(player_index: int, tile_index: int)
 signal timer_elapsed(turn_duration: int, time_elapsed: float)
 signal map_overview_button_pressed(is_active: bool)
 signal toll_payment_confirmed(is_payed: bool, toll_value: float)
+signal try_to_escape_prision_failed()
 
 # @export var turn_actions: TurnActions
 @export var left_sidebar_list: BoxContainer
@@ -68,6 +69,8 @@ func _bind_game_state() -> void:
         game_state.turn_state_changed.connect(_on_turn_state_changed)
     if not game_state.miner_batches_changed.is_connected(_on_miner_batches_changed):
         game_state.miner_batches_changed.connect(_on_miner_batches_changed)
+    if not game_state.player_arrested_changed.is_connected(_on_player_arrested_changed):
+        game_state.player_arrested_changed.connect(_on_player_arrested_changed)
 
 func _bind_ui_controller() -> void:
     if not ui_controller.end_turn_button_pressed.is_connected(_on_end_turn_pressed):
@@ -82,7 +85,8 @@ func _bind_ui_controller() -> void:
         ui_controller.map_overview_button_pressed.connect(_on_map_overview_pressed)
     if not ui_controller.pay_toll_button_pressed.is_connected(_on_toll_payment_requested):
         ui_controller.pay_toll_button_pressed.connect(_on_toll_payment_requested)
-
+    if not ui_controller.pay_exit_prision_button_pressed.is_connected(_on_pay_exit_prision_button_pressed):
+        ui_controller.pay_exit_prision_button_pressed.connect(_on_pay_exit_prision_button_pressed)
 
 # func _bind_sidebar() -> void:
 # 	if not turn_actions.end_turn_button.pressed.is_connected(_on_end_turn_pressed):
@@ -109,7 +113,13 @@ func _on_roll_dice_pressed() -> void:
     _on_dice_requested()
 
 func _on_dice_result_shown(dice_1: int, dice_2: int, total: int) -> void:
-    move_player(dice_1, dice_2, total)
+    if game_state.is_player_arrested(game_state.current_player_index):
+        if _try_to_escape_prision(dice_1, dice_2):
+            game_state.release_arrested_player(game_state.current_player_index)
+        else:
+            try_to_escape_prision_failed.emit()
+    else:
+        move_player(dice_1, dice_2, total)
 
 func _on_player_changed(new_index: int) -> void:
     # turn_actions.set_current_player(new_index, game_state.turn_count, game_state.current_cycle)
@@ -153,64 +163,19 @@ func _on_dice_requested() -> void:
 func _update_tile_info(tile_index: int) -> void:
     assert(game_state)
     var info: TileInfo = game_state.get_tile_info(tile_index)
-    var tile_type: Utils.TileType = info.tile_type
-    var city: String = info.city
-    var incident_kind: String = info.incident_kind
-    var price: float = 0.0
-    if tile_type == Utils.TileType.PROPERTY:
-        price = game_state.get_tile_price(info)
-    elif tile_type == Utils.TileType.SPECIAL_PROPERTY:
-        price = game_state.get_tile_price(info)
-    var buy_visible: bool = (
-        (tile_type == Utils.TileType.PROPERTY or tile_type == Utils.TileType.SPECIAL_PROPERTY)
-        and info.owner_index == -1
-    )
-    var is_owned: bool = info.owner_index != -1
-    var owner_name: String = ""
-    var owner_index: int = -1
-    if is_owned:
-        owner_index = info.owner_index
-        owner_name = "Player %d" % (owner_index + 1)
-    var buy_enabled: bool = false
-    if buy_visible:
-        var payer_index: int = game_state.current_player_index
-        var fiat_balance: float = game_state.get_player_fiat_balance(payer_index)
-        buy_enabled = price > 0.0 and fiat_balance >= price
-    # turn_actions.update_tile_info(
-    # 	tile_type,
-    # 	city,
-    # 	incident_kind,
-    # 	price,
-    # 	info.special_property_name,
-    # 	price,
-    # 	game_state.get_energy_toll(info),
-    # 	game_state.get_payout_per_miner_for_cycle(1),
-    # 	info.miner_batches,
-    # 	is_owned,
-    # 	owner_index,
-    # 	owner_name,
-    # 	buy_visible,
-    # 	buy_enabled
-    # )
     _update_toll_actions(info)
 
 func _update_toll_actions(info: TileInfo) -> void:
     print("_update_toll_actions %s" % info.city)
-    # assert(turn_actions)
     assert(game_state)
     pending_toll_owner_index = -1
     pending_toll_fiat = 0.0
     if info.tile_type == Utils.TileType.PROPERTY and info.owner_index != -1:
         if info.owner_index != game_state.current_player_index:
             var toll_amount: float = game_state.get_energy_toll(info)
-            var payer_index: int = game_state.current_player_index
-            var fiat_balance: float = game_state.get_player_fiat_balance(payer_index)
-            var fiat_enabled: bool = fiat_balance >= toll_amount
             pending_toll_owner_index = info.owner_index
             pending_toll_fiat = toll_amount
-            # turn_actions.show_toll_actions(toll_amount, fiat_enabled)
             return
-    # turn_actions.hide_toll_actions(false)
 
 func _place_all_pawns_at_start() -> void:
     assert(game_state)
@@ -246,7 +211,6 @@ func _initialize_game_state() -> void:
         game_state.set_accent_color(index - 1, pawn.accent_color)
     _on_player_changed(game_state.current_player_index)
     _place_all_pawns_at_start()
-    _update_tile_info(0)
 
 func _process(delta: float) -> void:
     if not turn_timer_active:
@@ -354,6 +318,10 @@ func _place_pawn(
             return
         _pawn_move_tween = null
         _pawn_jump_tween = null
+
+    if target_tile_index == game_state.inspection_tile_index:
+        game_state.arrest_player(player_index)
+
     if emit_finish:
         pawn_move_finished.emit(target_tile_index, player_index)
 
@@ -400,7 +368,6 @@ func _on_buy_requested() -> void:
     )
     assert(did_purchase)
     _flip_tile(current_tile_index)
-    _update_tile_info(current_tile_index)
     property_purchased.emit(current_tile_index)
 
 func _on_map_overview_pressed(is_active: bool):
@@ -419,13 +386,17 @@ func _on_toll_payment_requested() -> void:
         false
     )
     if not did_pay:
-        var info: TileInfo = game_state.get_tile_info(current_tile_index)
-        _update_toll_actions(info)
         return
     toll_payment_confirmed.emit(did_pay, pending_toll_fiat)
     pending_toll_owner_index = -1
     pending_toll_fiat = 0.0
     # turn_actions.hide_toll_actions(true)
+
+func _on_pay_exit_prision_button_pressed() -> void:
+    if not game_state.can_player_pay_exit_prision(game_state.current_player_index):
+        return
+
+    game_state.pay_and_release_player(game_state.current_player_index)
 
 func _flip_tile(tile_index: int) -> void:
     assert(board_layout)
@@ -446,8 +417,7 @@ func _on_player_data_changed(player_index: int, player_data: PlayerData) -> void
     assert(summary)
     summary.set_player_data(player_data)
 
-func _on_turn_state_changed(_player_index: int, turn_number: int, cycle_number: int) -> void:
-    # turn_actions.set_turn_state(turn_number, cycle_number)
+func _on_turn_state_changed(_player_index: int, _turn_number: int, cycle_number: int) -> void:
     if cycle_number != last_cycle:
         _update_cycle_visual(cycle_number)
         last_cycle = cycle_number
@@ -466,7 +436,6 @@ func _on_miner_batches_changed(tile_index: int, miner_batches: int, owner_index:
     var owner_color: Color = Palette.get_player_light(owner_index)
     board_tile.set_miner_batches(miner_batches, owner_color)
 
-
 func _update_cycle_visual(cycle_number: int) -> void:
     assert(board_layout)
     assert(board_layout.has_method("get_board_tiles"))
@@ -477,3 +446,10 @@ func _update_cycle_visual(cycle_number: int) -> void:
     assert(board_tile != null)
     var is_inflation: bool = cycle_number % 2 == 0
     board_tile.set_owned_visual(is_inflation)
+
+func _on_player_arrested_changed(player_index: int, arrested_status: bool) -> void:
+    if arrested_status:
+        _snap_pawn_to_tile(player_index, game_state.inspection_tile_index)
+
+func _try_to_escape_prision(dice_1: int, dice_2: int) -> bool:
+    return dice_1 == dice_2

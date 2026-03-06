@@ -6,6 +6,7 @@ signal roll_dice_button_pressed
 signal buy_property_button_pressed
 signal pass_property_button_pressed
 signal pay_toll_button_pressed
+signal pay_exit_prision_button_pressed
 signal map_overview_button_pressed(is_active: bool)
 signal dice_result_shown(dice_1: int, dice_2: int, total: int)
 
@@ -13,6 +14,7 @@ signal dice_result_shown(dice_1: int, dice_2: int, total: int)
 @export var game_state: GameState
 
 @export var timer_label : Label
+@export var notification_message_label : Label
 @export var player_name : Label
 @export var player_balance : Label
 @export var player_color : ColorRect
@@ -23,6 +25,7 @@ signal dice_result_shown(dice_1: int, dice_2: int, total: int)
 @export var buy_property_button : Button
 @export var pass_property_button : Button
 @export var pay_toll_button : Button
+@export var pay_exit_prision_button : Button
 @export var map_overview_button : TextureButton
 @export var inventory_button : TextureButton
 @export var card_ui : CardUi
@@ -36,7 +39,6 @@ signal dice_result_shown(dice_1: int, dice_2: int, total: int)
 @export var inventory : Control
 @export var card_dialog : CardDialog
 
-const TIMER_START_GAME := 2.0
 const TIMER_APPLY_DICES_RESULT := 1.0
 const TIMER_BALANCE_VARIATION := 3.0
 const TIMER_TURN_INDICATOR := 3.0
@@ -55,6 +57,7 @@ var _is_inventory_active: bool = false
 
 func _ready() -> void:
     # reset UI
+    notification_message_label.visible = false
     dice_1_texture_rect.visible = false
     dice_2_texture_rect.visible = false
     end_turn_button.visible = false
@@ -65,6 +68,7 @@ func _ready() -> void:
     turn_indicator_panel.visible = false
     map_overview_button.visible = false
     pay_toll_button.visible = false
+    pay_exit_prision_button.visible = false
     card_ui.hide_card()
     card_dialog.close_dialog()
     inventory.set_inventory(game_controller, game_state)
@@ -74,12 +78,6 @@ func _ready() -> void:
     _bind_game_state()
     _bind_game_controller()
     _bind_ui_elements()
-
-func _start_game() -> void:
-    await get_tree().create_timer(TIMER_START_GAME).timeout
-
-    roll_dice_button.visible = true
-    map_overview_button.visible = true
 
 func _bind_ui_elements() -> void:
     if not end_turn_button.pressed.is_connected(_on_end_turn_button_pressed):
@@ -98,6 +96,8 @@ func _bind_ui_elements() -> void:
         inventory_button.pressed.connect(_on_inventory_button_pressed)
     if not inventory.card_selected.is_connected(_on_card_selected):
         inventory.card_selected.connect(_on_card_selected)
+    if not pay_exit_prision_button.pressed.is_connected(_on_pay_exit_prision_button):
+        pay_exit_prision_button.pressed.connect(_on_pay_exit_prision_button)
 
 func _bind_game_controller() -> void:
     if not game_controller.timer_elapsed.is_connected(_on_timer_elapsed):
@@ -116,6 +116,8 @@ func _bind_game_controller() -> void:
         game_controller.property_purchased.connect(_on_property_purchased)
     if not game_controller.toll_payment_confirmed.is_connected(_on_toll_payment_confirmed):
         game_controller.toll_payment_confirmed.connect(_on_toll_payment_confirmed)
+    if not game_controller.try_to_escape_prision_failed.is_connected(_on_try_to_escape_prision_failed):
+        game_controller.try_to_escape_prision_failed.connect(_on_try_to_escape_prision_failed)
 
 func _bind_game_state() -> void:
     if not game_state.player_changed.is_connected(_on_player_changed):
@@ -130,6 +132,10 @@ func _bind_game_state() -> void:
         game_state.miner_batches_changed.connect(_on_miner_batches_changed)
     if not game_state.property_mortgaged_changed.is_connected(_on_property_mortgaged_changed):
         game_state.property_mortgaged_changed.connect(_on_property_mortgaged_changed)
+    if not game_state.player_arrested_changed.is_connected(_on_player_arrested_changed):
+        game_state.player_arrested_changed.connect(_on_player_arrested_changed)
+    if not game_state.player_money_fiat_spent.is_connected(_on_player_money_fiat_spent):
+        game_state.player_money_fiat_spent.connect(_on_player_money_fiat_spent)
 
 func _on_timer_elapsed(turn_duration: int, time_elapsed: float):
     var remaining := int(max(0.0, turn_duration - time_elapsed))
@@ -143,6 +149,7 @@ func _on_turn_started(player_index: int, tile_index: int):
     map_overview_button.visible = true
     inventory_button.visible = true
     _is_inventory_active = false
+    notification_message_label.visible = false
     inventory.hide_inventory()
 
     player_name.text = game_state.get_player_username(player_index)
@@ -194,6 +201,9 @@ func _on_turn_started(player_index: int, tile_index: int):
     await get_tree().create_timer(0.5).timeout
 
     roll_dice_button.visible = true
+
+    if (game_state.is_player_arrested(game_state.current_player_index)):
+        pay_exit_prision_button.visible = true
 
     await get_tree().create_timer(TIMER_TURN_INDICATOR).timeout
 
@@ -346,6 +356,27 @@ func _on_property_mortgaged_changed(_tile_index: int, is_mortgaged: bool, operat
     else:
         _spend_value_balance_variation(operation_value)
 
+func _on_player_arrested_changed(player_index: int, arrested_status: bool) -> void:
+    if game_state.current_player_index != player_index:
+        return
+
+    # Player is free to go
+    if not arrested_status:
+        roll_dice_button.visible = true
+        pay_exit_prision_button.visible = false
+
+    var message = "ARRESTED" if arrested_status else "FREE TO GO"
+    _notify_user(message)
+
+func _on_try_to_escape_prision_failed():
+    pay_exit_prision_button.visible = true
+    end_turn_button.visible = true
+    var message = "ATTEMPT FAILED"
+    _notify_user(message)
+
+func _on_player_money_fiat_spent(_player_index: int, spent_value: float) -> void:
+    _spend_value_balance_variation(spent_value)
+
 # UI
 
 func _on_end_turn_button_pressed() -> void:
@@ -356,6 +387,7 @@ func _on_end_turn_button_pressed() -> void:
 
 func _on_roll_dice_button_pressed() -> void:
     roll_dice_button.visible = false
+    pay_exit_prision_button.visible = false
     roll_dice_button_pressed.emit()
 
 func _on_buy_property_button_pressed() -> void:
@@ -375,7 +407,11 @@ func _on_pass_property_button_pressed() -> void:
 func _on_pay_toll_button_pressed() -> void:
     pay_toll_button.visible = false
     pay_toll_button_pressed.emit()
-    pass
+
+func _on_pay_exit_prision_button() -> void:
+    roll_dice_button.visible = false
+    pay_exit_prision_button.visible = false
+    pay_exit_prision_button_pressed.emit()
 
 func _on_map_overview_button_pressed() -> void:
     _is_map_overview_active = not _is_map_overview_active
@@ -436,3 +472,11 @@ func set_button_colors(button: Button, normal_color: Color, hover_color: Color, 
         style_disabled = StyleBoxFlat.new()
     style_disabled.bg_color = normal_color * 0.5
     button.add_theme_stylebox_override("disabled", style_disabled)
+
+func _notify_user(message: String) -> void:
+    notification_message_label.visible = true
+    notification_message_label.text = message
+
+    await get_tree().create_timer(3.0).timeout
+
+    notification_message_label.visible = false

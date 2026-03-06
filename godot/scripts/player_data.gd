@@ -6,6 +6,7 @@ var fiat_balance: float
 var bitcoin_balance: float
 var mining_power: int
 var accent_color: Color
+var is_arrested: bool
 
 func _init() -> void:
 	username = ""
@@ -13,3 +14,4 @@ func _init() -> void:
 	bitcoin_balance = 0.0
 	mining_power = 0
 	accent_color = Color(0, 0, 0, 1)
+	is_arrested = false

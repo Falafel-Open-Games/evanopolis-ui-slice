@@ -23,6 +23,7 @@ const MAX_MINER_BATCHES_PER_PROPERTY: int = 4
 const MINER_BATCH_PRICE_FIAT_BASE: float = 12
 const MORTGAGE_RECEIVE_RATE: float = 0.8
 const MORTGAGE_PAY_RATE: float = 1.2
+const EXIT_PRISION_COST: float = 2
 
 var current_player_index: int
 var player_positions: Array[int]
@@ -30,6 +31,7 @@ var tiles: Array[TileInfo]
 var players: Array[PlayerData] = []
 var current_cycle: int = 1
 var turn_count: int = 1
+var inspection_tile_index = -1
 var player_laps: Array[int] = []
 var player_progress: Array[int] = []
 var pending_miner_orders: Array[Dictionary] = []
@@ -38,6 +40,8 @@ var pending_miner_order_locked: Array[bool] = []
 signal player_changed(new_index: int)
 signal player_position_changed(new_position: int, tile_slot: int)
 signal player_data_changed(player_index: int, player_data: PlayerData)
+signal player_money_fiat_spent(player_index: int, spent_value: float)
+signal player_arrested_changed(player_index: int, arrested_status: bool)
 signal turn_state_changed(player_index: int, turn_number: int, cycle_number: int)
 signal miner_order_locked(player_index: int, locked: bool)
 signal miner_order_committed(player_index: int)
@@ -177,6 +181,8 @@ func apply_property_payout(tile_index: int) -> void:
     if total_payout <= 0.0:
         return
     var owner_data: PlayerData = players[tile.owner_index]
+    if owner_data.is_arrested:
+        return
     owner_data.bitcoin_balance += total_payout
     player_data_changed.emit(tile.owner_index, owner_data)
 
@@ -283,6 +289,7 @@ func pay_energy_toll(
     amount: float,
     use_bitcoin: bool
 ) -> bool:
+    print("pay_energy_toll")
     assert(payer_index >= 0 and payer_index < players.size())
     assert(owner_index >= 0 and owner_index < players.size())
     assert(amount >= 0.0)
@@ -294,9 +301,8 @@ func pay_energy_toll(
         payer.bitcoin_balance -= amount
         owner_data.bitcoin_balance += amount
     else:
-        if payer.fiat_balance < amount:
+        if not spend_money_fiat(payer_index, amount):
             return false
-        payer.fiat_balance -= amount
         owner_data.fiat_balance += amount
     player_data_changed.emit(payer_index, payer)
     player_data_changed.emit(owner_index, owner_data)
@@ -347,6 +353,7 @@ func _build_tile_info() -> void:
                     info.tile_type = Utils.TileType.START
                 3:
                     info.tile_type = Utils.TileType.INSPECTION
+                    inspection_tile_index = tile_index
                 1, 2, 4, 5:
                     info.tile_type = Utils.TileType.INCIDENT
                     info.incident_kind = _incident_kind_for_side(side_index)
@@ -386,12 +393,6 @@ func _is_tile_buyable(tile: TileInfo) -> bool:
     return (
         (tile.tile_type == Utils.TileType.PROPERTY or tile.tile_type == Utils.TileType.SPECIAL_PROPERTY)
         and tile.owner_index == -1
-    )
-
-func is_tile_mortgagable(tile: TileInfo) -> bool:
-    return(
-        (tile.tile_type == Utils.TileType.PROPERTY or tile.tile_type == Utils.TileType.SPECIAL_PROPERTY)
-        and tile.owner_index != -1
     )
 
 func _get_tiles_per_side() -> int:
@@ -443,12 +444,54 @@ func mortgage_property(player_index: int, tile_index: int) -> void:
 func unmortgage_property(player_index: int, tile_index: int) -> void:
     var info: TileInfo = get_tile_info(tile_index)
     var unmortgage_price = tiles[tile_index].property_price * MORTGAGE_PAY_RATE
-    var payer: PlayerData = players[player_index]
 
     if not can_player_unmortgage(player_index, info):
         return
 
     tiles[tile_index].is_mortgaged = false
-    payer.fiat_balance -= unmortgage_price
-    player_data_changed.emit(player_index, payer)
-    property_mortgaged_changed.emit(tile_index, false, unmortgage_price)
+    if spend_money_fiat(player_index, unmortgage_price):
+        property_mortgaged_changed.emit(tile_index, false, unmortgage_price)
+
+func is_player_arrested(player_index: int) -> bool:
+    var player: PlayerData = players[player_index]
+    return player.is_arrested
+
+func can_player_pay_exit_prision(player_index: int) -> bool:
+    var player: PlayerData = players[player_index]
+    return player.fiat_balance >= EXIT_PRISION_COST and player.is_arrested
+
+func arrest_player(player_index: int) -> void:
+    if is_player_arrested(player_index):
+        return
+
+    var player: PlayerData = players[player_index]
+    player.is_arrested = true
+    player_data_changed.emit(player_index, player)
+    player_arrested_changed.emit(player_index, true)
+
+func pay_and_release_player(player_index: int) -> void:
+    if not is_player_arrested(player_index):
+        return
+
+    if spend_money_fiat(player_index, EXIT_PRISION_COST):
+        release_arrested_player(player_index)
+
+func release_arrested_player(player_index: int) -> void:
+    if not is_player_arrested(player_index):
+        return
+
+    var player: PlayerData = players[player_index]
+    player.is_arrested = false
+    player_data_changed.emit(player_index, player)
+    player_arrested_changed.emit(player_index, false)
+
+func spend_money_fiat(player_index: int, spent_value: float) -> bool:
+    print("spend_money_fiat %s %s" % [player_index, spent_value])
+    var player: PlayerData = players[player_index]
+    if player.fiat_balance < spent_value:
+        return false
+
+    player.fiat_balance -= spent_value
+    player_money_fiat_spent.emit(player_index, spent_value)
+    player_data_changed.emit(player_index, player)
+    return true
