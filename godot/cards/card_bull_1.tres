@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="EventCard" load_steps=2 format=3 uid="uid://kn21fr4vioew"]
+
+[ext_resource type="Script" uid="uid://nfsy0lutna7r" path="res://scripts/event_card.gd" id="1_tdyoq"]
+
+[resource]
+script = ExtResource("1_tdyoq")
+name = "Lucky day"
+description = "Receives 2 EVAs from the bank"
+deck_type = 1
+effect_type = 4
+amount = 2.0
+metadata/_custom_type_script = "uid://nfsy0lutna7r"

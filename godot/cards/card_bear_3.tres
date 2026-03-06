@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="EventCard" load_steps=2 format=3 uid="uid://8b84c44xie7m"]
+
+[ext_resource type="Script" uid="uid://nfsy0lutna7r" path="res://scripts/event_card.gd" id="1_bint7"]
+
+[resource]
+script = ExtResource("1_bint7")
+name = "Go to jail"
+description = "You got caught in a legal inspection. Go to jail"
+effect_type = 8
+metadata/_custom_type_script = "uid://nfsy0lutna7r"

@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="EventCard" load_steps=2 format=3 uid="uid://b82eaj0h1lfrr"]
+
+[ext_resource type="Script" uid="uid://nfsy0lutna7r" path="res://scripts/event_card.gd" id="1_rkep7"]
+
+[resource]
+script = ExtResource("1_rkep7")
+name = "Pay fine"
+description = "Pay 1 EVA to the bank"
+amount = 1.0
