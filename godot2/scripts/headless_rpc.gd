@@ -56,6 +56,11 @@ func rpc_sync_request(game_id: String, player_id: String, last_applied_seq: int)
     _handle_sync_request(game_id, player_id, last_applied_seq)
 
 
+@rpc("any_peer")
+func rpc_player_ready(game_id: String, player_id: String) -> void:
+    _handle_player_ready(game_id, player_id)
+
+
 @rpc("authority")
 func rpc_game_started(seq: int, new_game_id: String) -> void:
     _handle_game_started(seq, new_game_id)
@@ -84,6 +89,16 @@ func rpc_join_accepted(seq: int, player_id: String, player_index: int, last_seq:
 @rpc("authority")
 func rpc_turn_started(seq: int, player_index: int, turn_number: int, cycle: int) -> void:
     _handle_turn_started(seq, player_index, turn_number, cycle)
+
+
+@rpc("authority")
+func rpc_game_ended(seq: int, winner_index: int, reason: String, btc_goal: float, winner_btc: float) -> void:
+    _handle_game_ended(seq, winner_index, reason, btc_goal, winner_btc)
+
+
+@rpc("authority")
+func rpc_player_ready_state(seq: int, player_index: int, is_ready: bool, ready_count: int, total_players: int) -> void:
+    _handle_player_ready_state(seq, player_index, is_ready, ready_count, total_players)
 
 
 @rpc("authority")
@@ -231,6 +246,10 @@ func _handle_sync_request(game_id: String, player_id: String, last_applied_seq: 
     pass
 
 
+func _handle_player_ready(game_id: String, player_id: String) -> void:
+    pass
+
+
 func _handle_game_started(seq: int, new_game_id: String) -> void:
     pass
 
@@ -252,6 +271,14 @@ func _handle_join_accepted(seq: int, player_id: String, player_index: int, last_
 
 
 func _handle_turn_started(seq: int, player_index: int, turn_number: int, cycle: int) -> void:
+    pass
+
+
+func _handle_game_ended(seq: int, winner_index: int, reason: String, btc_goal: float, winner_btc: float) -> void:
+    pass
+
+
+func _handle_player_ready_state(seq: int, player_index: int, is_ready: bool, ready_count: int, total_players: int) -> void:
     pass
 
 

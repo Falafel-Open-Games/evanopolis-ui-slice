@@ -167,6 +167,10 @@ O criador da sala pode configurar as condições de vitória, porém com valores
 - Número de rodadas = 4
 - Valor acumulado de BTC = 20
 
+### Escopo v0 (implementado no headless)
+- A partida encerra imediatamente quando um jogador atinge `20 BTC` ou mais.
+- O servidor emite evento terminal com vencedor e bloqueia novas ações com `match_finished`.
+
 ## Derrota
 O jogador que não tiver mais EVAs para pagar as taxas de outras propriedades é preso e permanece lá até conseguir sair. Ainda é possível se recuperar através dos dividendos de suas propriedades, mas é remota a sua chance de vitória.
 O jogador permanecerá no jogo até o fim da partida.

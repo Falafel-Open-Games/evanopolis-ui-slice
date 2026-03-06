@@ -17,12 +17,16 @@ var auth_token: String = ""
 var player_index: int = -1
 var current_player_index: int = 0
 var current_turn_number: int = 0
+var current_cycle_number: int = 0
 var pending_action_type: String = ""
 var pending_action_tile_index: int = -1
 var pending_action_owner_index: int = -1
 var pending_action_amount: float = 0.0
 var pending_action_buy_price: float = 0.0
 var match_has_started: bool = false
+var match_has_finished: bool = false
+var match_winner_index: int = -1
+var match_end_reason: String = ""
 var board_state: Dictionary = { }
 var pending_game_started: bool = false
 var next_expected_seq: int = 1
@@ -34,6 +38,8 @@ var player_bitcoin_balances: Dictionary = { }
 var player_positions: Dictionary = { }
 var player_in_inspection: Dictionary = { }
 var player_inspection_free_exits: Dictionary = { }
+var player_ready_states: Dictionary = { }
+var local_ready_sent: bool = false
 
 
 func _ready() -> void:
@@ -123,6 +129,14 @@ func _handle_join_accepted(seq: int, accepted_player_id: String, assigned_player
 
 func _handle_turn_started(seq: int, player_index_value: int, turn_number: int, cycle: int) -> void:
     _queue_event(seq, "_apply_turn_started", [player_index_value, turn_number, cycle])
+
+
+func _handle_player_ready_state(seq: int, player_index_value: int, is_ready: bool, ready_count: int, total_players: int) -> void:
+    _queue_event(seq, "_apply_player_ready_state", [player_index_value, is_ready, ready_count, total_players])
+
+
+func _handle_game_ended(seq: int, winner_index: int, reason: String, btc_goal: float, winner_btc: float) -> void:
+    _queue_event(seq, "_apply_game_ended", [winner_index, reason, btc_goal, winner_btc])
 
 
 func _handle_player_joined(seq: int, player_id_value: String, player_index_value: int) -> void:
@@ -237,10 +251,14 @@ func _flush_events() -> int:
 func _apply_game_started(new_game_id: String) -> void:
     game_id = new_game_id
     match_has_started = true
+    local_ready_sent = false
+    match_has_finished = false
+    match_winner_index = -1
+    match_end_reason = ""
     if player_index < 0:
         pending_game_started = true
         return
-    _log_server("game started: game_id=%s" % game_id)
+    _log_server("%sgame started%s: game_id=%s" % [ANSI_GREEN, ANSI_RESET, game_id])
 
 
 func _apply_board_state(board: Dictionary) -> void:
@@ -276,8 +294,11 @@ func _apply_join_accepted(accepted_player_id: String, assigned_player_index: int
 
 
 func _apply_turn_started(player_index_value: int, turn_number: int, cycle: int) -> void:
+    if match_has_finished:
+        return
     current_player_index = player_index_value
     current_turn_number = turn_number
+    current_cycle_number = cycle
     pending_action_type = ""
     pending_action_tile_index = -1
     pending_action_owner_index = -1
@@ -294,6 +315,29 @@ func _apply_turn_started(player_index_value: int, turn_number: int, cycle: int) 
         await _start_inspection_resolution_prompt()
         return
     await _start_turn_prompt()
+
+
+func _apply_player_ready_state(player_index_value: int, is_ready: bool, ready_count: int, total_players: int) -> void:
+    player_ready_states[player_index_value] = is_ready
+    _log_server(
+        "player ready: player=%d ready=%s ready_count=%d/%d"
+        % [player_index_value, is_ready, ready_count, total_players],
+    )
+
+
+func _apply_game_ended(winner_index: int, reason: String, btc_goal: float, winner_btc: float) -> void:
+    match_has_finished = true
+    match_winner_index = winner_index
+    match_end_reason = reason
+    pending_action_type = ""
+    pending_action_tile_index = -1
+    pending_action_owner_index = -1
+    pending_action_amount = 0.0
+    pending_action_buy_price = 0.0
+    _log_server(
+        "%sgame ended%s: winner=%d reason=%s btc_goal=%.8f winner_btc=%.8f"
+        % [ANSI_GREEN, ANSI_RESET, winner_index, reason, btc_goal, winner_btc],
+    )
 
 
 func _apply_player_joined(player_id_value: String, player_index_value: int) -> void:
@@ -366,8 +410,8 @@ func _apply_tile_landed(
 func _apply_incident_drawn(tile_index: int, incident_kind: String, card_id: String, card_text: String) -> void:
     var highlighted_card_text: String = "%s%s%s" % [ANSI_YELLOW, card_text, ANSI_RESET]
     _log_server(
-        "incident drawn: tile=%d kind=%s card_id=%s card_text=%s"
-        % [tile_index, incident_kind, card_id, highlighted_card_text],
+        "%sincident drawn%s: tile=%d kind=%s card_id=%s card_text=%s"
+        % [ANSI_GREEN, ANSI_RESET, tile_index, incident_kind, card_id, highlighted_card_text],
     )
 
 
@@ -439,8 +483,8 @@ func _apply_miner_batches_added(owner_player_index: int, tile_index: int, count:
 func _apply_mining_reward(owner_index: int, tile_index: int, miner_batches: int, btc_reward: float, reason: String) -> void:
     connected_player_indexes[owner_index] = true
     _log_server(
-        "mining reward: owner=%d tile=%d miner_batches=%d btc_reward=%.8f reason=%s"
-        % [owner_index, tile_index, miner_batches, btc_reward, reason],
+        "%smining reward%s: owner=%d tile=%d miner_batches=%d btc_reward=%s%.8f%s reason=%s"
+        % [ANSI_GREEN, ANSI_RESET, owner_index, tile_index, miner_batches, ANSI_GREEN, btc_reward, ANSI_RESET, reason],
     )
 
 
@@ -481,6 +525,7 @@ func _apply_state_snapshot(snapshot: Dictionary) -> void:
     game_id = str(snapshot.get("game_id", game_id))
     current_player_index = int(snapshot.get("current_player_index", current_player_index))
     current_turn_number = int(snapshot.get("turn_number", current_turn_number))
+    current_cycle_number = int(snapshot.get("current_cycle", current_cycle_number))
     var pending_action: Dictionary = snapshot.get("pending_action", { })
     pending_action_type = str(pending_action.get("type", ""))
     pending_action_tile_index = int(pending_action.get("tile_index", -1))
@@ -489,8 +534,10 @@ func _apply_state_snapshot(snapshot: Dictionary) -> void:
     pending_action_buy_price = float(pending_action.get("buy_price", 0.0))
     board_state = snapshot.get("board_state", { })
     pending_game_started = false
-    var cycle: int = int(snapshot.get("current_cycle", 0))
     match_has_started = bool(snapshot.get("has_started", match_has_started))
+    match_has_finished = bool(snapshot.get("has_finished", match_has_finished))
+    match_winner_index = int(snapshot.get("winner_index", match_winner_index))
+    match_end_reason = str(snapshot.get("end_reason", match_end_reason))
     var board_size: int = int(board_state.get("size", 0))
     var players: Array = snapshot.get("players", [])
     connected_player_indexes.clear()
@@ -499,6 +546,7 @@ func _apply_state_snapshot(snapshot: Dictionary) -> void:
     player_bitcoin_balances.clear()
     player_in_inspection.clear()
     player_inspection_free_exits.clear()
+    player_ready_states.clear()
     for player_variant in players:
         var player_in_snapshot: Dictionary = player_variant
         var player_index_value: int = int(player_in_snapshot.get("player_index", -1))
@@ -510,16 +558,22 @@ func _apply_state_snapshot(snapshot: Dictionary) -> void:
         player_bitcoin_balances[player_index_value] = float(player_in_snapshot.get("bitcoin_balance", 0.0))
         player_in_inspection[player_index_value] = bool(player_in_snapshot.get("in_inspection", false))
         player_inspection_free_exits[player_index_value] = int(player_in_snapshot.get("inspection_free_exits", 0))
+    var ready_players: Array = snapshot.get("ready_players", [])
+    for ready_index in range(ready_players.size()):
+        player_ready_states[ready_index] = bool(ready_players[ready_index])
     _log_server(
-        "state snapshot: game_id=%s turn=%d cycle=%d current_player=%d players=%d board_size=%d started=%s pending_action=%s pending_tile=%d pending_owner=%d pending_amount=%.2f pending_buy_price=%.2f"
+        "state snapshot: game_id=%s turn=%d cycle=%d current_player=%d players=%d board_size=%d started=%s finished=%s winner=%d end_reason=%s pending_action=%s pending_tile=%d pending_owner=%d pending_amount=%.2f pending_buy_price=%.2f"
         % [
             game_id,
             current_turn_number,
-            cycle,
+            current_cycle_number,
             current_player_index,
             players.size(),
             board_size,
             match_has_started,
+            match_has_finished,
+            match_winner_index,
+            match_end_reason,
             pending_action_type,
             pending_action_tile_index,
             pending_action_owner_index,
@@ -569,10 +623,11 @@ func _build_connected_players_summary() -> String:
     for player_index_value in connected_player_indexes_sorted:
         var player_holdings: Dictionary = holdings_by_player.get(player_index_value, { })
         player_summaries.append(
-            "p%d(tile=%d fiat=%s%.2f%s btc=%s%.8f%s properties=%d miners=%d)" % [
+            "p%d(tile=%d fiat=%s%s%.2f%s btc=%s%.8f%s properties=%d miners=%d)" % [
                 player_index_value,
                 int(player_positions.get(player_index_value, -1)),
                 ANSI_BOLD,
+                ANSI_YELLOW,
                 float(player_fiat_balances.get(player_index_value, 0.0)),
                 ANSI_RESET,
                 ANSI_YELLOW,
@@ -657,6 +712,11 @@ func _request_use_inspection_voucher() -> void:
     _rpc_to_server("rpc_use_inspection_voucher", [game_id, player_id])
 
 
+func _request_player_ready() -> void:
+    _log_client("player ready: game_id=%s, player_id=%s" % [game_id, player_id])
+    _rpc_to_server("rpc_player_ready", [game_id, player_id])
+
+
 func _rpc_to_server(method: String, args: Array = []) -> void:
     var payload: Array = [1, method]
     payload.append_array(args)
@@ -676,9 +736,31 @@ func _drop_stale_pending_events(final_seq: int) -> int:
 
 func _resume_after_sync_from_snapshot() -> void:
     if not match_has_started:
+        if not local_ready_sent and player_index >= 0:
+            local_ready_sent = true
+            _request_player_ready()
         _log_server("sync resume: waiting for game start")
         return
+    if match_has_finished:
+        _log_server(
+            "sync resume: match already ended winner=%d reason=%s"
+            % [match_winner_index, match_end_reason],
+        )
+        return
+    _log_server("%sgame resumed%s: game_id=%s" % [ANSI_GREEN, ANSI_RESET, game_id])
+    var board_size: int = int(board_state.get("size", 0))
+    if board_size > 0:
+        _log_server("board state: size=%d" % board_size)
+    var connected_players_summary: String = _build_connected_players_summary()
+    _log_server(
+        "%sturn started%s: player=%d, turn=%d, cycle=%d, connected_players=[%s]"
+        % [ANSI_GREEN, ANSI_RESET, current_player_index, current_turn_number, current_cycle_number, connected_players_summary],
+    )
     if player_index != current_player_index:
+        _log_server(
+            "sync resume: waiting for current player=%d turn=%d"
+            % [current_player_index, current_turn_number],
+        )
         return
     if pending_action_type == "buy_or_end_turn":
         var city: String = ""
@@ -743,8 +825,8 @@ func _start_pay_toll_prompt(tile_index: int, city: String, owner_index: int, amo
     if label_city.is_empty():
         label_city = "unknown"
     _log_prompt(
-        "pay toll amount=%.2f owner=%d tile=%d city=%s [enter]"
-        % [amount, owner_index, tile_index, label_city],
+        "%spay toll amount%s=%.2f owner=%d tile=%d city=%s [enter]"
+        % [ANSI_GREEN, ANSI_RESET, amount, owner_index, tile_index, label_city],
     )
     await _wait_for_enter()
     _request_pay_toll()

@@ -302,7 +302,7 @@ func test_turn_started_logs_connected_players_balances_and_holdings() -> void:
     var last_message: String = client.server_messages[client.server_messages.size() - 1]
     assert_eq(
         last_message,
-        "\u001b[32mturn started\u001b[0m: player=1, turn=4, cycle=2, connected_players=[p0(tile=6 fiat=\u001b[1m20.00\u001b[0m btc=\u001b[33m0.50000000\u001b[0m properties=2 miners=3), p1(tile=3 fiat=\u001b[1m13.50\u001b[0m btc=\u001b[33m0.37500000\u001b[0m properties=1 miners=4)]",
+        "\u001b[32mturn started\u001b[0m: player=1, turn=4, cycle=2, connected_players=[p0(tile=6 fiat=\u001b[1m\u001b[33m20.00\u001b[0m btc=\u001b[33m0.50000000\u001b[0m properties=2 miners=3), p1(tile=3 fiat=\u001b[1m\u001b[33m13.50\u001b[0m btc=\u001b[33m0.37500000\u001b[0m properties=1 miners=4)]",
         "turn started includes green label and connected players tile/balance/properties/miners",
     )
 
@@ -350,8 +350,24 @@ func test_turn_started_logs_ansi_formatting_for_negative_fiat_and_large_btc() ->
     var last_message: String = client.server_messages[client.server_messages.size() - 1]
     assert_eq(
         last_message,
-        "\u001b[32mturn started\u001b[0m: player=1, turn=4, cycle=2, connected_players=[p0(tile=9 fiat=\u001b[1m-1.25\u001b[0m btc=\u001b[33m12.34567890\u001b[0m properties=0 miners=0), p1(tile=14 fiat=\u001b[1m999.99\u001b[0m btc=\u001b[33m0.00000000\u001b[0m properties=0 miners=0)]",
+        "\u001b[32mturn started\u001b[0m: player=1, turn=4, cycle=2, connected_players=[p0(tile=9 fiat=\u001b[1m\u001b[33m-1.25\u001b[0m btc=\u001b[33m12.34567890\u001b[0m properties=0 miners=0), p1(tile=14 fiat=\u001b[1m\u001b[33m999.99\u001b[0m btc=\u001b[33m0.00000000\u001b[0m properties=0 miners=0)]",
         "turn started keeps ansi formatting for negative fiat and large btc balances",
+    )
+
+    client.free()
+
+
+func test_game_started_logs_green_label() -> void:
+    var client: ClientMainDouble = ClientMainDouble.new()
+    client.player_index = 0
+    client._apply_game_started("demo_002")
+
+    assert_true(client.server_messages.size() > 0, "expected server log messages")
+    var last_message: String = client.server_messages[client.server_messages.size() - 1]
+    assert_eq(
+        last_message,
+        "\u001b[32mgame started\u001b[0m: game_id=demo_002",
+        "game started includes green label",
     )
 
     client.free()
@@ -407,7 +423,7 @@ func test_turn_started_logs_purchase_balance_after_property_acquired() -> void:
     var last_message: String = client.server_messages[client.server_messages.size() - 1]
     assert_eq(
         last_message,
-        "\u001b[32mturn started\u001b[0m: player=1, turn=1, cycle=1, connected_players=[p0(tile=6 fiat=\u001b[1m16.00\u001b[0m btc=\u001b[33m0.00000000\u001b[0m properties=1 miners=0), p1(tile=0 fiat=\u001b[1m20.00\u001b[0m btc=\u001b[33m0.00000000\u001b[0m properties=0 miners=0)]",
+        "\u001b[32mturn started\u001b[0m: player=1, turn=1, cycle=1, connected_players=[p0(tile=6 fiat=\u001b[1m\u001b[33m16.00\u001b[0m btc=\u001b[33m0.00000000\u001b[0m properties=1 miners=0), p1(tile=0 fiat=\u001b[1m\u001b[33m20.00\u001b[0m btc=\u001b[33m0.00000000\u001b[0m properties=0 miners=0)]",
         "turn started summary reflects fiat deduction and player tile indexes",
     )
 
@@ -459,8 +475,8 @@ func test_mining_reward_logs_zero_payout_reason() -> void:
 
     assert_eq(
         client.server_messages[0],
-        "mining reward: owner=1 tile=5 miner_batches=0 btc_reward=0.00000000 reason=no_miners",
-        "mining reward log includes zero payout reason",
+        "\u001b[32mmining reward\u001b[0m: owner=1 tile=5 miner_batches=0 btc_reward=\u001b[32m0.00000000\u001b[0m reason=no_miners",
+        "mining reward log includes green label, green btc reward, and zero payout reason",
     )
     client.free()
 
@@ -671,6 +687,57 @@ func test_sync_complete_does_not_resume_pay_toll_for_other_player() -> void:
     client.free()
 
 
+func test_sync_complete_logs_turn_summary_for_non_current_player() -> void:
+    var client: ClientMainDouble = ClientMainDouble.new()
+    client.player_id = "p2"
+    client.game_id = "demo_002"
+
+    client._handle_join_accepted(0, "p2", 1, 4)
+    client._handle_state_snapshot(
+        0,
+        {
+            "game_id": "demo_002",
+            "turn_number": 1,
+            "current_player_index": 0,
+            "current_cycle": 1,
+            "pending_action": { },
+            "board_state": {
+                "size": 24,
+                "tiles": [],
+            },
+            "has_started": true,
+            "players": [
+                {
+                    "player_index": 0,
+                    "position": 0,
+                    "laps": 0,
+                    "fiat_balance": 120.0,
+                    "bitcoin_balance": 0.0,
+                    "in_inspection": false,
+                    "inspection_free_exits": 0,
+                },
+                {
+                    "player_index": 1,
+                    "position": 0,
+                    "laps": 0,
+                    "fiat_balance": 120.0,
+                    "bitcoin_balance": 0.0,
+                    "in_inspection": false,
+                    "inspection_free_exits": 0,
+                },
+            ],
+        },
+    )
+    client._handle_sync_complete(0, 4)
+
+    assert_eq(client.turn_prompt_count, 0, "non-current player should not be prompted to roll")
+    assert_true(client.server_messages.has("\u001b[32mgame resumed\u001b[0m: game_id=demo_002"), "sync resume logs game resumed label")
+    assert_true(client.server_messages.has("sync resume: waiting for current player=0 turn=1"), "sync resume explains no prompt because it is another player's turn")
+    var expected_turn_log: String = "\u001b[32mturn started\u001b[0m: player=0, turn=1, cycle=1, connected_players=[p0(tile=0 fiat=\u001b[1m\u001b[33m120.00\u001b[0m btc=\u001b[33m0.00000000\u001b[0m properties=0 miners=0), p1(tile=0 fiat=\u001b[1m\u001b[33m120.00\u001b[0m btc=\u001b[33m0.00000000\u001b[0m properties=0 miners=0)]"
+    assert_true(client.server_messages.has(expected_turn_log), "sync resume logs turn started summary for observing player")
+    client.free()
+
+
 func test_sync_complete_does_not_prompt_roll_when_match_not_started() -> void:
     var client: ClientMainDouble = ClientMainDouble.new()
     client.player_id = "p2"
@@ -698,6 +765,39 @@ func test_sync_complete_does_not_prompt_roll_when_match_not_started() -> void:
     assert_eq(client.turn_prompt_count, 0, "match not started should not prompt roll")
     assert_eq(client.buy_prompt_count, 0, "match not started should not prompt buy")
     assert_eq(client.pay_toll_prompt_count, 0, "match not started should not prompt pay toll")
+    client.free()
+
+
+func test_sync_complete_does_not_prompt_when_match_is_finished() -> void:
+    var client: ClientMainDouble = ClientMainDouble.new()
+    client.player_id = "p2"
+    client.game_id = "demo_002"
+
+    client._handle_join_accepted(0, "p2", 1, 4)
+    client._handle_state_snapshot(
+        0,
+        {
+            "game_id": "demo_002",
+            "turn_number": 7,
+            "current_player_index": 1,
+            "current_cycle": 3,
+            "pending_action": { },
+            "board_state": {
+                "size": 24,
+                "tiles": [],
+            },
+            "has_started": true,
+            "has_finished": true,
+            "winner_index": 0,
+            "end_reason": "btc_goal_reached",
+            "players": [],
+        },
+    )
+    client._handle_sync_complete(0, 4)
+
+    assert_eq(client.turn_prompt_count, 0, "finished match should not prompt roll")
+    assert_eq(client.buy_prompt_count, 0, "finished match should not prompt buy")
+    assert_eq(client.pay_toll_prompt_count, 0, "finished match should not prompt pay toll")
     client.free()
 
 

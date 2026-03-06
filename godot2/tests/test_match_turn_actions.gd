@@ -180,6 +180,39 @@ func test_owned_property_landing_emits_mining_reward_to_all_clients() -> void:
         assert_eq(str(mining_events_a[0].get("reason", "")), str(mining_events_b[0].get("reason", "_mismatch")), "reason is consistent")
 
 
+func test_reaching_btc_goal_ends_match_immediately_on_mining_reward() -> void:
+    var config: Config = Config.new("res://configs/demo_002.toml")
+    var game_match: GameMatch = GameMatch.new(config, [])
+    var client_a: MatchTestClient = MatchTestClient.new()
+    var client_b: MatchTestClient = MatchTestClient.new()
+    assert_eq(str(game_match.assign_client("alice", client_a).get("reason", "")), "", "first client should register")
+    assert_eq(str(game_match.assign_client("bob", client_b).get("reason", "")), "", "second client should register")
+
+    var tiles: Array = game_match.board_state.get("tiles", [])
+    var tile: Dictionary = tiles[6]
+    tile["owner_index"] = 1
+    tile["miner_batches"] = 1
+    tiles[6] = tile
+    game_match.board_state["tiles"] = tiles
+    game_match.state.players[1].bitcoin_balance = 19.0
+
+    game_match._server_move_pawn(6)
+
+    assert_true(game_match.has_finished, "match should be finished once goal is reached")
+    assert_eq(game_match.winner_index, 1, "owner reaching BTC goal wins immediately")
+    assert_eq(game_match.end_reason, "btc_goal_reached", "end reason indicates goal-based finish")
+    assert_true(game_match.pending_action.is_empty(), "pending action should be cleared when match ends")
+    assert_eq(game_match.state.current_player_index, 0, "turn should not advance after terminal event")
+
+    var ended_events: Array[Dictionary] = _filter_events(client_a, "rpc_game_ended")
+    assert_eq(ended_events.size(), 1, "game ended event emitted once")
+    if ended_events.size() == 1:
+        assert_eq(int(ended_events[0].get("winner_index", -1)), 1, "winner index in event")
+        assert_eq(str(ended_events[0].get("reason", "")), "btc_goal_reached", "end reason in event")
+        assert_true(is_equal_approx(float(ended_events[0].get("btc_goal", -1.0)), 20.0), "btc goal in event")
+        assert_true(is_equal_approx(float(ended_events[0].get("winner_btc", -1.0)), 21.0), "winner btc in event")
+
+
 func test_owned_property_landing_by_owner_emits_owner_btc_reward_without_toll() -> void:
     var config: Config = Config.new("res://configs/demo_002.toml")
     var game_match: GameMatch = GameMatch.new(config, [])
@@ -416,6 +449,40 @@ func test_pay_toll_insufficient_fiat_keeps_prior_mining_reward_to_owner() -> voi
     assert_true(found_owner_mining_delta, "owner mining balance delta should be emitted before toll resolution")
     var inspection_events: Array[Dictionary] = _filter_events(client_a, "rpc_player_sent_to_inspection")
     assert_eq(inspection_events.size(), 1, "inspection event still emitted for insufficient toll payer")
+
+
+func test_actions_are_rejected_after_match_finished() -> void:
+    var config: Config = Config.new("res://configs/demo_002.toml")
+    var game_match: GameMatch = GameMatch.new(config, [])
+    var client_a: MatchTestClient = MatchTestClient.new()
+    var client_b: MatchTestClient = MatchTestClient.new()
+    assert_eq(str(game_match.assign_client("alice", client_a).get("reason", "")), "", "first client should register")
+    assert_eq(str(game_match.assign_client("bob", client_b).get("reason", "")), "", "second client should register")
+
+    var tiles: Array = game_match.board_state.get("tiles", [])
+    var tile: Dictionary = tiles[6]
+    tile["owner_index"] = 1
+    tile["miner_batches"] = 1
+    tiles[6] = tile
+    game_match.board_state["tiles"] = tiles
+    game_match.state.players[1].bitcoin_balance = 19.0
+    game_match._server_move_pawn(6)
+    assert_true(game_match.has_finished, "match should already be finished")
+
+    assert_eq(game_match.rpc_end_turn("demo_002", "alice"), "match_finished", "end_turn blocked after game end")
+    assert_eq(game_match.rpc_buy_property("demo_002", "alice", 6), "match_finished", "buy blocked after game end")
+    assert_eq(game_match.rpc_buy_miner_batch("demo_002", "alice", 6), "match_finished", "miner buy blocked after game end")
+    assert_eq(game_match.rpc_pay_toll("demo_002", "alice"), "match_finished", "pay toll blocked after game end")
+    assert_eq(game_match.rpc_pay_inspection_fee("demo_002", "alice"), "match_finished", "inspection fee blocked after game end")
+    assert_eq(game_match.rpc_roll_inspection_exit("demo_002", "alice"), "match_finished", "inspection roll blocked after game end")
+    assert_eq(game_match.rpc_use_inspection_voucher("demo_002", "alice"), "match_finished", "inspection voucher blocked after game end")
+
+    game_match.rpc_roll_dice("demo_002", "alice")
+    var rejected: Array[Dictionary] = _filter_events(client_a, "rpc_action_rejected")
+    assert_true(rejected.size() >= 1, "roll should emit action rejection after game end")
+    if rejected.size() >= 1:
+        var latest_rejection: Dictionary = rejected[rejected.size() - 1]
+        assert_eq(str(latest_rejection.get("reason", "")), "match_finished", "roll rejection reason after game end")
 
 
 func test_pay_toll_rejected_for_non_current_player() -> void:
