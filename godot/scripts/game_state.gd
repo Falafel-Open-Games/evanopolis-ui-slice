@@ -49,6 +49,7 @@ signal miner_batches_changed(tile_index: int, miner_batches: int, owner_index: i
 signal property_owner_changed(tile_index: int, owner_index: int)
 signal property_mortgaged_changed(tile_index: int, is_mortgaged: bool, operation_value: float)
 signal state_reset()
+signal match_winner_player_data(player_data: PlayerData)
 
 func _ready() -> void:
     seed(GameConfig.game_id.hash())
@@ -175,28 +176,39 @@ func get_energy_toll_btc(tile: TileInfo) -> float:
 func get_payout_per_miner_for_cycle(_cycle_number: int) -> float:
     return PAYOUT_PER_MINER
 
-func get_winner_username() -> String:
-    var winner_username = ""
-    var greater_btc_value = 0
+func check_winner_by_btc() -> bool:
+    # It's impossible to win during first cycle
+    if current_cycle < 2:
+        return false
 
     for player in players:
-        if player.bitcoin_balance <= greater_btc_value:
+        # print("%s: %s BTC" % [players[i].username, players[i].bitcoin_balance])
+        if player.bitcoin_balance >= GameConfig.btc_winning_value:
+            match_winner_player_data.emit(player)
+            return true
+
+    return false
+
+func check_winner_by_time() -> void:
+    var best_player: PlayerData
+    var has_best := false
+
+    for player in players:
+        if not has_best:
+            best_player = player
+            has_best = true
             continue
 
-        greater_btc_value = player.bitcoin_balance
-        winner_username = player.username
+        # Compare BTC first
+        if player.bitcoin_balance > best_player.bitcoin_balance:
+            best_player = player
+        elif player.bitcoin_balance == best_player.bitcoin_balance:
+            # Tie on BTC: compare EVA
+            if player.fiat_balance > best_player.fiat_balance:
+                best_player = player
 
-    var greater_fiat_value = 0
-
-    if greater_btc_value == 0:
-        for player in players:
-            if player.fiat_balance <= greater_fiat_value:
-                continue
-
-            greater_fiat_value = player.fiat_balance
-            winner_username = player.username
-
-    return winner_username
+    print("best_player: %s" % best_player.username)
+    match_winner_player_data.emit(best_player)
 
 
 func apply_property_payout(tile_index: int) -> void:

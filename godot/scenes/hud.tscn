@@ -59,7 +59,7 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_ahhtf")
 match_timer_label = NodePath("MarginContainer/VBoxContainer/MatchTimerValue")
-timer_label = NodePath("MarginContainer/VBoxContainer/VBoxContainer/Timer")
+timer_label = NodePath("MarginContainer/VBoxContainer/VBoxContainer/HBoxContainer/Timer")
 notification_message_label = NodePath("MarginContainer/VBoxContainer/NotificationMessage")
 player_name = NodePath("MarginContainer/VBoxContainer/VBoxContainer/HBoxContainer/PlayerName")
 player_balance = NodePath("MarginContainer/VBoxContainer/VBoxContainer/HBoxContainer2/PlayerBalance")
@@ -153,14 +153,6 @@ stretch_mode = 4
 layout_mode = 2
 theme_override_constants/separation = 16
 
-[node name="Timer" type="Label" parent="MarginContainer/VBoxContainer/VBoxContainer"]
-layout_mode = 2
-size_flags_horizontal = 8
-size_flags_vertical = 1
-theme_override_font_sizes/font_size = 24
-text = "MM:SS"
-horizontal_alignment = 2
-
 [node name="HBoxContainer3" type="HBoxContainer" parent="MarginContainer/VBoxContainer/VBoxContainer"]
 layout_mode = 2
 theme_override_constants/separation = 16
@@ -185,18 +177,30 @@ layout_mode = 2
 theme_override_constants/separation = 16
 alignment = 2
 
-[node name="PlayerColor" type="ColorRect" parent="MarginContainer/VBoxContainer/VBoxContainer/HBoxContainer"]
-custom_minimum_size = Vector2(24, 24)
+[node name="Timer" type="Label" parent="MarginContainer/VBoxContainer/VBoxContainer/HBoxContainer"]
 layout_mode = 2
 size_flags_horizontal = 8
-size_flags_vertical = 4
-color = Color(0.05882353, 0.89411765, 0.40784314, 1)
+size_flags_vertical = 1
+theme_override_font_sizes/font_size = 24
+text = "MM:SS"
+horizontal_alignment = 2
+
+[node name="Separator" type="Label" parent="MarginContainer/VBoxContainer/VBoxContainer/HBoxContainer"]
+layout_mode = 2
+text = "|"
 
 [node name="PlayerName" type="Label" parent="MarginContainer/VBoxContainer/VBoxContainer/HBoxContainer"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 20
 text = "Player 1"
 horizontal_alignment = 2
+
+[node name="PlayerColor" type="ColorRect" parent="MarginContainer/VBoxContainer/VBoxContainer/HBoxContainer"]
+custom_minimum_size = Vector2(24, 24)
+layout_mode = 2
+size_flags_horizontal = 8
+size_flags_vertical = 4
+color = Color(0.05882353, 0.89411765, 0.40784314, 1)
 
 [node name="HBoxContainer2" type="HBoxContainer" parent="MarginContainer/VBoxContainer/VBoxContainer"]
 custom_minimum_size = Vector2(0, 48)
@@ -559,13 +563,14 @@ script = ExtResource("4_uo2fv")
 card_scene = ExtResource("3_5ysmq")
 vertical_offset = 500.0
 
-[node name="WinnerDialog" type="CanvasLayer" parent="." node_paths=PackedStringArray("winner_name", "bg", "panel", "restart_button")]
-visible = false
+[node name="WinnerDialog" type="CanvasLayer" parent="." node_paths=PackedStringArray("winner_name", "winner_currencies", "bg", "panel", "restart_button", "list_of_players")]
 script = ExtResource("9_0i1j5")
-winner_name = NodePath("PanelContainer/MarginContainer/VBoxContainer/WinnerNameLabel")
+winner_name = NodePath("PanelContainer/MarginContainer/VBoxContainer/VBoxContainer/WinnerNameLabel")
+winner_currencies = NodePath("PanelContainer/MarginContainer/VBoxContainer/VBoxContainer/WinnerCurrenciesLabel")
 bg = NodePath("ColorRect")
 panel = NodePath("PanelContainer")
 restart_button = NodePath("RestartButton")
+list_of_players = NodePath("PanelContainer/MarginContainer/VBoxContainer/ListOfPlayers")
 
 [node name="ColorRect" type="ColorRect" parent="WinnerDialog"]
 anchors_preset = 15
@@ -607,12 +612,25 @@ text = "WINNER"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="WinnerNameLabel" type="Label" parent="WinnerDialog/PanelContainer/MarginContainer/VBoxContainer"]
+[node name="VBoxContainer" type="VBoxContainer" parent="WinnerDialog/PanelContainer/MarginContainer/VBoxContainer"]
+layout_mode = 2
+
+[node name="WinnerNameLabel" type="Label" parent="WinnerDialog/PanelContainer/MarginContainer/VBoxContainer/VBoxContainer"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 80
 text = "PLAYER NAME"
 horizontal_alignment = 1
 vertical_alignment = 1
+
+[node name="WinnerCurrenciesLabel" type="Label" parent="WinnerDialog/PanelContainer/MarginContainer/VBoxContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 32
+text = "20 EVA | 16 BTC"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="ListOfPlayers" type="VBoxContainer" parent="WinnerDialog/PanelContainer/MarginContainer/VBoxContainer"]
+layout_mode = 2
 
 [node name="RestartButton" type="Button" parent="WinnerDialog"]
 anchors_preset = 7

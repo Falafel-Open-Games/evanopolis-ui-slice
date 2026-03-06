@@ -9,5 +9,6 @@ extends Node
 @export var starting_mining_power: int = 0
 @export var disable_special_properties: bool = true
 @export var btc_exchange_rate_fiat: float = 100000.0
+@export var btc_winning_value: float = 20.0
 @export var game_id: String = ""
 @export var build_id: String = "xlvrrzmwtxto"

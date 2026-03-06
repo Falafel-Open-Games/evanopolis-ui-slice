@@ -66,6 +66,7 @@ func _ready() -> void:
     card_dialog.close_dialog()
     inventory.set_inventory(game_controller, game_state)
     card_dialog.set_dialog(game_controller, game_state)
+    winner_screen.set_panel(game_state)
 
     # bind states
     _bind_game_state()
@@ -87,6 +88,19 @@ func _reset_ui():
     pay_toll_button.visible = false
     pay_exit_prision_button.visible = false
     go_to_prision_button.visible = false
+
+func hide_all_ui():
+    _reset_ui()
+    timer_label.visible = false
+    match_timer_label.visible = false
+    inventory_button.visible = false
+    _is_inventory_active = false
+    inventory.hide_inventory()
+    player_name.visible = false
+    player_balance.visible = false
+    player_color.visible = false
+    dice_1_texture_rect.visible = false
+    dice_2_texture_rect.visible = false
 
 func _bind_ui_elements() -> void:
     if not end_turn_button.pressed.is_connected(_on_end_turn_button_pressed):
@@ -113,8 +127,6 @@ func _bind_ui_elements() -> void:
 func _bind_game_controller() -> void:
     if not game_controller.match_elapsed.is_connected(_on_match_elapsed):
         game_controller.match_elapsed.connect(_on_match_elapsed)
-    if not game_controller.match_ended.is_connected(_on_match_ended):
-        game_controller.match_ended.connect(_on_match_ended)
     if not game_controller.timer_elapsed.is_connected(_on_timer_elapsed):
         game_controller.timer_elapsed.connect(_on_timer_elapsed)
     if not game_controller.turn_started.is_connected(_on_turn_started):
@@ -151,20 +163,15 @@ func _bind_game_state() -> void:
         game_state.player_arrested_changed.connect(_on_player_arrested_changed)
     if not game_state.player_money_fiat_spent.is_connected(_on_player_money_fiat_spent):
         game_state.player_money_fiat_spent.connect(_on_player_money_fiat_spent)
+    if not game_state.match_winner_player_data.is_connected(_on_match_winner_player_data):
+        game_state.match_winner_player_data.connect(_on_match_winner_player_data)
 
-func _on_match_ended() -> void:
-    _reset_ui()
-    timer_label.visible = false
-    match_timer_label.visible = false
-    inventory_button.visible = false
-    _is_inventory_active = false
-    inventory.hide_inventory()
-    player_name.visible = false
-    player_balance.visible = false
-    player_color.visible = false
-    dice_1_texture_rect.visible = false
-    dice_2_texture_rect.visible = false
-    winner_screen.show_dialog(game_state.get_winner_username())
+func _on_match_winner_player_data(winner_player_data: PlayerData) -> void:
+    _show_winner_screen(winner_player_data)
+
+func _show_winner_screen(winner_player_data: PlayerData) -> void:
+    hide_all_ui()
+    winner_screen.show_dialog(winner_player_data)
 
 func _on_match_elapsed(match_duration: int, time_elapsed: float) -> void:
     var remaining := int(max(0.0, match_duration - time_elapsed))
@@ -409,7 +416,7 @@ func _on_player_arrested_changed(player_index: int, arrested_status: bool) -> vo
     _notify_user(message)
 
 func _on_try_to_escape_prision_failed():
-    pay_exit_prision_button.visible = true
+    pay_exit_prision_button.visible = false
     end_turn_button.visible = true
     var message = "ATTEMPT FAILED"
     _notify_user(message)

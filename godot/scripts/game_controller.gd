@@ -8,7 +8,6 @@ signal property_purchased(tile_index: int)
 signal turn_ended(next_player_index: int, next_tile_index: int)
 signal turn_started(player_index: int, tile_index: int)
 signal match_elapsed(match_duration: int, time_elapsed: float)
-signal match_ended()
 signal timer_elapsed(turn_duration: int, time_elapsed: float)
 signal map_overview_button_pressed(is_active: bool)
 signal toll_payment_confirmed(is_payed: bool, toll_value: float)
@@ -95,21 +94,10 @@ func _bind_ui_controller() -> void:
     if not ui_controller.go_to_prision_button_pressed.is_connected(_on_go_to_prision_button_pressed):
         ui_controller.go_to_prision_button_pressed.connect(_on_go_to_prision_button_pressed)
 
-# func _bind_sidebar() -> void:
-# 	if not turn_actions.end_turn_button.pressed.is_connected(_on_end_turn_pressed):
-# 		turn_actions.end_turn_button.pressed.connect(_on_end_turn_pressed)
-# 	if not turn_actions.dice_requested.is_connected(_on_dice_requested):
-# 		turn_actions.dice_requested.connect(_on_dice_requested)
-# 	if not turn_actions.dice_rolled.is_connected(_on_dice_rolled):
-# 		turn_actions.dice_rolled.connect(_on_dice_rolled)
-# 	if not turn_actions.buy_requested.is_connected(_on_buy_requested):
-# 		turn_actions.buy_requested.connect(_on_buy_requested)
-# 	if not turn_actions.toll_payment_requested.is_connected(_on_toll_payment_requested):
-# 		turn_actions.toll_payment_requested.connect(_on_toll_payment_requested)
-
 func _on_end_match_time() -> void:
+    print("_on_end_match_time")
     turn_timer_active = false
-    match_ended.emit()
+    game_state.check_winner_by_time()
 
 func _on_end_turn_pressed() -> void:
     assert(game_state)
@@ -435,6 +423,7 @@ func _on_player_data_changed(player_index: int, player_data: PlayerData) -> void
     var summary: PlayerSummary = summaries[player_index] as PlayerSummary
     assert(summary)
     summary.set_player_data(player_data)
+    game_state.check_winner_by_btc()
 
 func _on_turn_state_changed(_player_index: int, _turn_number: int, cycle_number: int) -> void:
     if cycle_number != last_cycle:
