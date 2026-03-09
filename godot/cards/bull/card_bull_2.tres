@@ -9,4 +9,5 @@ description = "Receives 0.2 BTC from an airdrop"
 deck_type = 1
 effect_type = 5
 amount = 0.2
+copies = 2
 metadata/_custom_type_script = "uid://nfsy0lutna7r"

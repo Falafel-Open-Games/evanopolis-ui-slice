@@ -9,4 +9,5 @@ description = "Receives 2 EVAs from the bank"
 deck_type = 1
 effect_type = 4
 amount = 2.0
+copies = 3
 metadata/_custom_type_script = "uid://nfsy0lutna7r"

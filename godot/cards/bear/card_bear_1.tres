@@ -7,3 +7,4 @@ script = ExtResource("1_rkep7")
 name = "Pay fine"
 description = "Pay 1 EVA to the bank"
 amount = 1.0
+copies = 3

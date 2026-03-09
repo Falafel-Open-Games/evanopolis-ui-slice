@@ -8,4 +8,5 @@ name = "Lose BTC"
 description = "Lose 0.5 BTC"
 effect_type = 1
 amount = 0.5
+copies = 2
 metadata/_custom_type_script = "uid://nfsy0lutna7r"
