@@ -21,7 +21,8 @@ signal try_to_escape_prision_failed()
 @export var pawn_wait_time_per_tile: float = 0.3
 @export var pawn_delay_start_movement: float = 0.8
 
-@export var ui_controller : UiController
+@export var ui_controller: UiController
+@export var decks_manager: DecksManager
 
 # TODO: review the methods of thid board layout, it looks like they should be processed once in the beginning and then be part of the game state until the end of the match
 @onready var board_layout: Node = %BoardLayout
@@ -323,8 +324,14 @@ func _place_pawn(
         _pawn_move_tween = null
         _pawn_jump_tween = null
 
-    if target_tile_index == game_state.inspection_tile_index:
+    if game_state.get_tile_info(target_tile_index).tile_type == Utils.TileType.INSPECTION:
         game_state.arrest_player(player_index)
+    elif game_state.get_tile_info(target_tile_index).tile_type == Utils.TileType.INCIDENT:
+        var event_card = decks_manager.draw_chance_card()
+        print(event_card.name)
+    #TODO:
+        # draw card if bear / bull
+        # flip tile
 
     if emit_finish:
         pawn_move_finished.emit(target_tile_index, player_index)

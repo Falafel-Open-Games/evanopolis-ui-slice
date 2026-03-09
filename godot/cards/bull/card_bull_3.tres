@@ -1,9 +1,9 @@
 [gd_resource type="Resource" script_class="EventCard" load_steps=2 format=3 uid="uid://c07vakjb15243"]
 
-[ext_resource type="Script" uid="uid://nfsy0lutna7r" path="res://scripts/event_card.gd" id="1_tjed0"]
+[ext_resource type="Script" uid="uid://nfsy0lutna7r" path="res://scripts/event_card.gd" id="1_6rffg"]
 
 [resource]
-script = ExtResource("1_tjed0")
+script = ExtResource("1_6rffg")
 name = "Free inspection exit"
 description = "You can use this card anytime to skip 1 inspection for free"
 effect_type = 9
