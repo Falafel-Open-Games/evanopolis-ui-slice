@@ -1,4 +1,4 @@
-[gd_scene load_steps=18 format=3 uid="uid://bq4767bbrdlve"]
+[gd_scene load_steps=20 format=3 uid="uid://bq4767bbrdlve"]
 
 [ext_resource type="Script" uid="uid://braklbiosnmm3" path="res://scripts/ui_controller.gd" id="1_ahhtf"]
 [ext_resource type="Texture2D" uid="uid://c517xfjbdurgf" path="res://textures/dices.png" id="2_6fi6k"]
@@ -10,6 +10,7 @@
 [ext_resource type="Texture2D" uid="uid://bsdsirftpihua" path="res://textures/miner_icon.png" id="5_047uy"]
 [ext_resource type="Script" uid="uid://daav86w8lrh1h" path="res://scripts/winner_screen.gd" id="9_0i1j5"]
 [ext_resource type="Theme" uid="uid://e861w5aouvps" path="res://styles/general_theme.tres" id="10_mphia"]
+[ext_resource type="Script" uid="uid://bq5ev5plxqt28" path="res://scripts/event_card_ui.gd" id="11_0m4u7"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_6fi6k"]
 atlas = ExtResource("2_6fi6k")
@@ -50,7 +51,19 @@ corner_radius_top_right = 24
 corner_radius_bottom_right = 24
 corner_radius_bottom_left = 24
 
-[node name="Hud" type="Control" node_paths=PackedStringArray("match_timer_label", "timer_label", "notification_message_label", "player_name", "player_balance", "player_color", "dice_1_texture_rect", "dice_2_texture_rect", "end_turn_button", "roll_dice_button", "buy_property_button", "pass_property_button", "pay_toll_button", "pay_exit_prision_button", "go_to_prision_button", "map_overview_button", "inventory_button", "card_ui", "balance_variation_panel", "balance_variation_label", "turn_indicator_panel", "turn_indicator_label", "turn_indicator_player_color", "inventory", "card_dialog", "winner_screen")]
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_mphia"]
+bg_color = Color(0.4326641, 0.396452, 0.16814962, 1)
+border_width_left = 4
+border_width_top = 4
+border_width_right = 4
+border_width_bottom = 4
+border_color = Color(0, 0, 0, 1)
+corner_radius_top_left = 24
+corner_radius_top_right = 24
+corner_radius_bottom_right = 24
+corner_radius_bottom_left = 24
+
+[node name="Hud" type="Control" node_paths=PackedStringArray("match_timer_label", "timer_label", "notification_message_label", "player_name", "player_balance", "player_color", "dice_1_texture_rect", "dice_2_texture_rect", "end_turn_button", "roll_dice_button", "buy_property_button", "pass_property_button", "pay_toll_button", "pay_exit_prision_button", "go_to_prision_button", "draw_event_card_button", "apply_event_card_effect_button", "map_overview_button", "inventory_button", "card_ui", "event_card_ui", "balance_variation_panel", "balance_variation_label", "turn_indicator_panel", "turn_indicator_label", "turn_indicator_player_color", "inventory", "card_dialog", "winner_screen")]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -73,9 +86,12 @@ pass_property_button = NodePath("MarginContainer/MarginContainer/HBoxContainer/P
 pay_toll_button = NodePath("MarginContainer/MarginContainer/HBoxContainer/PayToll")
 pay_exit_prision_button = NodePath("MarginContainer/MarginContainer/HBoxContainer/PayExitPrision")
 go_to_prision_button = NodePath("MarginContainer/MarginContainer/HBoxContainer/GoToPrision")
+draw_event_card_button = NodePath("MarginContainer/MarginContainer/HBoxContainer/DrawEventCard")
+apply_event_card_effect_button = NodePath("MarginContainer/MarginContainer/HBoxContainer/ApplyEventCard")
 map_overview_button = NodePath("MarginContainer/VBoxContainer/VBoxContainer/HBoxContainer3/MapOverviewBtn")
 inventory_button = NodePath("MarginContainer/VBoxContainer/VBoxContainer/HBoxContainer3/InventoryBtn")
 card_ui = NodePath("Card")
+event_card_ui = NodePath("EventCard")
 balance_variation_panel = NodePath("MarginContainer/VBoxContainer/VBoxContainer/HBoxContainer2/BalanceVariationPanel")
 balance_variation_label = NodePath("MarginContainer/VBoxContainer/VBoxContainer/HBoxContainer2/BalanceVariationPanel/MarginContainer/BalanceVariationValue")
 balance_variation_spend_color = Color(0.64705884, 0.16862746, 0.19215687, 1)
@@ -278,6 +294,16 @@ text = "PAY EXIT PRISION"
 custom_minimum_size = Vector2(200, 80)
 layout_mode = 2
 text = "GO TO PRISION"
+
+[node name="DrawEventCard" type="Button" parent="MarginContainer/MarginContainer/HBoxContainer"]
+custom_minimum_size = Vector2(200, 80)
+layout_mode = 2
+text = "DRAW CARD"
+
+[node name="ApplyEventCard" type="Button" parent="MarginContainer/MarginContainer/HBoxContainer"]
+custom_minimum_size = Vector2(200, 80)
+layout_mode = 2
+text = "CONTINUE"
 
 [node name="Card" parent="." instance=ExtResource("3_5ysmq")]
 visible = false
@@ -564,6 +590,7 @@ card_scene = ExtResource("3_5ysmq")
 vertical_offset = 500.0
 
 [node name="WinnerDialog" type="CanvasLayer" parent="." node_paths=PackedStringArray("winner_name", "winner_currencies", "bg", "panel", "restart_button", "list_of_players")]
+visible = false
 script = ExtResource("9_0i1j5")
 winner_name = NodePath("PanelContainer/MarginContainer/VBoxContainer/VBoxContainer/WinnerNameLabel")
 winner_currencies = NodePath("PanelContainer/MarginContainer/VBoxContainer/VBoxContainer/WinnerCurrenciesLabel")
@@ -646,3 +673,61 @@ grow_horizontal = 2
 grow_vertical = 0
 theme = ExtResource("10_mphia")
 text = "RESTART"
+
+[node name="EventCard" type="Panel" parent="." node_paths=PackedStringArray("title_label", "card_type_label", "description_label")]
+visible = false
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -120.0
+offset_top = -300.0
+offset_right = 120.0
+offset_bottom = 100.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_mphia")
+script = ExtResource("11_0m4u7")
+title_label = NodePath("MarginContainer/VBoxContainer/Top/Title")
+card_type_label = NodePath("MarginContainer/VBoxContainer/Top/Type")
+description_label = NodePath("MarginContainer/VBoxContainer/Description")
+
+[node name="MarginContainer" type="MarginContainer" parent="EventCard"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 24
+theme_override_constants/margin_top = 24
+theme_override_constants/margin_right = 24
+theme_override_constants/margin_bottom = 24
+
+[node name="VBoxContainer" type="VBoxContainer" parent="EventCard/MarginContainer"]
+layout_mode = 2
+theme_override_constants/separation = 40
+
+[node name="Top" type="VBoxContainer" parent="EventCard/MarginContainer/VBoxContainer"]
+layout_mode = 2
+
+[node name="Title" type="Label" parent="EventCard/MarginContainer/VBoxContainer/Top"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+text = "CARD TITLE"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Type" type="Label" parent="EventCard/MarginContainer/VBoxContainer/Top"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = "DECK"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Description" type="Label" parent="EventCard/MarginContainer/VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 1
+text = "Card description"

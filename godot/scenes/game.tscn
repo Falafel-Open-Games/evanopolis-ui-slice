@@ -1,4 +1,4 @@
-[gd_scene load_steps=20 format=3 uid="uid://cqmxik86m7jfl"]
+[gd_scene load_steps=21 format=3 uid="uid://cqmxik86m7jfl"]
 
 [ext_resource type="PackedScene" uid="uid://q6cux836c2th" path="res://scenes/tile.tscn" id="1_tile"]
 [ext_resource type="PackedScene" uid="uid://belar34400qbw" path="res://scenes/side_strip.tscn" id="2_s0k7h"]
@@ -9,6 +9,7 @@
 [ext_resource type="Script" uid="uid://b4b2jj7a5a3fy" path="res://scripts/pawns_start.gd" id="4_3k9qj"]
 [ext_resource type="Texture2D" uid="uid://k7syhjgjqoc" path="res://textures/sky_29_2k.png" id="4_dinhu"]
 [ext_resource type="Texture2D" uid="uid://6g72sqywcghk" path="res://textures/wood-natural-texture.jpg" id="4_kvuet"]
+[ext_resource type="Script" path="res://scripts/decks_manager.gd" id="4_trtic"]
 [ext_resource type="Script" uid="uid://e1pe74jhpbxc" path="res://scripts/game_controller.gd" id="5_77h6y"]
 [ext_resource type="PackedScene" uid="uid://ckbnfxtwa4po5" path="res://scenes/turn_actions.tscn" id="6_p57ef"]
 [ext_resource type="Script" uid="uid://c6s7q4d0p7qrx" path="res://scripts/game_state.gd" id="7_h6e2v"]
@@ -46,7 +47,7 @@ script = ExtResource("7_h6e2v")
 unique_name_in_owner = true
 script = ExtResource("3_tfrx2")
 
-[node name="GameController" type="Node" parent="." node_paths=PackedStringArray("left_sidebar_list", "pawns_root", "ui_controller")]
+[node name="GameController" type="Node" parent="." node_paths=PackedStringArray("left_sidebar_list", "pawns_root", "ui_controller", "decks_manager")]
 unique_name_in_owner = true
 script = ExtResource("5_77h6y")
 left_sidebar_list = NodePath("../Control/MarginContainer/BoxContainer/PlayersList/VBoxContainer")
@@ -55,6 +56,10 @@ pawn_movement_peak = Vector2(0.1, 0.1)
 pawn_jump_height = 0.02
 pawn_wait_time_per_tile = 0.2
 ui_controller = NodePath("../Hud")
+decks_manager = NodePath("../DecksManager")
+
+[node name="DecksManager" type="Node" parent="."]
+script = ExtResource("4_trtic")
 
 [node name="Table" type="MeshInstance3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.1348363)

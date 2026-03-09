@@ -8,6 +8,8 @@ signal pass_property_button_pressed
 signal pay_toll_button_pressed
 signal pay_exit_prision_button_pressed
 signal go_to_prision_button_pressed
+signal draw_event_card_button_pressed
+signal apply_event_card_effect_button_pressed
 signal map_overview_button_pressed(is_active: bool)
 signal dice_result_shown(dice_1: int, dice_2: int, total: int)
 
@@ -29,9 +31,12 @@ signal dice_result_shown(dice_1: int, dice_2: int, total: int)
 @export var pay_toll_button : Button
 @export var pay_exit_prision_button : Button
 @export var go_to_prision_button : Button
+@export var draw_event_card_button : Button
+@export var apply_event_card_effect_button : Button
 @export var map_overview_button : TextureButton
 @export var inventory_button : TextureButton
 @export var card_ui : CardUi
+@export var event_card_ui : EventCardUi
 @export var balance_variation_panel : PanelContainer
 @export var balance_variation_label : Label
 @export var balance_variation_spend_color : Color
@@ -88,6 +93,8 @@ func _reset_ui():
     pay_toll_button.visible = false
     pay_exit_prision_button.visible = false
     go_to_prision_button.visible = false
+    draw_event_card_button.visible = false
+    apply_event_card_effect_button.visible = false
 
 func hide_all_ui():
     _reset_ui()
@@ -101,6 +108,7 @@ func hide_all_ui():
     player_color.visible = false
     dice_1_texture_rect.visible = false
     dice_2_texture_rect.visible = false
+    event_card_ui.hide_card()
 
 func _bind_ui_elements() -> void:
     if not end_turn_button.pressed.is_connected(_on_end_turn_button_pressed):
@@ -123,6 +131,10 @@ func _bind_ui_elements() -> void:
         pay_exit_prision_button.pressed.connect(_on_pay_exit_prision_button)
     if not go_to_prision_button.pressed.is_connected(_on_go_to_prision_button):
         go_to_prision_button.pressed.connect(_on_go_to_prision_button)
+    if not draw_event_card_button.pressed.is_connected(_on_draw_event_card_button):
+        draw_event_card_button.pressed.connect(_on_draw_event_card_button)
+    if not apply_event_card_effect_button.pressed.is_connected(_on_apply_event_card_effect_button):
+        apply_event_card_effect_button.pressed.connect(_on_apply_event_card_effect_button)
 
 func _bind_game_controller() -> void:
     if not game_controller.match_elapsed.is_connected(_on_match_elapsed):
@@ -145,6 +157,8 @@ func _bind_game_controller() -> void:
         game_controller.toll_payment_confirmed.connect(_on_toll_payment_confirmed)
     if not game_controller.try_to_escape_prision_failed.is_connected(_on_try_to_escape_prision_failed):
         game_controller.try_to_escape_prision_failed.connect(_on_try_to_escape_prision_failed)
+    if not game_controller.incident_card_drew.is_connected(_on_incident_card_drew):
+        game_controller.incident_card_drew.connect(_on_incident_card_drew)
 
 func _bind_game_state() -> void:
     if not game_state.player_changed.is_connected(_on_player_changed):
@@ -301,6 +315,8 @@ func _on_pawn_move_finished(_end_tile_index: int, _player_index: int) -> void:
     map_overview_button.visible = true
     inventory_button.visible = true
 
+    # TODO: UI Controller shouldn't handle game rules. It must be moved to GameController instead
+
     if is_property:
         if tile_info.owner_index == -1:
             # Tile is available
@@ -329,6 +345,8 @@ func _on_pawn_move_finished(_end_tile_index: int, _player_index: int) -> void:
             var owner_name = game_state.get_player_username(tile_info.owner_index) if tile_info.owner_index != -1 else "NO OWNER"
             card_ui.set_card_owned(tile_info.city, tile_info.tile_type, toll_amount, tile_info.miner_batches, owner_name, tile_info.is_mortgaged)
             end_turn_button.visible = true
+    elif tile_info.tile_type == Utils.TileType.INCIDENT:
+        draw_event_card_button.visible = true
     else:
         end_turn_button.visible = true
 
@@ -424,10 +442,19 @@ func _on_try_to_escape_prision_failed():
 func _on_player_money_fiat_spent(_player_index: int, spent_value: float) -> void:
     _spend_value_balance_variation(spent_value)
 
+func _on_incident_card_drew(event_card: EventCard) -> void:
+    print(event_card.name)
+    apply_event_card_effect_button.visible = true
+    event_card_ui.show_card(event_card)
+    # TODO:
+        # populate card details
+        # if user can´t pay, show button to go to jail
+
 # UI
 
 func _on_end_turn_button_pressed() -> void:
     card_ui.hide_card()
+    event_card_ui.hide_card()
     end_turn_button.visible = false
     balance_variation_panel.visible = false
     end_turn_button_pressed.emit()
@@ -463,7 +490,18 @@ func _on_pay_exit_prision_button() -> void:
 func _on_go_to_prision_button() -> void:
     go_to_prision_button.visible = false
     pay_toll_button.visible = false
+    event_card_ui.hide_card()
     go_to_prision_button_pressed.emit()
+
+func _on_draw_event_card_button() -> void:
+    draw_event_card_button.visible = false
+    draw_event_card_button_pressed.emit()
+
+func _on_apply_event_card_effect_button() -> void:
+    apply_event_card_effect_button.visible = false
+    end_turn_button.visible = true
+    event_card_ui.hide_card()
+    apply_event_card_effect_button_pressed.emit()
 
 func _on_map_overview_button_pressed() -> void:
     _is_map_overview_active = not _is_map_overview_active

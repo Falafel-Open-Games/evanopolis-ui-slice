@@ -41,6 +41,9 @@ signal player_changed(new_index: int)
 signal player_position_changed(new_position: int, tile_slot: int)
 signal player_data_changed(player_index: int, player_data: PlayerData)
 signal player_money_fiat_spent(player_index: int, spent_value: float)
+signal player_money_bitcoin_spent(player_index: int, spent_value: float)
+signal player_money_fiat_received(player_index: int, spent_value: float)
+signal player_money_bitcoin_received(player_index: int, spent_value: float)
 signal player_arrested_changed(player_index: int, arrested_status: bool)
 signal turn_state_changed(player_index: int, turn_number: int, cycle_number: int)
 signal miner_order_locked(player_index: int, locked: bool)
@@ -541,3 +544,28 @@ func spend_money_fiat(player_index: int, spent_value: float) -> bool:
     player_money_fiat_spent.emit(player_index, spent_value)
     player_data_changed.emit(player_index, player)
     return true
+
+func spend_money_btc(player_index: int, spent_value: float) -> bool:
+    print("spend_money_btc %s %s" % [player_index, spent_value])
+    var player: PlayerData = players[player_index]
+    if player.bitcoin_balance < spent_value:
+        return false
+
+    player.bitcoin_balance -= spent_value
+    player_money_bitcoin_spent.emit(player_index, spent_value)
+    player_data_changed.emit(player_index, player)
+    return true
+
+func receive_money_fiat(player_index: int, received_value: float) -> void:
+    print("receive_money_fiat %s %s" % [player_index, received_value])
+    var player: PlayerData = players[player_index]
+    player.fiat_balance += received_value
+    player_money_fiat_received.emit(player_index, received_value)
+    player_data_changed.emit(player_index, player)
+
+func receive_money_bitcoin(player_index: int, received_value: float) -> void:
+    print("receive_money_fiat %s %s" % [player_index, received_value])
+    var player: PlayerData = players[player_index]
+    player.bitcoin_balance += received_value
+    player_money_bitcoin_received.emit(player_index, received_value)
+    player_data_changed.emit(player_index, player)

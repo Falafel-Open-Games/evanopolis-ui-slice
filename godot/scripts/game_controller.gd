@@ -12,6 +12,7 @@ signal timer_elapsed(turn_duration: int, time_elapsed: float)
 signal map_overview_button_pressed(is_active: bool)
 signal toll_payment_confirmed(is_payed: bool, toll_value: float)
 signal try_to_escape_prision_failed()
+signal incident_card_drew(event_card: EventCard)
 
 # @export var turn_actions: TurnActions
 @export var left_sidebar_list: BoxContainer
@@ -42,6 +43,7 @@ var _pawn_move_token: int = 0
 var _pawn_move_tween: Tween = null
 var _pawn_jump_tween: Tween = null
 var _pawn_move_timer: SceneTreeTimer = null
+var _last_effect_card_drew: EventCard = null
 
 func _ready() -> void:
     assert(game_state)
@@ -94,6 +96,10 @@ func _bind_ui_controller() -> void:
         ui_controller.pay_exit_prision_button_pressed.connect(_on_pay_exit_prision_button_pressed)
     if not ui_controller.go_to_prision_button_pressed.is_connected(_on_go_to_prision_button_pressed):
         ui_controller.go_to_prision_button_pressed.connect(_on_go_to_prision_button_pressed)
+    if not ui_controller.draw_event_card_button_pressed.is_connected(_on_draw_event_card_button_pressed):
+        ui_controller.draw_event_card_button_pressed.connect(_on_draw_event_card_button_pressed)
+    if not ui_controller.apply_event_card_effect_button_pressed.is_connected(_on_apply_event_card_effect_button_pressed):
+        ui_controller.apply_event_card_effect_button_pressed.connect(_on_apply_event_card_effect_button_pressed)
 
 func _on_end_match_time() -> void:
     print("_on_end_match_time")
@@ -326,13 +332,6 @@ func _place_pawn(
 
     if game_state.get_tile_info(target_tile_index).tile_type == Utils.TileType.INSPECTION:
         game_state.arrest_player(player_index)
-    elif game_state.get_tile_info(target_tile_index).tile_type == Utils.TileType.INCIDENT:
-        var event_card = decks_manager.draw_chance_card()
-        print(event_card.name)
-    #TODO:
-        # draw card if bear / bull
-        # flip tile
-
     if emit_finish:
         pawn_move_finished.emit(target_tile_index, player_index)
 
@@ -411,6 +410,58 @@ func _on_pay_exit_prision_button_pressed() -> void:
 
 func _on_go_to_prision_button_pressed() -> void:
     game_state.arrest_player(game_state.current_player_index)
+
+func _on_draw_event_card_button_pressed() -> void:
+    var event_card = decks_manager.draw_chance_card()
+    _last_effect_card_drew = event_card
+    print(event_card.name)
+    incident_card_drew.emit(event_card)
+
+    #TODO:
+        # draw card if bear / bull
+        # flip tile
+
+func _on_apply_event_card_effect_button_pressed() -> void:
+    if _last_effect_card_drew == null:
+        return
+
+    match _last_effect_card_drew.effect_type:
+        Utils.CardEffectType.EXIT_JAIL_FREE:
+            print("receive EXIT_JAIL_FREE card for %s shots" % _last_effect_card_drew.amount)
+            # Todo: add this type to inventory
+        Utils.CardEffectType.GAIN_MINER:
+            print("Gain %s miners" % _last_effect_card_drew.amount)
+            # Todo: not for v0
+        Utils.CardEffectType.GO_TO_JAIL:
+            print("Go to jail")
+            game_state.arrest_player(game_state.current_player_index)
+        Utils.CardEffectType.LOSE_MINER:
+            print("Lose %s miners" % _last_effect_card_drew.amount)
+            # Todo: not for v0
+        Utils.CardEffectType.PAY_BTC_TO_BANK:
+            print("Pay %s BTC to bank" % _last_effect_card_drew.amount)
+            game_state.spend_money_btc(game_state.current_player_index, _last_effect_card_drew.amount)
+        Utils.CardEffectType.PAY_BTC_TO_PLAYERS:
+            print("Pay %s BTC to other players" % _last_effect_card_drew.amount)
+            # Todo: not for v0
+        Utils.CardEffectType.PAY_FIAT_TO_BANK:
+            print("Pay %s EVA to bank" % _last_effect_card_drew.amount)
+            game_state.spend_money_fiat(game_state.current_player_index, _last_effect_card_drew.amount)
+        Utils.CardEffectType.PAY_FIAT_TO_PLAYERS:
+            print("Pay %s EVA to other players" % _last_effect_card_drew.amount)
+            # Todo: not for v0
+        Utils.CardEffectType.RECEIVE_BTC_FROM_BANK:
+            print("Receive %s BTC from bank" % _last_effect_card_drew.amount)
+            game_state.receive_money_bitcoin(game_state.current_player_index, _last_effect_card_drew.amount)
+        Utils.CardEffectType.RECEIVE_BTC_FROM_PLAYERS:
+            print("Receive %s BTC from other players" % _last_effect_card_drew.amount)
+            # Todo: not for v0
+        Utils.CardEffectType.RECEIVE_FIAT_FROM_BANK:
+            print("Receive %s EVA from bank" % _last_effect_card_drew.amount)
+            game_state.receive_money_fiat(game_state.current_player_index, _last_effect_card_drew.amount)
+        Utils.CardEffectType.RECEIVE_FIAT_FROM_PLAYERS:
+            print("Receive %s EVA from other players" % _last_effect_card_drew.amount)
+            # Todo: not for v0
 
 func _flip_tile(tile_index: int) -> void:
     assert(board_layout)
