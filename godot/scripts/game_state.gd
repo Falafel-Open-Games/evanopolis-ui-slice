@@ -34,6 +34,7 @@ var turn_count: int = 1
 var inspection_tile_index = -1
 var player_laps: Array[int] = []
 var player_progress: Array[int] = []
+var player_event_cards: Array[Dictionary] = []
 var pending_miner_orders: Array[Dictionary] = []
 var pending_miner_order_locked: Array[bool] = []
 
@@ -74,6 +75,9 @@ func reset_positions() -> void:
     player_progress.resize(GameConfig.player_count)
     player_progress.fill(0)
 
+    player_event_cards = []
+    player_event_cards.resize(GameConfig.player_count)
+
     pending_miner_orders = []
     pending_miner_orders.resize(GameConfig.player_count)
     pending_miner_order_locked = []
@@ -89,6 +93,7 @@ func reset_positions() -> void:
         data.mining_power = GameConfig.starting_mining_power
         players[index] = data
         player_data_changed.emit(index, data)
+        player_event_cards[index] = {}
         pending_miner_orders[index] = {}
         pending_miner_order_locked[index] = false
 
@@ -579,3 +584,25 @@ func receive_money_bitcoin(player_index: int, received_value: float) -> void:
     player.bitcoin_balance += received_value
     player_money_bitcoin_received.emit(player_index, received_value)
     player_data_changed.emit(player_index, player)
+
+func get_event_card_amount(player_index: int, event_card_type: Utils.CardEffectType) -> int:
+    var card_id = Utils.CardEffectType.keys()[event_card_type]
+    var cards := player_event_cards[player_index]
+    return cards.get(card_id, 0)
+
+func consume_event_card(player_index: int, event_card_type: Utils.CardEffectType, amount: int = 1) -> bool:
+    if get_event_card_amount(player_index, event_card_type) < amount:
+        return false
+
+    receive_event_card(player_index, event_card_type, -amount)
+    return true
+
+func receive_event_card(player_index: int, event_card_type: Utils.CardEffectType, amount: int) -> void:
+    var card_id = Utils.CardEffectType.keys()[event_card_type]
+    var cards := player_event_cards[player_index]
+    var current: int = cards.get(card_id, 0)
+    current += amount
+    if current <= 0:
+        cards.erase(card_id)
+    else:
+        cards[card_id] = current

@@ -96,6 +96,8 @@ func _bind_ui_controller() -> void:
         ui_controller.pay_exit_prision_button_pressed.connect(_on_pay_exit_prision_button_pressed)
     if not ui_controller.go_to_prision_button_pressed.is_connected(_on_go_to_prision_button_pressed):
         ui_controller.go_to_prision_button_pressed.connect(_on_go_to_prision_button_pressed)
+    if not ui_controller.consume_exit_prision_card_button_pressed.is_connected(_on_consume_exit_prision_card_button_pressed):
+        ui_controller.consume_exit_prision_card_button_pressed.connect(_on_consume_exit_prision_card_button_pressed)
     if not ui_controller.draw_event_card_button_pressed.is_connected(_on_draw_event_card_button_pressed):
         ui_controller.draw_event_card_button_pressed.connect(_on_draw_event_card_button_pressed)
     if not ui_controller.apply_event_card_effect_button_pressed.is_connected(_on_apply_event_card_effect_button_pressed):
@@ -411,6 +413,10 @@ func _on_pay_exit_prision_button_pressed() -> void:
 func _on_go_to_prision_button_pressed() -> void:
     game_state.arrest_player(game_state.current_player_index)
 
+func _on_consume_exit_prision_card_button_pressed() -> void:
+    if game_state.consume_event_card(game_state.current_player_index, Utils.CardEffectType.EXIT_JAIL_FREE, 1):
+        game_state.release_arrested_player(game_state.current_player_index)
+
 func _on_draw_event_card_button_pressed() -> void:
     var tile_info = game_state.get_tile_info(current_tile_index)
     var event_card = null
@@ -435,7 +441,7 @@ func _on_apply_event_card_effect_button_pressed() -> void:
     match _last_effect_card_drew.effect_type:
         Utils.CardEffectType.EXIT_JAIL_FREE:
             print("receive EXIT_JAIL_FREE card for %s shots" % _last_effect_card_drew.amount)
-            # TODO: add this type to inventory
+            game_state.receive_event_card(game_state.current_player_index, Utils.CardEffectType.EXIT_JAIL_FREE, _last_effect_card_drew.amount)
         Utils.CardEffectType.GAIN_MINER:
             print("Gain %s miners" % _last_effect_card_drew.amount)
             # TODO: not for v0
