@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="EventCard" load_steps=2 format=3 uid="uid://bmibfwbtejjtk"]
+
+[ext_resource type="Script" uid="uid://nfsy0lutna7r" path="res://scripts/event_card.gd" id="1_h50ew"]
+
+[resource]
+script = ExtResource("1_h50ew")
+name = "Airdrop"
+description = "Receives 0.2 BTC from an airdrop"
+deck_type = 1
+effect_type = 5
+amount = 0.2
+copies = 2
+metadata/_custom_type_script = "uid://nfsy0lutna7r"

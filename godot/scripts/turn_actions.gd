@@ -193,7 +193,7 @@ func _set_panel_color(panel: Panel, color: Color) -> void:
 func update_tile_info(
 	tile_type: String,
 	city: String,
-	incident_kind: String,
+	incident_kind: int,
 	property_price: float,
 	special_name: String,
 	special_price: float,
@@ -239,7 +239,7 @@ func update_tile_info(
 func _update_tile_type_label(
 	tile_type: String,
 	city: String,
-	incident_kind: String,
+	incident_kind: int,
 	special_name: String
 ) -> void:
 	assert(tile_type_label)
@@ -251,8 +251,8 @@ func _update_tile_type_label(
 			label_text += "Inspection"
 		"incident":
 			label_text += "Incident"
-			if not incident_kind.is_empty():
-				label_text += " (%s)" % [incident_kind.capitalize()]
+			if incident_kind != -1:
+				label_text += " (%s)" % [Utils.CardEffectDeckType.keys()[incident_kind].capitalize()]
 		"special_property":
 			label_text += "Special Property"
 			if not special_name.is_empty():

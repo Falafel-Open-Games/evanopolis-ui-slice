@@ -3,7 +3,7 @@ extends RefCounted
 
 var tile_type: Utils.TileType
 var city: String
-var incident_kind: String
+var incident_kind: int
 var occupants: Array[int]
 var property_price: float # TODO: CHANGE PRICE TO INT
 var special_property_name: String
@@ -15,7 +15,7 @@ var is_mortgaged: bool
 func _init() -> void:
 	tile_type = Utils.TileType.UNKNOWN
 	city = ""
-	incident_kind = ""
+	incident_kind = -1
 	occupants = []
 	property_price = 0.0
 	special_property_name = ""

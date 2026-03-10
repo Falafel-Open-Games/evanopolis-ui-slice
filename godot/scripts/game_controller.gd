@@ -7,9 +7,12 @@ signal pawn_move_finished(end_tile_index: int, player_index: int)
 signal property_purchased(tile_index: int)
 signal turn_ended(next_player_index: int, next_tile_index: int)
 signal turn_started(player_index: int, tile_index: int)
+signal match_elapsed(match_duration: int, time_elapsed: float)
 signal timer_elapsed(turn_duration: int, time_elapsed: float)
 signal map_overview_button_pressed(is_active: bool)
 signal toll_payment_confirmed(is_payed: bool, toll_value: float)
+signal try_to_escape_prison_failed()
+signal incident_card_drew(event_card: EventCard)
 
 # @export var turn_actions: TurnActions
 @export var left_sidebar_list: BoxContainer
@@ -19,7 +22,8 @@ signal toll_payment_confirmed(is_payed: bool, toll_value: float)
 @export var pawn_wait_time_per_tile: float = 0.3
 @export var pawn_delay_start_movement: float = 0.8
 
-@export var ui_controller : UiController
+@export var ui_controller: UiController
+@export var decks_manager: DecksManager
 
 # TODO: review the methods of thid board layout, it looks like they should be processed once in the beginning and then be part of the game state until the end of the match
 @onready var board_layout: Node = %BoardLayout
@@ -27,7 +31,9 @@ signal toll_payment_confirmed(is_payed: bool, toll_value: float)
 @onready var game_id_label: LineEdit = %GameIdLabel
 @onready var build_id_label: Label = %BuildIdLabel
 
+var match_timer_elapsed: float = 0.0
 var turn_elapsed: float = 0.0
+var match_timer_active: bool = false
 var turn_timer_active: bool = false
 var current_tile_index: int = 0
 var pending_toll_owner_index: int = -1
@@ -37,6 +43,7 @@ var _pawn_move_token: int = 0
 var _pawn_move_tween: Tween = null
 var _pawn_jump_tween: Tween = null
 var _pawn_move_timer: SceneTreeTimer = null
+var _last_effect_card_drew: EventCard = null
 
 func _ready() -> void:
     assert(game_state)
@@ -55,6 +62,7 @@ func _ready() -> void:
     call_deferred("_initialize_game_state")
 
     # call_deferred("_bind_sidebar")
+    match_timer_active = true
     set_process(true)
 
 func _bind_game_state() -> void:
@@ -68,6 +76,8 @@ func _bind_game_state() -> void:
         game_state.turn_state_changed.connect(_on_turn_state_changed)
     if not game_state.miner_batches_changed.is_connected(_on_miner_batches_changed):
         game_state.miner_batches_changed.connect(_on_miner_batches_changed)
+    if not game_state.player_arrested_changed.is_connected(_on_player_arrested_changed):
+        game_state.player_arrested_changed.connect(_on_player_arrested_changed)
 
 func _bind_ui_controller() -> void:
     if not ui_controller.end_turn_button_pressed.is_connected(_on_end_turn_pressed):
@@ -82,19 +92,21 @@ func _bind_ui_controller() -> void:
         ui_controller.map_overview_button_pressed.connect(_on_map_overview_pressed)
     if not ui_controller.pay_toll_button_pressed.is_connected(_on_toll_payment_requested):
         ui_controller.pay_toll_button_pressed.connect(_on_toll_payment_requested)
+    if not ui_controller.pay_exit_prison_button_pressed.is_connected(_on_pay_exit_prison_button_pressed):
+        ui_controller.pay_exit_prison_button_pressed.connect(_on_pay_exit_prison_button_pressed)
+    if not ui_controller.go_to_prison_button_pressed.is_connected(_on_go_to_prison_button_pressed):
+        ui_controller.go_to_prison_button_pressed.connect(_on_go_to_prison_button_pressed)
+    if not ui_controller.consume_exit_prison_card_button_pressed.is_connected(_on_consume_exit_prison_card_button_pressed):
+        ui_controller.consume_exit_prison_card_button_pressed.connect(_on_consume_exit_prison_card_button_pressed)
+    if not ui_controller.draw_event_card_button_pressed.is_connected(_on_draw_event_card_button_pressed):
+        ui_controller.draw_event_card_button_pressed.connect(_on_draw_event_card_button_pressed)
+    if not ui_controller.apply_event_card_effect_button_pressed.is_connected(_on_apply_event_card_effect_button_pressed):
+        ui_controller.apply_event_card_effect_button_pressed.connect(_on_apply_event_card_effect_button_pressed)
 
-
-# func _bind_sidebar() -> void:
-# 	if not turn_actions.end_turn_button.pressed.is_connected(_on_end_turn_pressed):
-# 		turn_actions.end_turn_button.pressed.connect(_on_end_turn_pressed)
-# 	if not turn_actions.dice_requested.is_connected(_on_dice_requested):
-# 		turn_actions.dice_requested.connect(_on_dice_requested)
-# 	if not turn_actions.dice_rolled.is_connected(_on_dice_rolled):
-# 		turn_actions.dice_rolled.connect(_on_dice_rolled)
-# 	if not turn_actions.buy_requested.is_connected(_on_buy_requested):
-# 		turn_actions.buy_requested.connect(_on_buy_requested)
-# 	if not turn_actions.toll_payment_requested.is_connected(_on_toll_payment_requested):
-# 		turn_actions.toll_payment_requested.connect(_on_toll_payment_requested)
+func _on_end_match_time() -> void:
+    print("_on_end_match_time")
+    turn_timer_active = false
+    game_state.check_winner_by_time()
 
 func _on_end_turn_pressed() -> void:
     assert(game_state)
@@ -109,7 +121,13 @@ func _on_roll_dice_pressed() -> void:
     _on_dice_requested()
 
 func _on_dice_result_shown(dice_1: int, dice_2: int, total: int) -> void:
-    move_player(dice_1, dice_2, total)
+    if game_state.is_player_arrested(game_state.current_player_index):
+        if _try_to_escape_prison(dice_1, dice_2):
+            game_state.release_arrested_player(game_state.current_player_index)
+        else:
+            try_to_escape_prison_failed.emit()
+    else:
+        move_player(dice_1, dice_2, total)
 
 func _on_player_changed(new_index: int) -> void:
     # turn_actions.set_current_player(new_index, game_state.turn_count, game_state.current_cycle)
@@ -153,64 +171,19 @@ func _on_dice_requested() -> void:
 func _update_tile_info(tile_index: int) -> void:
     assert(game_state)
     var info: TileInfo = game_state.get_tile_info(tile_index)
-    var tile_type: Utils.TileType = info.tile_type
-    var city: String = info.city
-    var incident_kind: String = info.incident_kind
-    var price: float = 0.0
-    if tile_type == Utils.TileType.PROPERTY:
-        price = game_state.get_tile_price(info)
-    elif tile_type == Utils.TileType.SPECIAL_PROPERTY:
-        price = game_state.get_tile_price(info)
-    var buy_visible: bool = (
-        (tile_type == Utils.TileType.PROPERTY or tile_type == Utils.TileType.SPECIAL_PROPERTY)
-        and info.owner_index == -1
-    )
-    var is_owned: bool = info.owner_index != -1
-    var owner_name: String = ""
-    var owner_index: int = -1
-    if is_owned:
-        owner_index = info.owner_index
-        owner_name = "Player %d" % (owner_index + 1)
-    var buy_enabled: bool = false
-    if buy_visible:
-        var payer_index: int = game_state.current_player_index
-        var fiat_balance: float = game_state.get_player_fiat_balance(payer_index)
-        buy_enabled = price > 0.0 and fiat_balance >= price
-    # turn_actions.update_tile_info(
-    # 	tile_type,
-    # 	city,
-    # 	incident_kind,
-    # 	price,
-    # 	info.special_property_name,
-    # 	price,
-    # 	game_state.get_energy_toll(info),
-    # 	game_state.get_payout_per_miner_for_cycle(1),
-    # 	info.miner_batches,
-    # 	is_owned,
-    # 	owner_index,
-    # 	owner_name,
-    # 	buy_visible,
-    # 	buy_enabled
-    # )
     _update_toll_actions(info)
 
 func _update_toll_actions(info: TileInfo) -> void:
     print("_update_toll_actions %s" % info.city)
-    # assert(turn_actions)
     assert(game_state)
     pending_toll_owner_index = -1
     pending_toll_fiat = 0.0
     if info.tile_type == Utils.TileType.PROPERTY and info.owner_index != -1:
         if info.owner_index != game_state.current_player_index:
             var toll_amount: float = game_state.get_energy_toll(info)
-            var payer_index: int = game_state.current_player_index
-            var fiat_balance: float = game_state.get_player_fiat_balance(payer_index)
-            var fiat_enabled: bool = fiat_balance >= toll_amount
             pending_toll_owner_index = info.owner_index
             pending_toll_fiat = toll_amount
-            # turn_actions.show_toll_actions(toll_amount, fiat_enabled)
             return
-    # turn_actions.hide_toll_actions(false)
 
 func _place_all_pawns_at_start() -> void:
     assert(game_state)
@@ -246,17 +219,21 @@ func _initialize_game_state() -> void:
         game_state.set_accent_color(index - 1, pawn.accent_color)
     _on_player_changed(game_state.current_player_index)
     _place_all_pawns_at_start()
-    _update_tile_info(0)
 
 func _process(delta: float) -> void:
-    if not turn_timer_active:
-        return
-    turn_elapsed += delta
-    # turn_actions.set_turn_timer(GameConfig.turn_duration, turn_elapsed)
-    timer_elapsed.emit(GameConfig.turn_duration, turn_elapsed)
-    if turn_elapsed >= GameConfig.turn_duration:
-        turn_timer_active = false
-        _on_end_turn_pressed()
+    if match_timer_active:
+        match_timer_elapsed += delta
+        match_elapsed.emit(GameConfig.match_duration, match_timer_elapsed)
+        if match_timer_elapsed >= GameConfig.match_duration:
+            match_timer_active = false
+            _on_end_match_time()
+
+    if turn_timer_active:
+        turn_elapsed += delta
+        timer_elapsed.emit(GameConfig.turn_duration, turn_elapsed)
+        if turn_elapsed >= GameConfig.turn_duration:
+            turn_timer_active = false
+            _on_end_turn_pressed()
 
 func _reset_turn_timer() -> void:
     turn_elapsed = 0.0
@@ -354,6 +331,9 @@ func _place_pawn(
             return
         _pawn_move_tween = null
         _pawn_jump_tween = null
+
+    if game_state.get_tile_info(target_tile_index).tile_type == Utils.TileType.INSPECTION:
+        game_state.arrest_player(player_index)
     if emit_finish:
         pawn_move_finished.emit(target_tile_index, player_index)
 
@@ -400,7 +380,6 @@ func _on_buy_requested() -> void:
     )
     assert(did_purchase)
     _flip_tile(current_tile_index)
-    _update_tile_info(current_tile_index)
     property_purchased.emit(current_tile_index)
 
 func _on_map_overview_pressed(is_active: bool):
@@ -419,13 +398,83 @@ func _on_toll_payment_requested() -> void:
         false
     )
     if not did_pay:
-        var info: TileInfo = game_state.get_tile_info(current_tile_index)
-        _update_toll_actions(info)
         return
     toll_payment_confirmed.emit(did_pay, pending_toll_fiat)
     pending_toll_owner_index = -1
     pending_toll_fiat = 0.0
     # turn_actions.hide_toll_actions(true)
+
+func _on_pay_exit_prison_button_pressed() -> void:
+    if not game_state.can_player_pay_exit_prison(game_state.current_player_index):
+        return
+
+    game_state.pay_and_release_player(game_state.current_player_index)
+
+func _on_go_to_prison_button_pressed() -> void:
+    game_state.arrest_player(game_state.current_player_index)
+
+func _on_consume_exit_prison_card_button_pressed() -> void:
+    if game_state.consume_event_card(game_state.current_player_index, Utils.CardEffectType.EXIT_JAIL_FREE, 1):
+        game_state.release_arrested_player(game_state.current_player_index)
+
+func _on_draw_event_card_button_pressed() -> void:
+    var tile_info = game_state.get_tile_info(current_tile_index)
+    var event_card = null
+    match tile_info.incident_kind:
+        Utils.CardEffectDeckType.BEAR:
+            event_card = decks_manager.draw_bear_card()
+        Utils.CardEffectDeckType.BULL:
+            event_card = decks_manager.draw_bull_card()
+
+    if event_card == null:
+        return
+
+    _last_effect_card_drew = event_card
+    print(event_card.name)
+    incident_card_drew.emit(event_card)
+    game_state.flip_incident_tile(current_tile_index)
+
+func _on_apply_event_card_effect_button_pressed() -> void:
+    if _last_effect_card_drew == null:
+        return
+
+    match _last_effect_card_drew.effect_type:
+        Utils.CardEffectType.EXIT_JAIL_FREE:
+            print("receive EXIT_JAIL_FREE card for %s shots" % _last_effect_card_drew.amount)
+            game_state.receive_event_card(game_state.current_player_index, Utils.CardEffectType.EXIT_JAIL_FREE, _last_effect_card_drew.amount)
+        Utils.CardEffectType.GAIN_MINER:
+            print("Gain %s miners" % _last_effect_card_drew.amount)
+            # TODO: not for v0
+        Utils.CardEffectType.GO_TO_JAIL:
+            print("Go to jail")
+            game_state.arrest_player(game_state.current_player_index)
+        Utils.CardEffectType.LOSE_MINER:
+            print("Lose %s miners" % _last_effect_card_drew.amount)
+            # TODO: not for v0
+        Utils.CardEffectType.PAY_BTC_TO_BANK:
+            print("Pay %s BTC to bank" % _last_effect_card_drew.amount)
+            game_state.spend_money_btc(game_state.current_player_index, _last_effect_card_drew.amount)
+        Utils.CardEffectType.PAY_BTC_TO_PLAYERS:
+            print("Pay %s BTC to other players" % _last_effect_card_drew.amount)
+            # TODO: not for v0
+        Utils.CardEffectType.PAY_FIAT_TO_BANK:
+            print("Pay %s EVA to bank" % _last_effect_card_drew.amount)
+            game_state.spend_money_fiat(game_state.current_player_index, _last_effect_card_drew.amount)
+        Utils.CardEffectType.PAY_FIAT_TO_PLAYERS:
+            print("Pay %s EVA to other players" % _last_effect_card_drew.amount)
+            # TODO: not for v0
+        Utils.CardEffectType.RECEIVE_BTC_FROM_BANK:
+            print("Receive %s BTC from bank" % _last_effect_card_drew.amount)
+            game_state.receive_money_bitcoin(game_state.current_player_index, _last_effect_card_drew.amount)
+        Utils.CardEffectType.RECEIVE_BTC_FROM_PLAYERS:
+            print("Receive %s BTC from other players" % _last_effect_card_drew.amount)
+            # TODO: not for v0
+        Utils.CardEffectType.RECEIVE_FIAT_FROM_BANK:
+            print("Receive %s EVA from bank" % _last_effect_card_drew.amount)
+            game_state.receive_money_fiat(game_state.current_player_index, _last_effect_card_drew.amount)
+        Utils.CardEffectType.RECEIVE_FIAT_FROM_PLAYERS:
+            print("Receive %s EVA from other players" % _last_effect_card_drew.amount)
+            # TODO: not for v0
 
 func _flip_tile(tile_index: int) -> void:
     assert(board_layout)
@@ -445,9 +494,9 @@ func _on_player_data_changed(player_index: int, player_data: PlayerData) -> void
     var summary: PlayerSummary = summaries[player_index] as PlayerSummary
     assert(summary)
     summary.set_player_data(player_data)
+    game_state.check_winner_by_btc()
 
-func _on_turn_state_changed(_player_index: int, turn_number: int, cycle_number: int) -> void:
-    # turn_actions.set_turn_state(turn_number, cycle_number)
+func _on_turn_state_changed(_player_index: int, _turn_number: int, cycle_number: int) -> void:
     if cycle_number != last_cycle:
         _update_cycle_visual(cycle_number)
         last_cycle = cycle_number
@@ -466,7 +515,6 @@ func _on_miner_batches_changed(tile_index: int, miner_batches: int, owner_index:
     var owner_color: Color = Palette.get_player_light(owner_index)
     board_tile.set_miner_batches(miner_batches, owner_color)
 
-
 func _update_cycle_visual(cycle_number: int) -> void:
     assert(board_layout)
     assert(board_layout.has_method("get_board_tiles"))
@@ -477,3 +525,10 @@ func _update_cycle_visual(cycle_number: int) -> void:
     assert(board_tile != null)
     var is_inflation: bool = cycle_number % 2 == 0
     board_tile.set_owned_visual(is_inflation)
+
+func _on_player_arrested_changed(player_index: int, arrested_status: bool) -> void:
+    if arrested_status:
+        game_state.teleport_player_to_tile(player_index, game_state.inspection_tile_index)
+
+func _try_to_escape_prison(dice_1: int, dice_2: int) -> bool:
+    return dice_1 == dice_2
