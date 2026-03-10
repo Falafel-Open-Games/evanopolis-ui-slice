@@ -23,7 +23,7 @@ const MAX_MINER_BATCHES_PER_PROPERTY: int = 4
 const MINER_BATCH_PRICE_FIAT_BASE: float = 12
 const MORTGAGE_RECEIVE_RATE: float = 0.8
 const MORTGAGE_PAY_RATE: float = 1.2
-const EXIT_PRISION_COST: float = 2
+const EXIT_prison_COST: float = 2
 
 var current_player_index: int
 var player_positions: Array[int]
@@ -520,9 +520,9 @@ func is_player_arrested(player_index: int) -> bool:
     var player: PlayerData = players[player_index]
     return player.is_arrested
 
-func can_player_pay_exit_prision(player_index: int) -> bool:
+func can_player_pay_exit_prison(player_index: int) -> bool:
     var player: PlayerData = players[player_index]
-    return player.fiat_balance >= EXIT_PRISION_COST and player.is_arrested
+    return player.fiat_balance >= EXIT_prison_COST and player.is_arrested
 
 func arrest_player(player_index: int) -> void:
     if is_player_arrested(player_index):
@@ -537,7 +537,7 @@ func pay_and_release_player(player_index: int) -> void:
     if not is_player_arrested(player_index):
         return
 
-    if spend_money_fiat(player_index, EXIT_PRISION_COST):
+    if spend_money_fiat(player_index, EXIT_prison_COST):
         release_arrested_player(player_index)
 
 func release_arrested_player(player_index: int) -> void:

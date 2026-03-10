@@ -6,9 +6,9 @@ signal roll_dice_button_pressed
 signal buy_property_button_pressed
 signal pass_property_button_pressed
 signal pay_toll_button_pressed
-signal pay_exit_prision_button_pressed
-signal go_to_prision_button_pressed
-signal consume_exit_prision_card_button_pressed
+signal pay_exit_prison_button_pressed
+signal go_to_prison_button_pressed
+signal consume_exit_prison_card_button_pressed
 signal draw_event_card_button_pressed
 signal apply_event_card_effect_button_pressed
 signal map_overview_button_pressed(is_active: bool)
@@ -30,9 +30,9 @@ signal dice_result_shown(dice_1: int, dice_2: int, total: int)
 @export var buy_property_button : Button
 @export var pass_property_button : Button
 @export var pay_toll_button : Button
-@export var pay_exit_prision_button : Button
-@export var go_to_prision_button : Button
-@export var consume_exit_prision_card_button : Button
+@export var pay_exit_prison_button : Button
+@export var go_to_prison_button : Button
+@export var consume_exit_prison_card_button : Button
 @export var draw_event_card_button : Button
 @export var apply_event_card_effect_button : Button
 @export var map_overview_button : TextureButton
@@ -93,9 +93,9 @@ func _reset_ui():
     map_overview_button.visible = false
     inventory_button.visible = false
     pay_toll_button.visible = false
-    pay_exit_prision_button.visible = false
-    go_to_prision_button.visible = false
-    consume_exit_prision_card_button.visible = false
+    pay_exit_prison_button.visible = false
+    go_to_prison_button.visible = false
+    consume_exit_prison_card_button.visible = false
     draw_event_card_button.visible = false
     apply_event_card_effect_button.visible = false
 
@@ -130,12 +130,12 @@ func _bind_ui_elements() -> void:
         inventory_button.pressed.connect(_on_inventory_button_pressed)
     if not inventory.card_selected.is_connected(_on_card_selected):
         inventory.card_selected.connect(_on_card_selected)
-    if not pay_exit_prision_button.pressed.is_connected(_on_pay_exit_prision_button):
-        pay_exit_prision_button.pressed.connect(_on_pay_exit_prision_button)
-    if not go_to_prision_button.pressed.is_connected(_on_go_to_prision_button):
-        go_to_prision_button.pressed.connect(_on_go_to_prision_button)
-    if not consume_exit_prision_card_button.pressed.is_connected(_on_consume_exit_prision_card_button):
-        consume_exit_prision_card_button.pressed.connect(_on_consume_exit_prision_card_button)
+    if not pay_exit_prison_button.pressed.is_connected(_on_pay_exit_prison_button):
+        pay_exit_prison_button.pressed.connect(_on_pay_exit_prison_button)
+    if not go_to_prison_button.pressed.is_connected(_on_go_to_prison_button):
+        go_to_prison_button.pressed.connect(_on_go_to_prison_button)
+    if not consume_exit_prison_card_button.pressed.is_connected(_on_consume_exit_prison_card_button):
+        consume_exit_prison_card_button.pressed.connect(_on_consume_exit_prison_card_button)
     if not draw_event_card_button.pressed.is_connected(_on_draw_event_card_button):
         draw_event_card_button.pressed.connect(_on_draw_event_card_button)
     if not apply_event_card_effect_button.pressed.is_connected(_on_apply_event_card_effect_button):
@@ -160,8 +160,8 @@ func _bind_game_controller() -> void:
         game_controller.property_purchased.connect(_on_property_purchased)
     if not game_controller.toll_payment_confirmed.is_connected(_on_toll_payment_confirmed):
         game_controller.toll_payment_confirmed.connect(_on_toll_payment_confirmed)
-    if not game_controller.try_to_escape_prision_failed.is_connected(_on_try_to_escape_prision_failed):
-        game_controller.try_to_escape_prision_failed.connect(_on_try_to_escape_prision_failed)
+    if not game_controller.try_to_escape_prison_failed.is_connected(_on_try_to_escape_prison_failed):
+        game_controller.try_to_escape_prison_failed.connect(_on_try_to_escape_prison_failed)
     if not game_controller.incident_card_drew.is_connected(_on_incident_card_drew):
         game_controller.incident_card_drew.connect(_on_incident_card_drew)
 
@@ -266,9 +266,9 @@ func _on_turn_started(player_index: int, tile_index: int):
     roll_dice_button.visible = true
 
     if game_state.is_player_arrested(game_state.current_player_index):
-        pay_exit_prision_button.visible = true
+        pay_exit_prison_button.visible = true
         if game_state.get_event_card_amount(game_state.current_player_index, Utils.CardEffectType.EXIT_JAIL_FREE) > 0:
-            consume_exit_prision_card_button.visible = true
+            consume_exit_prison_card_button.visible = true
 
     await get_tree().create_timer(TIMER_TURN_INDICATOR).timeout
 
@@ -346,7 +346,7 @@ func _on_pawn_move_finished(_end_tile_index: int, _player_index: int) -> void:
 
             pay_toll_button.visible = true
             pay_toll_button.disabled = not has_enough_funds
-            go_to_prision_button.visible = not has_enough_funds
+            go_to_prison_button.visible = not has_enough_funds
             card_ui.set_card_owned(tile_info.city, tile_info.tile_type, toll_amount, tile_info.miner_batches, owner_name)
         else:
             # Current player is the owner already or is mortgaged
@@ -437,13 +437,13 @@ func _on_player_arrested_changed(player_index: int, arrested_status: bool) -> vo
     # Player is free to go
     if not arrested_status:
         roll_dice_button.visible = true
-        pay_exit_prision_button.visible = false
+        pay_exit_prison_button.visible = false
 
     var message = "ARRESTED" if arrested_status else "FREE TO GO"
     _notify_user(message)
 
-func _on_try_to_escape_prision_failed():
-    pay_exit_prision_button.visible = false
+func _on_try_to_escape_prison_failed():
+    pay_exit_prison_button.visible = false
     end_turn_button.visible = true
     var message = "ATTEMPT FAILED"
     _notify_user(message)
@@ -473,7 +473,7 @@ func _on_end_turn_button_pressed() -> void:
 
 func _on_roll_dice_button_pressed() -> void:
     roll_dice_button.visible = false
-    pay_exit_prision_button.visible = false
+    pay_exit_prison_button.visible = false
     roll_dice_button_pressed.emit()
 
 func _on_buy_property_button_pressed() -> void:
@@ -492,25 +492,25 @@ func _on_pass_property_button_pressed() -> void:
 
 func _on_pay_toll_button_pressed() -> void:
     pay_toll_button.visible = false
-    consume_exit_prision_card_button.visible = false
+    consume_exit_prison_card_button.visible = false
     pay_toll_button_pressed.emit()
 
-func _on_pay_exit_prision_button() -> void:
+func _on_pay_exit_prison_button() -> void:
     roll_dice_button.visible = false
-    pay_exit_prision_button.visible = false
-    pay_exit_prision_button_pressed.emit()
+    pay_exit_prison_button.visible = false
+    pay_exit_prison_button_pressed.emit()
 
-func _on_go_to_prision_button() -> void:
-    go_to_prision_button.visible = false
+func _on_go_to_prison_button() -> void:
+    go_to_prison_button.visible = false
     pay_toll_button.visible = false
-    consume_exit_prision_card_button.visible = false
+    consume_exit_prison_card_button.visible = false
     event_card_ui.hide_card()
-    go_to_prision_button_pressed.emit()
+    go_to_prison_button_pressed.emit()
 
-func _on_consume_exit_prision_card_button() -> void:
+func _on_consume_exit_prison_card_button() -> void:
     pay_toll_button.visible = false
-    consume_exit_prision_card_button.visible = false
-    consume_exit_prision_card_button_pressed.emit()
+    consume_exit_prison_card_button.visible = false
+    consume_exit_prison_card_button_pressed.emit()
 
 func _on_draw_event_card_button() -> void:
     draw_event_card_button.visible = false

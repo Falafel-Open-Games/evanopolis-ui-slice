@@ -11,7 +11,7 @@ signal match_elapsed(match_duration: int, time_elapsed: float)
 signal timer_elapsed(turn_duration: int, time_elapsed: float)
 signal map_overview_button_pressed(is_active: bool)
 signal toll_payment_confirmed(is_payed: bool, toll_value: float)
-signal try_to_escape_prision_failed()
+signal try_to_escape_prison_failed()
 signal incident_card_drew(event_card: EventCard)
 
 # @export var turn_actions: TurnActions
@@ -92,12 +92,12 @@ func _bind_ui_controller() -> void:
         ui_controller.map_overview_button_pressed.connect(_on_map_overview_pressed)
     if not ui_controller.pay_toll_button_pressed.is_connected(_on_toll_payment_requested):
         ui_controller.pay_toll_button_pressed.connect(_on_toll_payment_requested)
-    if not ui_controller.pay_exit_prision_button_pressed.is_connected(_on_pay_exit_prision_button_pressed):
-        ui_controller.pay_exit_prision_button_pressed.connect(_on_pay_exit_prision_button_pressed)
-    if not ui_controller.go_to_prision_button_pressed.is_connected(_on_go_to_prision_button_pressed):
-        ui_controller.go_to_prision_button_pressed.connect(_on_go_to_prision_button_pressed)
-    if not ui_controller.consume_exit_prision_card_button_pressed.is_connected(_on_consume_exit_prision_card_button_pressed):
-        ui_controller.consume_exit_prision_card_button_pressed.connect(_on_consume_exit_prision_card_button_pressed)
+    if not ui_controller.pay_exit_prison_button_pressed.is_connected(_on_pay_exit_prison_button_pressed):
+        ui_controller.pay_exit_prison_button_pressed.connect(_on_pay_exit_prison_button_pressed)
+    if not ui_controller.go_to_prison_button_pressed.is_connected(_on_go_to_prison_button_pressed):
+        ui_controller.go_to_prison_button_pressed.connect(_on_go_to_prison_button_pressed)
+    if not ui_controller.consume_exit_prison_card_button_pressed.is_connected(_on_consume_exit_prison_card_button_pressed):
+        ui_controller.consume_exit_prison_card_button_pressed.connect(_on_consume_exit_prison_card_button_pressed)
     if not ui_controller.draw_event_card_button_pressed.is_connected(_on_draw_event_card_button_pressed):
         ui_controller.draw_event_card_button_pressed.connect(_on_draw_event_card_button_pressed)
     if not ui_controller.apply_event_card_effect_button_pressed.is_connected(_on_apply_event_card_effect_button_pressed):
@@ -122,10 +122,10 @@ func _on_roll_dice_pressed() -> void:
 
 func _on_dice_result_shown(dice_1: int, dice_2: int, total: int) -> void:
     if game_state.is_player_arrested(game_state.current_player_index):
-        if _try_to_escape_prision(dice_1, dice_2):
+        if _try_to_escape_prison(dice_1, dice_2):
             game_state.release_arrested_player(game_state.current_player_index)
         else:
-            try_to_escape_prision_failed.emit()
+            try_to_escape_prison_failed.emit()
     else:
         move_player(dice_1, dice_2, total)
 
@@ -404,16 +404,16 @@ func _on_toll_payment_requested() -> void:
     pending_toll_fiat = 0.0
     # turn_actions.hide_toll_actions(true)
 
-func _on_pay_exit_prision_button_pressed() -> void:
-    if not game_state.can_player_pay_exit_prision(game_state.current_player_index):
+func _on_pay_exit_prison_button_pressed() -> void:
+    if not game_state.can_player_pay_exit_prison(game_state.current_player_index):
         return
 
     game_state.pay_and_release_player(game_state.current_player_index)
 
-func _on_go_to_prision_button_pressed() -> void:
+func _on_go_to_prison_button_pressed() -> void:
     game_state.arrest_player(game_state.current_player_index)
 
-func _on_consume_exit_prision_card_button_pressed() -> void:
+func _on_consume_exit_prison_card_button_pressed() -> void:
     if game_state.consume_event_card(game_state.current_player_index, Utils.CardEffectType.EXIT_JAIL_FREE, 1):
         game_state.release_arrested_player(game_state.current_player_index)
 
@@ -530,5 +530,5 @@ func _on_player_arrested_changed(player_index: int, arrested_status: bool) -> vo
     if arrested_status:
         game_state.teleport_player_to_tile(player_index, game_state.inspection_tile_index)
 
-func _try_to_escape_prision(dice_1: int, dice_2: int) -> bool:
+func _try_to_escape_prison(dice_1: int, dice_2: int) -> bool:
     return dice_1 == dice_2

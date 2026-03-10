@@ -63,7 +63,7 @@ corner_radius_top_right = 24
 corner_radius_bottom_right = 24
 corner_radius_bottom_left = 24
 
-[node name="Hud" type="Control" node_paths=PackedStringArray("match_timer_label", "timer_label", "notification_message_label", "player_name", "player_balance", "player_color", "dice_1_texture_rect", "dice_2_texture_rect", "end_turn_button", "roll_dice_button", "buy_property_button", "pass_property_button", "pay_toll_button", "pay_exit_prision_button", "go_to_prision_button", "consume_exit_prision_card_button", "draw_event_card_button", "apply_event_card_effect_button", "map_overview_button", "inventory_button", "card_ui", "event_card_ui", "balance_variation_panel", "balance_variation_label", "turn_indicator_panel", "turn_indicator_label", "turn_indicator_player_color", "inventory", "card_dialog", "winner_screen")]
+[node name="Hud" type="Control" node_paths=PackedStringArray("match_timer_label", "timer_label", "notification_message_label", "player_name", "player_balance", "player_color", "dice_1_texture_rect", "dice_2_texture_rect", "end_turn_button", "roll_dice_button", "buy_property_button", "pass_property_button", "pay_toll_button", "pay_exit_prison_button", "go_to_prison_button", "consume_exit_prison_card_button", "draw_event_card_button", "apply_event_card_effect_button", "map_overview_button", "inventory_button", "card_ui", "event_card_ui", "balance_variation_panel", "balance_variation_label", "turn_indicator_panel", "turn_indicator_label", "turn_indicator_player_color", "inventory", "card_dialog", "winner_screen")]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -84,9 +84,9 @@ roll_dice_button = NodePath("MarginContainer/MarginContainer/HBoxContainer/RollD
 buy_property_button = NodePath("MarginContainer/MarginContainer/HBoxContainer/BuyPropertyBtn")
 pass_property_button = NodePath("MarginContainer/MarginContainer/HBoxContainer/PassPropertyBtn")
 pay_toll_button = NodePath("MarginContainer/MarginContainer/HBoxContainer/PayToll")
-pay_exit_prision_button = NodePath("MarginContainer/MarginContainer/HBoxContainer/PayExitPrision")
-go_to_prision_button = NodePath("MarginContainer/MarginContainer/HBoxContainer/GoToPrision")
-consume_exit_prision_card_button = NodePath("MarginContainer/MarginContainer/HBoxContainer/UseFreeExitEventCard")
+pay_exit_prison_button = NodePath("MarginContainer/MarginContainer/HBoxContainer/PayExitPrison")
+go_to_prison_button = NodePath("MarginContainer/MarginContainer/HBoxContainer/GoToPrison")
+consume_exit_prison_card_button = NodePath("MarginContainer/MarginContainer/HBoxContainer/UseFreeExitEventCard")
 draw_event_card_button = NodePath("MarginContainer/MarginContainer/HBoxContainer/DrawEventCard")
 apply_event_card_effect_button = NodePath("MarginContainer/MarginContainer/HBoxContainer/ApplyEventCard")
 map_overview_button = NodePath("MarginContainer/VBoxContainer/VBoxContainer/HBoxContainer3/MapOverviewBtn")
@@ -286,15 +286,15 @@ custom_minimum_size = Vector2(200, 80)
 layout_mode = 2
 text = "PAY"
 
-[node name="PayExitPrision" type="Button" parent="MarginContainer/MarginContainer/HBoxContainer"]
+[node name="PayExitPrison" type="Button" parent="MarginContainer/MarginContainer/HBoxContainer"]
 custom_minimum_size = Vector2(200, 80)
 layout_mode = 2
-text = "PAY EXIT PRISION"
+text = "PAY EXIT PRISON"
 
-[node name="GoToPrision" type="Button" parent="MarginContainer/MarginContainer/HBoxContainer"]
+[node name="GoToPrison" type="Button" parent="MarginContainer/MarginContainer/HBoxContainer"]
 custom_minimum_size = Vector2(200, 80)
 layout_mode = 2
-text = "GO TO PRISION"
+text = "GO TO PRISON"
 
 [node name="DrawEventCard" type="Button" parent="MarginContainer/MarginContainer/HBoxContainer"]
 custom_minimum_size = Vector2(200, 80)
