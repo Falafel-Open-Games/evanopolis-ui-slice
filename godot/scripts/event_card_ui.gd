@@ -10,7 +10,7 @@ func _ready() -> void:
 
 func show_card(event_card: EventCard) -> void:
     title_label.text = event_card.name
-    card_type_label.text = str(Utils.CardEffectDeckType.keys()[event_card.effect_type]).to_upper()
+    card_type_label.text = str(Utils.CardEffectDeckType.keys()[event_card.deck_type]).to_upper()
     description_label.text = event_card.description
     self.visible = true
 

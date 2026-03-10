@@ -28,16 +28,16 @@ func shuffle_decks():
     bear_deck.shuffle()
     bull_deck.shuffle()
 
-func draw_chance_card() -> EventCard:
+func draw_bear_card() -> EventCard:
     if bear_deck.is_empty():
-        shuffle_decks()
+        bear_deck.shuffle()
     var card: EventCard = bear_deck.pop_front()
-    bear_deck.append(card) # put at bottom
+    bear_deck.append(card)
     return card
 
-func draw_community_chest_card() -> EventCard:
+func draw_bull_card() -> EventCard:
     if bull_deck.is_empty():
-        shuffle_decks()
+        bull_deck.shuffle()
     var card: EventCard = bull_deck.pop_front()
     bull_deck.append(card)
     return card

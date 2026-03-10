@@ -449,17 +449,27 @@ func _get_tiles_per_side() -> int:
     @warning_ignore("integer_division")
     return GameConfig.board_size / SIDE_COUNT
 
-func _incident_kind_for_side(side_index: int) -> String:
+func _incident_kind_for_side(side_index: int) -> int:
     match side_index:
         1, 4:
-            return "suerte"
+            return Utils.CardEffectDeckType.BEAR
         2, 5:
-            return "destino"
-    return ""
+            return Utils.CardEffectDeckType.BULL
+    return -1
 
 func _city_for_side(side_index: int) -> String:
     assert(side_index >= 0 and side_index < Palette.CITY_ORDER.size())
     return Palette.CITY_ORDER[side_index]
+
+func flip_incident_tile(tile_index: int) -> void:
+    assert(tile_index >= 0 and tile_index < tiles.size())
+    match tiles[tile_index].incident_kind:
+        Utils.CardEffectDeckType.BEAR:
+            tiles[tile_index].incident_kind = Utils.CardEffectDeckType.BULL
+            print("flip_incident_tile from BEAR to BULL")
+        Utils.CardEffectDeckType.BULL:
+            tiles[tile_index].incident_kind = Utils.CardEffectDeckType.BEAR
+            print("flip_incident_tile from BULL to BEAR")
 
 func can_player_mortgage(player_index: int, tile: TileInfo) -> bool:
     return(
