@@ -98,6 +98,9 @@ func _reset_ui():
     consume_exit_prison_card_button.visible = false
     draw_event_card_button.visible = false
     apply_event_card_effect_button.visible = false
+    event_card_ui.hide_card()
+    card_ui.hide_card()
+    card_dialog.close_dialog()
 
 func hide_all_ui():
     _reset_ui()
@@ -112,6 +115,8 @@ func hide_all_ui():
     dice_1_texture_rect.visible = false
     dice_2_texture_rect.visible = false
     event_card_ui.hide_card()
+    card_ui.hide_card()
+    card_dialog.close_dialog()
 
 func _bind_ui_elements() -> void:
     if not end_turn_button.pressed.is_connected(_on_end_turn_button_pressed):
