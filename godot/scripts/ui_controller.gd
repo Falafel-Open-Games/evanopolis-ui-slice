@@ -184,6 +184,8 @@ func _bind_game_state() -> void:
         game_state.player_money_fiat_spent.connect(_on_player_money_fiat_spent)
     if not game_state.match_winner_player_data.is_connected(_on_match_winner_player_data):
         game_state.match_winner_player_data.connect(_on_match_winner_player_data)
+    if not game_state.player_money_fiat_received.is_connected(_on_player_money_fiat_received):
+        game_state.player_money_fiat_received.connect(_on_player_money_fiat_received)
 
 func _on_match_winner_player_data(winner_player_data: PlayerData) -> void:
     _show_winner_screen(winner_player_data)
@@ -448,6 +450,9 @@ func _on_try_to_escape_prision_failed():
 
 func _on_player_money_fiat_spent(_player_index: int, spent_value: float) -> void:
     _spend_value_balance_variation(spent_value)
+
+func _on_player_money_fiat_received(player_index: int, received_value: float) -> void:
+    _receive_value_balance_variation(received_value)
 
 func _on_incident_card_drew(event_card: EventCard) -> void:
     print(event_card.name)
